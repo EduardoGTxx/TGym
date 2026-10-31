@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import Media, { Thumb } from './Media.jsx'
 import { useStore, DEF } from '../store/useStore.js'
 import { setLang } from '../lib/i18n.js'
+import { CATALOGUE, imgSrc, gifSrc } from '../lib/exercises.js'
 
 let host, root, media
 const exercise = { id: 'qa', n: 'QA exercise', img: 'still.jpg', gif: 'motion.gif' }
@@ -38,24 +39,54 @@ it.each([
  expect(useStore.getState().S).toEqual(before);expect(localStorage.getItem('gym_state_v1')).toBe(raw);expect(ex).toEqual(original)
 })
 
-it('shows a bundled custom exercise GIF and still thumbnail without writing artwork into the profile',()=>{
- const ex={id:'kept-custom',custom:true,n:'Walking',bp:'cardio'},before=structuredClone(useStore.getState().S)
- const raw=JSON.stringify(before);localStorage.setItem('gym_state_v1',raw)
- act(()=>root.render(<><Media ex={ex}/><Thumb ex={ex}/></>))
- expect(host.querySelector('.exmedia img').getAttribute('src')).toContain('walking-flat-ground.gif')
- expect(host.querySelector('img.thumb').getAttribute('src')).toContain('walking-flat-ground-poster.png')
- act(()=>host.querySelector('[aria-label="Pause animation"]').click())
- expect(host.querySelector('.exmedia img').getAttribute('src')).toContain('walking-flat-ground-poster.png')
+const rejectedArtworkExercises=[
+ ['Overhead Cable Triceps Extension','upper arms'],['Cross-Body Lat Pull-Around','back'],
+ ['Plate Pinch Hold','lower arms'],['Bayesian Cable Curl','upper arms'],
+ ['Spanish Squat Hold','upper legs'],['Nordic Hold','upper legs'],['Dead Hang','back'],
+ ['Bent Knee Calf Raise','lower legs'],['Hip Thrust en máquina o Smith','upper legs'],
+ ['Captain’s Chair Knee Raise','waist'],['Suitcase Carry','waist'],['Walking','cardio'],
+ ['Stepmill — Continuous Timed Walk','cardio'],
+].map(([n,bp],i)=>({id:'kept-custom-'+i,custom:true,n,bp}))
+
+it.each([false,true])('never substitutes rejected artwork for custom exercises without media (reduced motion: %s)',reduceMotion=>{
+ useStore.setState({S:{...useStore.getState().S,reduceMotion,customEx:structuredClone(rejectedArtworkExercises)}})
+ const before=structuredClone(useStore.getState().S),raw=JSON.stringify(before),decode=vi.fn()
+ localStorage.setItem('gym_state_v1',raw);vi.stubGlobal('Image',decode)
+ for(const ex of rejectedArtworkExercises){
+  const original=structuredClone(ex)
+  act(()=>root.render(<><Media ex={ex}/><Thumb ex={ex}/></>))
+  expect(host.querySelector('img')).toBeNull()
+  expect(host.querySelector('.media-playback')).toBeNull()
+  expect(host.querySelector('.thumb-x')).not.toBeNull()
+  expect(ex).toEqual(original)
+ }
+ expect(decode).not.toHaveBeenCalled()
  expect(useStore.getState().S).toEqual(before);expect(localStorage.getItem('gym_state_v1')).toBe(raw)
- expect(ex).toEqual({id:'kept-custom',custom:true,n:'Walking',bp:'cardio'})
 })
 
-it('starts bundled custom media on its supplied still poster when motion is reduced',()=>{
- useStore.setState({S:{...useStore.getState().S,reduceMotion:true}})
- act(()=>root.render(<Media ex={{id:'kept-custom',custom:true,n:'Nordic Hold',bp:'upper legs'}}/>))
- expect(src()).toContain('nordic-hold-poster.png')
- act(()=>host.querySelector('[aria-label="Play animation"]').click())
- expect(src()).toContain('nordic-hold.gif')
+it.each([
+ ['still upload',{img:'data:image/jpeg;base64,kept-still'},'data:image/jpeg;base64,kept-still'],
+ ['animated image upload',{img:'data:image/gif;base64,kept-animation'},'data:image/gif;base64,kept-animation'],
+ ['GIF and poster upload',{img:'data:image/png;base64,kept-poster',gif:'data:image/gif;base64,kept-gif'},'data:image/gif;base64,kept-gif'],
+])('keeps a matching custom exercise’s %s as the display source',(_,upload,display)=>{
+ const ex={id:'kept-upload',custom:true,n:'Walking',bp:'cardio',...upload},original=structuredClone(ex)
+ const before=structuredClone(useStore.getState().S),raw=JSON.stringify(before)
+ localStorage.setItem('gym_state_v1',raw)
+ act(()=>root.render(<><Media ex={ex}/><Thumb ex={ex}/></>))
+ expect(host.querySelector('.exmedia img').getAttribute('src')).toBe(display)
+ expect(host.querySelector('img.thumb').getAttribute('src')).toBe(upload.img)
+ expect(ex).toEqual(original);expect(useStore.getState().S).toEqual(before)
+ expect(localStorage.getItem('gym_state_v1')).toBe(raw)
+})
+
+it('retains the normal ExerciseDB catalogue image, GIF and identity',()=>{
+ const ex=CATALOGUE.find(item=>item.img&&item.gif),original=structuredClone(ex)
+ act(()=>root.render(<><Media ex={ex}/><Thumb ex={ex}/></>))
+ expect(host.querySelector('.exmedia img').getAttribute('src')).toBe(gifSrc(ex))
+ expect(host.querySelector('img.thumb').getAttribute('src')).toBe(imgSrc(ex))
+ act(()=>host.querySelector('[aria-label="Pause animation"]').click())
+ expect(host.querySelector('.exmedia img').getAttribute('src')).toBe(imgSrc(ex))
+ expect(ex).toEqual(original)
 })
 
 it.each(['app', 'system'])('starts with a still image for %s reduced motion and permits explicit playback', source => {

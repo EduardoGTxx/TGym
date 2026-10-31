@@ -1,18 +1,29 @@
 # TGym anatomical exercise media
 
-The active authoring pipeline is [native/](native/README.md). It renders thirteen
+**Status: rejected appearance; not shipped.** The user superseded the earlier
+appearance approval and requires the same visual design as the existing
+ExerciseDB catalogue GIFs. This candidate is not approved for application
+integration or publication. Earlier approvals, candidate builds and successful
+measurements are historical evidence, not current release acceptance.
+
+The preserved authoring pipeline is [native/](native/README.md). It renders thirteen
 exercise GIFs and matching still PNG posters from a continuous, skinned 3D
 avatar, with authored equipment and motion. The earlier procedural silhouette
 pipeline and its obsolete rig/provenance records have been retired. Historical
 artwork and its evidence remain available in release tags and Git history.
 
-The shipped file hashes and frozen authoring inputs are recorded in
+The historical candidate export hashes and frozen authoring inputs are recorded in
 [anatomical-media-manifest.json](anatomical-media-manifest.json).
 
-The user approved the gray/red/white anatomical appearance and confirmed the
-standing **low-rear-pulley, upright-torso overhead extension with a short curved
-EZ attachment**. That confirmation does not stand in for reviewing the final
-encoded loops, supports, grips, framing and playback.
+The earlier gray/red/white appearance approval has been withdrawn. The separate
+mechanical confirmation of the standing **low-rear-pulley, upright-torso overhead
+extension with a short curved EZ attachment** is retained. All exercise IDs,
+mapping, provenance and kinematics remain preserved; the rejected visual design
+must not be substituted for the requested catalogue design.
+
+`native/` and the original audit files are retained unchanged. Their status and
+approval wording describes the earlier candidate and is superseded by this
+document and the top-level manifest's rejection status.
 
 ## Sources and separate licenses
 
@@ -52,10 +63,14 @@ license or existing catalogue-image attributions.
 [pinned-inputs.json](native/assets/pinned-inputs.json) record the source roles,
 licenses, adaptations and exact baked-input hashes. No GymVisual input, removed
 watermark, paid animation or commercial app head is used in this replacement
-set. Upstream creators do not endorse TGym. Artwork contains no logo or text;
-attribution is provided separately in the app and accompanying source notices.
+set. Upstream creators do not endorse TGym. This candidate artwork contains no
+logo or text; its attribution remains in the accompanying authoring notices.
+Retaining those sources and notices does not mean the rejected artwork ships.
 
 ## Reproduce and inspect
+
+These commands reproduce the historical candidate for inspection. They do not
+approve its appearance or authorize reintegration into the application.
 
 Use Node 22 or newer, FFmpeg, and Python with Pillow. The isolated native tool
 pins Three.js 0.183.2 and Playwright 1.63.0; its dependencies are separate from
@@ -136,10 +151,13 @@ These raw-joint and decoded-file results do not establish visible skin contact,
 all mesh collisions, clinical correctness or physical-device acceptance.
 Review all encoded loops and key poses separately before integrating them.
 
-The app consumes only the GIF/poster pairs in
-`frontend/src/assets/exercises-original/`. Promotion must compare the reviewed
-export hashes to every replacement. Display-only fallback resolution preserves
-custom exercise IDs, duplicate identities, routine/history references and
-uploaded user media; it does not add artwork bytes to portable profiles.
-Replacing these resources does not by itself prove a phone update or Android,
-iPhone or PWA playback. Keep those acceptance results separate.
+The rejected candidate used GIF/poster pairs in
+`frontend/src/assets/exercises-original/` with display-only fallback resolution.
+This candidate must remain excluded from runtime integration; these files must
+not be shipped.
+The historical resolver preserved custom exercise IDs, duplicate identities,
+routine/history references and uploaded user media without adding artwork bytes
+to portable profiles. Preserve those identity and persistence boundaries in any
+future solution. Historical candidate playback or mechanical checks do not
+establish current design approval, a phone update, or Android/iPhone/PWA release
+acceptance.

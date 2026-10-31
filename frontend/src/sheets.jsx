@@ -535,6 +535,24 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     const norm = hasExplicitMuscleMetadata(existing || {}) ? normalizeMuscleGroups(existing || {}) : []
     return norm.slice(1)
   })
+  // Compare with the form's initial draft, not normalized legacy records. An
+  // image-only edit must not add optional metadata or rewrite muscle roles.
+  const [initialDraft] = useState(() => ({ n, bp, desc, eq, img, primaries:[...primaries], secondaries:[...secondaries] }))
+  const [saving, setSaving] = useState(false)
+  const [readingImage, setReadingImage] = useState(false)
+  const savingExercise = useRef(false), mounted = useRef(true), imageReader = useRef(null)
+  useEffect(() => { mounted.current=true; return () => { mounted.current=false; imageReader.current?.abort?.(); imageReader.current=null } }, [])
+  const readImage = file => {
+    if (savingExercise.current || imageReader.current || !file) return
+    if (file.size > 5_000_000) { toast(t('Image or GIF must be smaller than 5 MB')); return }
+    const reader = new FileReader()
+    imageReader.current = reader; setReadingImage(true)
+    const finish = () => { if(imageReader.current===reader){imageReader.current=null;if(mounted.current)setReadingImage(false)} }
+    reader.onload = () => { if(mounted.current&&imageReader.current===reader)setImg(String(reader.result));finish() }
+    reader.onerror = () => { if(mounted.current&&imageReader.current===reader)toast(t('Could not save changes. Try again.'));finish() }
+    reader.onabort = finish
+    try { reader.readAsDataURL(file) } catch { reader.onerror() }
+  }
   const togglePrimary = value => setPrimaries(current => current.includes(value) ? current.filter(m => m !== value) : [...current, value])
   const toggleSecondary = value => setSecondaries(current => current.includes(value) ? current.filter(m => m !== value) : [...current, value])
   const similarName = (a, b) => {
@@ -548,11 +566,15 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     }
     return 1 - row[y.length] / Math.max(x.length, y.length)
   }
-  const save = (allowDuplicate = false) => {
+  const save = async (allowDuplicate = false) => {
+    if (savingExercise.current || imageReader.current) return
+    const mediaOnly = existing && n === initialDraft.n && bp === initialDraft.bp && desc === initialDraft.desc && eq === initialDraft.eq
+      && JSON.stringify(primaries) === JSON.stringify(initialDraft.primaries) && JSON.stringify(secondaries) === JSON.stringify(initialDraft.secondaries)
     const name = n.trim()
-    if (!name) { toast(t('Give it a name')); return }
-    if (!bp) { toast(t('Pick a body part')); return }
-    const dup = allExercises(S()).map(e => ({ e, score: similarName(e.n, name) })).filter(x => x.e.id !== (existing || {}).id && x.score >= .95).sort((a, b) => b.score - a.score)[0]?.e
+    if (!mediaOnly && !name) { toast(t('Give it a name')); return }
+    if (!mediaOnly && !bp) { toast(t('Pick a body part')); return }
+    const renamed = !existing || name !== existing.n.trim()
+    const dup = renamed && allExercises(S()).map(e => ({ e, score: similarName(e.n, name) })).filter(x => x.e.id !== (existing || {}).id && x.score >= .95).sort((a, b) => b.score - a.score)[0]?.e
     if (dup && !allowDuplicate) {
       confirmSheet({ title: t('Possible duplicate'), message: t('“{0}” is very similar to an existing exercise: “{1}”. You can still add it if they are different.', name, originalExerciseNameFor(dup)), confirmText: t('Add anyway'), onConfirm: () => save(true) })
       return
@@ -562,20 +584,47 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     const sm = secondaries.filter(m => !prim.includes(m))
     const groups = [...prim, ...sm]
     let id = existing && existing.id
-    if (existing) update(s => { const c = (s.customEx || []).find(x => x.id === id); if (c) {
-      c.n = name; c.bp = bp; c.desc = d; c.eq = eq; c.img = img; c.tg = prim[0] || ''; c.sm = sm; c.muscleGroups = groups; c.primaries = prim; c.secondaries = sm
-    } })
-    else {
-      id = 'c' + uid()
-      update(s => { (s.customEx = s.customEx || []).push({ id, n: name, bp, desc: d, tg: prim[0] || '', sm, muscleGroups: groups, primaries: prim, secondaries: sm, eq, img, custom: true }) })
-    }
+    let saved
+    savingExercise.current = true
+    setSaving(true)
+    try {
+      if (mediaOnly) {
+        // Read the live record by its stable ID. Metadata changed elsewhere while
+        // this sheet was open remains intact; quota failures keep the old state.
+        const live = (S().customEx || []).find(c => c.id === id)
+        if (!live) throw new Error('Custom exercise no longer exists')
+        if (img !== initialDraft.img && live.img !== img) {
+          await useStore.getState().updateAtomic(s => {
+            const c = (s.customEx || []).find(c => c.id === id)
+            if (!c) throw new Error('Custom exercise no longer exists')
+            c.img = img
+          })
+        }
+      } else if (existing) {
+        update(s => { const c = (s.customEx || []).find(x => x.id === id); if (c) {
+          c.n = name; c.bp = bp; c.desc = d; c.eq = eq; c.img = img; c.tg = prim[0] || ''; c.sm = sm; c.muscleGroups = groups; c.primaries = prim; c.secondaries = sm
+        } })
+      } else {
+        id = 'c' + uid()
+        update(s => { (s.customEx = s.customEx || []).push({ id, n: name, bp, desc: d, tg: prim[0] || '', sm, muscleGroups: groups, primaries: prim, secondaries: sm, eq, img, custom: true }) })
+      }
+      saved = (S().customEx || []).find(c => c.id === id)
+    } catch {
+      savingExercise.current = false
+      if (mounted.current) toast(t('Could not save. Check available storage and try again.'))
+      return
+    } finally { if (mounted.current) setSaving(false) }
+    // A callback failure is not a failed persistence attempt. Keep the guard
+    // locked after success so stale clicks cannot create/save another record.
+    if (!mounted.current) return
     close()
     toast(existing ? t('Saved') : t('“{0}” created', name))
-    onDone && onDone(EXIDX[id])
+    onDone && onDone(saved)
   }
   return <>
     <h3>{existing ? t('Edit custom exercise') : t('Create your own exercise')}</h3>
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Name it, choose a body part, and optionally add an image or animated GIF.')}</div>
+    <fieldset disabled={saving||readingImage} style={{border:0,padding:0,margin:0,minWidth:0}}>
     <input className="input" aria-label={t('Exercise name')} placeholder={t('Exercise name')} value={n} onChange={e => setN(e.target.value)} />
     <div className="sect-b" style={{ marginTop: 12 }}><SelectRow title={t('Equipment')} value={eq} onChange={setEq} options={[{ value: 'custom', label: t('Other') }, ...ALL_EQUIPMENT.map(x => ({ value: x, label: t(x) }))]} /></div>
     <div className="chips choice-grid" style={{ margin: '12px 0' }}>
@@ -594,11 +643,12 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     {bp === 'cardio' && <div className="small dim row" style={{ marginBottom: 10, gap: 5 }}><Icon name="figureRun" style={{ fontSize: 13 }} />{t('Cardio exercises log time + speed instead of weight × reps.')}</div>}
     <textarea className="input" rows={4} maxLength={1000} placeholder={t('Description (optional) — setup, cues, anything you want to remember')}
       value={desc} onChange={e => setDesc(e.target.value)} />
-    <div className="row" style={{ gap: 8, marginTop: 10 }}><Button icon="photo" onClick={() => document.getElementById('custom-ex-image')?.click()}>{img ? t('Change image or GIF') : t('Add image or GIF')}</Button>{img && <Button variant="ghost" onClick={() => setImg('')}>{t('Remove')}</Button>}</div>
-    <input id="custom-ex-image" type="file" accept="image/*,.gif" hidden onChange={e => { const f = e.target.files?.[0]; if (!f) return; if (f.size > 5_000_000) { toast(t('Image or GIF must be smaller than 5 MB')); return }; const rd = new FileReader(); rd.onload = () => setImg(String(rd.result)); rd.readAsDataURL(f) }} />
+    <div className="row" style={{ gap: 8, marginTop: 10 }}><Button disabled={saving||readingImage} icon="photo" onClick={() => document.getElementById('custom-ex-image')?.click()}>{img ? t('Change image or GIF') : t('Add image or GIF')}</Button>{img && <Button disabled={saving||readingImage} variant="ghost" onClick={() => setImg('')}>{t('Remove')}</Button>}</div>
+    <input id="custom-ex-image" type="file" accept="image/*,.gif" disabled={saving||readingImage} hidden onChange={e => { const file=e.target.files?.[0]; e.target.value=''; readImage(file) }} />
     <div style={{ height: 14 }} />
-    <Button variant="primary" onClick={() => save()}>{existing ? t('Save') : t('Create exercise')}</Button>
-    {existing && <><div style={{ height: 8 }} /><Button variant="danger" icon="trash" onClick={() => { close(); deleteCustomEx(existing) }}>{t('Delete exercise')}</Button></>}
+    <Button disabled={saving||readingImage} variant="primary" onClick={() => save()}>{existing ? t('Save') : t('Create exercise')}</Button>
+    {existing && <><div style={{ height: 8 }} /><Button disabled={saving||readingImage} variant="danger" icon="trash" onClick={() => { close(); deleteCustomEx(existing) }}>{t('Delete exercise')}</Button></>}
+    </fieldset>
   </>
 }
 export const customExSheet = (existing, onDone, prefill) => ui().openSheet(close => <CustomExForm existing={existing} prefill={prefill} onDone={onDone} close={close} />)
