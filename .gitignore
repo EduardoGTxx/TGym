@@ -4,6 +4,9 @@ media/gif/
 
 # Runtime data — users, passkeys, per-user state, session secret
 data/
+!frontend/scripts/original-exercises/native/model/data/
+!frontend/scripts/original-exercises/native/model/data/muscles.json
+!frontend/scripts/original-exercises/native/model/data/za_map.json
 
 # Local config
 .env

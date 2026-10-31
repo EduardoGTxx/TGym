@@ -27,6 +27,9 @@ import { openRestoreSheet } from '../components/RestoreSheet.jsx'
 import { UpdateCheckButton } from '../components/AppUpdate.jsx'
 import { openSoundSettings } from '../components/SoundSettings.jsx'
 import { APP_REPOSITORY, ORIGINAL_OPENGYM_REPOSITORY } from '../lib/app-meta.js'
+import anatomicalMediaNotice from '../../scripts/original-exercises/native/model/NOTICE.md?raw'
+import anatomicalUpstreamNotice from '../../scripts/original-exercises/native/model/UPSTREAM-NOTICE.md?raw'
+import anatomicalAvatarNotice from '../../scripts/original-exercises/native/assets/NOTICE.md?raw'
 import { ReminderStatus } from '../components/ReminderPanel.jsx'
 import MeasurementReminders from '../components/MeasurementReminders.jsx'
 import WorkoutReminderSettings from '../components/WorkoutReminderSettings.jsx'
@@ -438,7 +441,11 @@ export default function Settings() {
       <UpdateCheckButton />
       {APP_REPOSITORY && <><a href={APP_REPOSITORY} target="_blank" rel="noopener">GitHub</a><br /></>}
       {t('Based on openGym')} · <a href={ORIGINAL_OPENGYM_REPOSITORY} target="_blank" rel="noopener">{t('original source')}</a> · exercise data: hasaneyldrm/exercises-dataset (MIT)<br />
-      exercise images and animations © <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>
+      catalog exercise images and animations © <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>
+      <details style={{ marginTop: 8 }}>
+        <summary style={{ cursor: 'pointer' }}>Heatsy / Z-Anatomy / BodyParts3D / MakeHuman · CC BY-SA 4.0 / CC0</summary>
+        <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', textAlign: 'left', marginTop: 8 }}>{anatomicalMediaNotice}{'\n\n'}{anatomicalAvatarNotice}{'\n\n'}{anatomicalUpstreamNotice}</div>
+      </details>
     </div>
   </div>
 }

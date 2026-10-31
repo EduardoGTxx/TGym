@@ -26,8 +26,16 @@ it('preserves uploaded media, unmatched names, builtins and contrary variants',(
   {n:'Walking',custom:true,gif:'kept.gif'},
   {n:'Bent Knee Calf Raise',custom:true,desc:'Seated soleus raise'},
   {n:'Overhead Cable Triceps Extension',custom:true,eq:'rope'},
+  {n:'Overhead Cable Triceps Extension',custom:true,eq:'high pulley'},
+  {n:'Overhead Cable Triceps Extension',custom:true,desc:'Polea alta, torso inclinado'},
+  {n:'Overhead Cable Triceps Extension',custom:true,st:['Attach the bar to a high pulley']},
   {n:'Hip Thrust en máquina o Smith',custom:true,desc:'Solo Smith'},
  ])expect(originalExerciseVariant(ex)).toBeNull()
+})
+it('recognises the upright low-pulley curved-bar variant while preserving its stored definition',()=>{
+ const ex={id:'kept-overhead',n:'Overhead Cable Triceps Extension',custom:true,bp:'upper arms',eq:'EZ cable bar',desc:'De pie, torso erguido y polea baja'},before=structuredClone(ex)
+ expect(originalExerciseVariant(ex)).toBe('overhead-cable-triceps-ez-bar')
+ expect(ex).toEqual(before)
 })
 it('handles legacy punctuation without treating a different exercise as the same identity',()=>{
  expect(originalExerciseVariant({id:'one',custom:true,n:"CAPTAIN'S CHAIR KNEE RAISE"})).toBe('captains-chair-knee-raise')

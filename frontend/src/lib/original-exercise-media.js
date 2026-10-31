@@ -26,7 +26,8 @@ export function originalExerciseVariant(ex) {
  // A specific contrary variant takes precedence over a generic legacy title.
  const details=normalise([ex.eq,ex.desc,...(Array.isArray(ex.st)?ex.st:[])].filter(Boolean).join(' '))
  if(row[0]==='standing-bent-knee-calf-raise'&&/\b(seated|sentado|sentada|straight knee|rodilla extendida)\b/.test(details))return null
- if(row[0]==='overhead-cable-triceps-ez-bar'&&/\b(seated|sentado|sentada|rope|cuerda|straight bar|barra recta)\b/.test(details))return null
+ // The bundled curved-bar overhead is standing, upright and low-pulley.
+ if(row[0]==='overhead-cable-triceps-ez-bar'&&/\b(seated|sentado|sentada|rope|cuerda|straight bar|barra recta|high pulley|polea alta)\b/.test(details))return null
  if(row[0]==='machine-hip-thrust'&&/\b(smith only|solo smith|barbell|barra libre)\b/.test(details))return null
  return row[0]
 }
