@@ -12,6 +12,7 @@ import Records from '../views/Records.jsx'
 import History from '../views/History.jsx'
 import ProgressReport from '../views/ProgressReport.jsx'
 import StatsSections from './StatsSections.jsx'
+import StatsHeader from './StatsHeader.jsx'
 import SwipeNavigation from './SwipeNavigation.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 
@@ -29,11 +30,16 @@ function StatsHub() {
   const location=useLocation(),S=useStore(s=>s.S)
   const active=activeStatsPage(S,location),pages=statsPages(S,active)
   const kind=active==='records'?'records':active==='workout-history'?'history':active==='report'?'report':'analytics'
+  const filters=useRef(null)
   return <div className="stats-hub">
+    <div className="stats-hub-fixed"><StatsHeader filters={()=>filters.current?.()||{}}/>
     <div className="stats-slide-heading" role="status" aria-label={t(STATS_PAGES.find(([id])=>id===active)?.[1]||'Stats')} aria-live="polite" aria-atomic="true"><small>{pages.indexOf(active)+1} / {pages.length}</small></div>
+    </div>
+    <div className="stats-hub-content" data-stats-motion>
     <RetainedPages active={kind} pages={[
-      ['analytics',<Stats standaloneControl={false}/>],['records',<Records />],['history',<History />],['report',<ProgressReport />],
+      ['analytics',<Stats standaloneControl={false} hideHeader headerExportRef={filters}/>],['records',<Records />],['history',<History />],['report',<ProgressReport />],
     ]}/>
+    </div>
   </div>
 }
 export default function ModuleDeck() {

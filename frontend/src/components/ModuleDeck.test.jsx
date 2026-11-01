@@ -84,6 +84,7 @@ it('retains analytics and record drafts separately and cleans the nested inactiv
 
 it('shows only the Stats position above the section while preserving its accessible name and selector',async()=>{
  await mount('/stats?section=history')
+ const fixedHeader=host.querySelector('.stats-hub-fixed .stats-header')
  const positions=[
   ['/stats?section=history','Training history','1 / 5','analytics'],
   ['/stats?section=bodyweight','Body Weight','2 / 5','analytics'],
@@ -101,6 +102,8 @@ it('shows only the Stats position above the section while preserving its accessi
   expect(heading.getAttribute('aria-live')).toBe('polite')
   expect(host.querySelector('[data-stats-control]')).not.toBeNull()
   expect(pane(id).inert).toBe(false)
+  expect(host.querySelector('.stats-hub-fixed .stats-header')).toBe(fixedHeader)
+  expect(host.querySelector('[data-stats-motion]').contains(fixedHeader)).toBe(false)
  }
  preserved()
 })

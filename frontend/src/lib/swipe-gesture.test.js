@@ -10,8 +10,8 @@ it.each([[4,8],[13,4],[16,12],[30,24],[45,70]])('rejects jitter or a nonhorizont
   const g=gesture();moveSwipe(g,250-dx,200+dy,80)
   expect(swipeStep(g,250-dx,200+dy,120)).toBe(0)
 })
-it('never changes a vertical/ambiguous start into page navigation',()=>{
-  for(const [x,y] of [[247,220],[225,220]]){
+it('never changes a clear vertical start into page navigation',()=>{
+  for(const [x,y] of [[247,220],[240,225]]){
     const g=gesture();expect(moveSwipe(g,x,y,30)).toBe('rejected')
     expect(moveSwipe(g,80,225,100)).toBe('rejected');expect(swipeStep(g,50,225,150)).toBe(0)
   }
@@ -25,9 +25,9 @@ it('does not use old flick velocity after holding a short drag',()=>{
   const g=gesture();moveSwipe(g,200,200,40)
   expect(swipeStep(g,200,200,390)).toBe(0)
 })
-it('does not turn a long stationary text hold into page navigation',()=>{
-  const g=gesture();expect(moveSwipe(g,180,200,650)).toBe('rejected')
-  expect(swipeStep(g,80,200,720)).toBe(0)
+it('recognizes deliberate movement after a pause before dragging',()=>{
+  const g=gesture();expect(moveSwipe(g,180,200,650)).toBe('horizontal')
+  expect(swipeStep(g,80,200,720)).toBe(1)
 })
 it.each([20,200])('cancels a deliberate reversal even after a long drag and %sms release pause',pause=>{
   const g=gesture();moveSwipe(g,80,200,180);moveSwipe(g,150,200,240)
@@ -42,11 +42,20 @@ it('cancels navigation when the user turns the contact vertically',()=>{
   expect(swipeStep(g,100,320,200)).toBe(0)
 })
 it.each([320,390,680,1280])('requires clear distance at %spx without stale speed',width=>{
-  const g=gesture(width),threshold=Math.min(108,Math.max(64,width*.2))
+  const g=gesture(width),threshold=Math.min(96,Math.max(56,width*.17))
   moveSwipe(g,250-threshold+1,200,200)
   expect(swipeStep(g,250-threshold+1,200,500)).toBe(0)
   const deliberate=gesture(width);moveSwipe(deliberate,250-threshold-1,200,200)
   expect(swipeStep(deliberate,250-threshold-1,200,500)).toBe(1)
+})
+it('waits through diagonal jitter until a clear intent emerges',()=>{
+  const g=gesture();expect(moveSwipe(g,225,220,40)).toBe('pending')
+  expect(moveSwipe(g,180,223,100)).toBe('horizontal')
+  expect(swipeStep(g,140,225,300)).toBe(1)
+})
+it('recognizes sparse delivery from the final release point without intermediate moves',()=>{
+  expect(swipeStep(gesture(),130,204,300)).toBe(1)
+  expect(swipeStep(gesture(),247,300,300)).toBe(0)
 })
 it('uses the final release position, including a returned or completed drag',()=>{
   const returned=gesture();moveSwipe(returned,150,200,100)

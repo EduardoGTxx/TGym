@@ -15,6 +15,8 @@ function Page(){
  if(visits.at(-1)!==loc.key)visits.push(loc.key)
  return <>
   <SwipeNavigation>
+   <header data-stats-fixed><h1>Stats</h1><button>Export</button></header>
+   <div data-stats-motion>
    <p data-current onClick={clicked}>{loc.pathname+loc.search}</p>
    <button data-control onClick={clicked}>Control</button>
    <input aria-label="Input"/><textarea aria-label="Text"/><select aria-label="Select"><option>One</option></select>
@@ -34,6 +36,7 @@ function Page(){
    <svg data-static-figure><path/></svg>
    <dialog data-modal><h2 data-modal-text>Export options</h2></dialog>
    <div data-aria-modal><p data-aria-modal-text>Dialog content</p></div>
+   </div>
   </SwipeNavigation>
   <button data-outside onClick={()=>navigate('/nutrition')}>Dock</button>
  </>
@@ -62,7 +65,7 @@ async function point(type,x,y=100,{id=1,target=region(),pointerType='touch',butt
 }
 const tick=ms=>{now+=ms;return act(()=>vi.advanceTimersByTime(ms))}
 const frame=()=>act(()=>{const pending=[...frames];frames.clear();for(const [,callback] of pending)callback(now)})
-const settle=async()=>{await frame();await tick(240)}
+const settle=async()=>{await frame();await tick(340)}
 const end=(node=content(),property='transform')=>act(()=>{const event=new Event('transitionend',{bubbles:true});Object.defineProperty(event,'propertyName',{value:property});node.dispatchEvent(event)})
 const click=(target,detail=1)=>act(()=>target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail})))
 const swipe=async(from=250,to=100)=>{await point('pointerdown',from);await tick(16);await point('pointermove',to);await tick(16);await point('pointerup',to)}
@@ -91,8 +94,24 @@ it.each(['[data-static-editable]','[data-static-table]','[data-static-figure]'])
  await mount('/home');const target=host.querySelector(selector)
  await point('pointerdown',260,100,{target});await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});expect(current()).toBe('/plan')
 })
-it.each([[210,240],[220,120]])('permanently rejects a vertical or ambiguous diagonal start (%s,%s)',async(x,y)=>{
+it.each([[210,240],[210,125]])('permanently rejects a clear vertical start (%s,%s)',async(x,y)=>{
  await mount('/home');await point('pointerdown',200,100);await point('pointermove',x,y);await point('pointermove',50,110);await point('pointerup',50,110);await settle();expectUnmoved()
+})
+it('recognizes a sparse contact at release without losing the route change',async()=>{
+ await mount('/home');await point('pointerdown',250);await tick(180);await point('pointerup',120);expect(current()).toBe('/plan');await settle();expect(phase()).toBe('idle')
+})
+it('keeps navigation working if the optional outgoing picture cannot be created',async()=>{
+ await mount('/home');vi.spyOn(content(),'cloneNode').mockImplementation(()=>{throw Error('Unavailable picture')})
+ await swipe();expect(current()).toBe('/plan');expect(phase()).toBe('idle');expect(content().style.transform).toBe('');expect(host.querySelector('.swipe-navigation-picture').childElementCount).toBe(0)
+})
+it('keeps the Stats header and controls outside drag and depth animation',async()=>{
+ await mount('/stats?section=history');const header=host.querySelector('[data-stats-fixed]'),body=host.querySelector('[data-stats-motion]')
+ await point('pointerdown',250);await tick(40);await point('pointermove',100);await frame()
+ expect(body.style.transform).not.toBe('');expect(content().style.transform).toBe('');expect(header.style.transform).toBe('')
+ await point('pointerup',100);expect(current()).toBe('/stats?section=consistency');expect(body.dataset.pageMotion).toBe('depth');expect(body.style.transform).toContain('scale(0.96)');expect(content().style.transform).toBe('')
+ const picture=host.querySelector('.swipe-navigation-picture');expect(picture.querySelector('[data-stats-fixed]')).toBeNull()
+ await frame();expect(picture.firstElementChild.style.transform).toContain('scale(.94)');expect(host.querySelector('[data-stats-fixed]')).toBe(header)
+ await end(body);expect(phase()).toBe('idle');expect(body.style.transform).toBe('');expect(body.dataset.pageMotion).toBeUndefined();expect(picture.childElementCount).toBe(0)
 })
 it.each([8,window.innerWidth-8])('preserves the system edge gesture at x=%s',async x=>{
  await mount('/home');await point('pointerdown',x);await point('pointermove',x<100?250:100);await point('pointerup',x<100?250:100);expectUnmoved()
@@ -131,8 +150,8 @@ it('does not exclude a container merely because overflow auto is set when its co
 it('accepts a new deliberate contact immediately after a previous scroll without an artificial wait',async()=>{
  await mount('/home');await act(()=>document.dispatchEvent(new Event('scroll')));await swipe();expect(current()).toBe('/plan');await settle();expect(visits).toHaveLength(2)
 })
-it('cancels a pending contact when native scrolling starts',async()=>{
- await mount('/home');await point('pointerdown',250);await act(()=>document.dispatchEvent(new Event('scroll')));await point('pointermove',80);await point('pointerup',80);expectUnmoved()
+it('does not confuse an inertial scroll event with the intent of a new contact',async()=>{
+ await mount('/home');await point('pointerdown',250);await act(()=>document.dispatchEvent(new Event('scroll')));await point('pointermove',80);await point('pointerup',80);expect(current()).toBe('/plan');await settle()
 })
 it('preserves a focused text input rather than treating another contact as navigation',async()=>{
  await mount('/home');host.querySelector('input').focus();await swipe();expectUnmoved();expect(document.activeElement).toBe(host.querySelector('input'))
@@ -147,14 +166,15 @@ it('allows navigation from blank space while text in another part of the page re
 it('does not swallow a later deliberate click after the compatibility guard expires',async()=>{
  await mount('/home');await swipe();await settle();await tick(401);await click(host.querySelector('[data-control]'));expect(clicked).toHaveBeenCalledOnce()
 })
-it.each([[250,100,'next',1,'/plan'],[100,260,'previous',-1,'/progress']])('commits on release and enters from a bounded short offset (%s to %s)',async(from,to,direction,sign,target)=>{
+it.each([[250,100,'next',1,'/plan'],[100,260,'previous',-1,'/progress']])('covers the outgoing page from the correct full-width side (%s to %s)',async(from,to,direction,sign,target)=>{
  await mount('/home');vi.spyOn(region(),'getBoundingClientRect').mockReturnValue({width:390})
  await point('pointerdown',from);await point('pointermove',to);expect(phase()).toBe('dragging');expect(content().style.transform).toBe('');expect(frames.size).toBe(1)
  await frame();const dragged=Number(content().style.transform.match(/\((-?[\d.]+)px/)[1]);expect(Math.sign(dragged)).toBe(-sign);expect(Math.abs(dragged)).toBeLessThan(Math.abs(to-from))
- await point('pointerup',to);expect(current()).toBe(target);expect(phase()).toBe('preparing');expect(content().style.opacity).toBe('0.78')
- const entry=Number(content().style.transform.match(/\((-?[\d.]+)px/)[1]);expect(Math.sign(entry)).toBe(sign);expect(Math.abs(entry)).toBeGreaterThan(0);expect(Math.abs(entry)).toBeLessThanOrEqual(56);expect(region().dataset.swipeDirection).toBe(direction)
+ await point('pointerup',to);expect(current()).toBe(target);expect(phase()).toBe('preparing');expect(content().style.opacity).toBe('')
+ const entry=Number(content().style.transform.match(/\((-?[\d.]+)px/)[1]);expect(Math.sign(entry)).toBe(sign);expect(Math.abs(entry)).toBe(390);expect(region().dataset.swipeDirection).toBe(direction)
+ const picture=host.querySelector('.swipe-navigation-picture');expect(picture.inert).toBe(true);expect(picture.getAttribute('aria-hidden')).toBe('true');expect(picture.textContent).toContain('/home')
  expect(frames.size).toBe(1);await frame();expect(phase()).toBe('entering');expect(content().style.transform).toBe('');expect(content().style.opacity).toBe('')
- await end();expect(phase()).toBe('idle');expect(region().hasAttribute('aria-busy')).toBe(false)
+ await end();expect(phase()).toBe('idle');expect(region().hasAttribute('aria-busy')).toBe(false);expect(picture.childElementCount).toBe(0)
 })
 it('coalesces multiple drag updates into one compositor write using the latest point',async()=>{
  await mount('/home');await point('pointerdown',300);await point('pointermove',270);await point('pointermove',240);await point('pointermove',210)
@@ -181,7 +201,7 @@ it('commits exactly once when transitionend and the fallback both become due',as
  expect(current()).toBe('/plan');expect(visits).toHaveLength(2);expect(phase()).toBe('idle')
 })
 it('finishes entry at its bounded fallback without waiting to change routes',async()=>{
- await mount('/home');await swipe();expect(current()).toBe('/plan');await frame();await tick(239);expect(phase()).toBe('entering');await tick(1);expect(phase()).toBe('idle');expect(visits).toHaveLength(2)
+ await mount('/home');await swipe();expect(current()).toBe('/plan');await frame();await tick(339);expect(phase()).toBe('entering');await tick(1);expect(phase()).toBe('idle');expect(visits).toHaveLength(2)
 })
 it('ignores transitions from a child or a non-transform property',async()=>{
  await mount('/home');await swipe();await frame();await end(host.querySelector('[data-current]'));await end(content(),'opacity');expect(phase()).toBe('entering');await end();expect(phase()).toBe('idle')
@@ -225,8 +245,8 @@ it('preserves an ordinary non-drag tap and a keyboard activation',async()=>{
  await mount('/home');const text=host.querySelector('[data-current]');await point('pointerdown',200,100,{target:text});await point('pointerup',200,100,{target:text});await click(text);expect(clicked).toHaveBeenCalledOnce()
  await swipe();await click(host.querySelector('[data-control]'),0);expect(clicked).toHaveBeenCalledTimes(2)
 })
-it('rejects a stationary hold longer than500ms instead of converting it to navigation',async()=>{
- await mount('/home');await point('pointerdown',250);await tick(501);await point('pointermove',80);await point('pointerup',80);await settle();expectUnmoved()
+it('accepts movement after resting the finger without an artificial deadline',async()=>{
+ await mount('/home');await point('pointerdown',250);await tick(650);await point('pointermove',80);await point('pointerup',80);expect(current()).toBe('/plan');await settle()
 })
 it('recognizes a recent short flick independently of the earlier contact duration',async()=>{
  await mount('/home');await point('pointerdown',250);await tick(350);await point('pointermove',245);await tick(20);await point('pointermove',205);await tick(16);await point('pointerup',205);expect(current()).toBe('/plan')
@@ -256,7 +276,7 @@ it('supports focused keyboard navigation and does not steal inner-control arrow 
 
 it('has a bounded preparation fallback even if no animation frame is ever delivered',async()=>{
  await mount('/home');await swipe();expect(current()).toBe('/plan');expect(phase()).toBe('preparing');expect(frames.size).toBe(1)
- await tick(239);expect(phase()).toBe('preparing');await tick(1);expect(phase()).toBe('idle');expect(frames.size).toBe(0);expect(content().style.transform).toBe('');expect(content().style.opacity).toBe('')
+ await tick(339);expect(phase()).toBe('preparing');await tick(1);expect(phase()).toBe('idle');expect(frames.size).toBe(0);expect(content().style.transform).toBe('');expect(content().style.opacity).toBe('')
 })
 it('ignores a stale entry callback after direct navigation invalidates its generation',async()=>{
  await mount('/home');await swipe();const obsolete=[...frames.values()][0];await act(()=>navigate('/nutrition'));expect(phase()).toBe('idle')

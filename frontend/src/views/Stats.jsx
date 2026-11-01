@@ -5,13 +5,13 @@ import { removeBodyRecord } from '../lib/body-records.js'
 import { HybridSummary } from '../components/Activities.jsx'
 import ExerciseSessions from '../components/ExerciseSessions.jsx'
 import TrainingHistory from '../components/TrainingHistory.jsx'
-import ReportsExport from '../components/ReportsExport.jsx'
+import StatsHeader from '../components/StatsHeader.jsx'
 import { statisticsState } from '../lib/training-history.js'
 import { createStatsSnapshotSelector } from '../lib/stats-snapshot.js'
 import ConsistencyCard from '../components/ConsistencyCard.jsx'
 import CalendarExport from '../components/CalendarExport.jsx'
 import ModuleSwitch, { PROGRESS_VIEWS } from '../components/ModuleSwitch.jsx'
-import { Activity, Children, cloneElement, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { Activity, Children, cloneElement, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { activeStatsPage } from '../lib/navigation-model.js'
 import { useStore } from '../store/useStore.js'
@@ -38,7 +38,6 @@ import { Button, Segmented, SelectRow } from '../components/ui.jsx'
 import { normalizeStatsSectionOrder, statsSelectionOrder } from '../lib/stats-sections.js'
 import './Stats.css'
 import { isWarmupRow } from '../lib/workout-model.js'
-import { MOBILE } from '../lib/mobile.js'
 
 import { bmiBand, bmiFor, MEASURE_FIELDS, measurementValue } from '../lib/stats-insights.js'
 import { trainingStreak } from '../lib/training-plan.js'
@@ -322,7 +321,7 @@ const BODY_SECTIONS = ['bodyweight', 'measurements', 'bmi']
 
 // Stats = the analytics hub: all charts, progress and history live here. `focus="body"`
 // renders the same cards as the Body screen: weight, measurements, BMI and InBody.
-function Stats({ focus = null, standaloneControl = true }) {
+function Stats({ focus = null, standaloneControl = true, hideHeader = false, headerExportRef }) {
   useLang()
   const body = focus === 'body'
   const nav = useNavigate()
@@ -476,9 +475,11 @@ function Stats({ focus = null, standaloneControl = true }) {
     nav('/stats?section=exercise')
   }
 
+  const reportFilters=()=>({...exportFilters.current,bodyweightRange:range,exId:curEx,exMetric,measurementSelection:bodySelection})
+  useLayoutEffect(()=>{if(headerExportRef)headerExportRef.current=reportFilters})
+
   return <>
-    <div className="hdr stats-header"><div><h1>{body ? t('Body') : t('Stats')}</h1><div className="sub">{body ? t('Weight, measurements and composition') : t('Progress & history')}</div></div>
-      <div className="row stats-header-actions" data-tour="stats-actions" style={{ gap: 3 }}><button className="iconbtn" onClick={() => useUI.getState().openSheet(close => <ReportsExport S={rawState} pdf statsFilters={{...exportFilters.current,bodyweightRange:range,exId:curEx,exMetric,measurementSelection:bodySelection}} close={close} />)} aria-label={t('Export Reports')} title={t('Export Reports')}><Icon name="download" /></button>{!MOBILE && <button className="iconbtn" onClick={() => window.print()} aria-label={t('Print / Save as PDF')} title={t('Print / Save as PDF')}><Icon name="clipboard" /></button>}<button className="iconbtn" onClick={() => nav('/progress')} aria-label={t('Progress Report')} title={t('Progress Report')}><Icon name="chart" /></button><button className="iconbtn" data-tour="history" onClick={() => nav('/history')} aria-label={t('History')} title={t('History')}><Icon name="history" /></button><button className="iconbtn" data-tour="inbody" onClick={inBodySheet} aria-label={t('InBody history')} title={t('InBody history')}><Icon name="person" /></button></div></div>
+    {!hideHeader&&<StatsHeader state={rawState} filters={reportFilters} body={body}/>}
 
     <ModuleSwitch items={PROGRESS_VIEWS} current={body ? '/body' : '/stats'} />
     {body ? <button type="button" className="card inbody-entry" onClick={inBodySheet}>

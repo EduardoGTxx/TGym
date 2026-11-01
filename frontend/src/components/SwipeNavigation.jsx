@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } fr
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { swipeTarget } from '../lib/navigation-model.js'
+import { moduleForPath, swipeTarget } from '../lib/navigation-model.js'
 import { beginSwipe, moveSwipe, swipeOffset, swipeStep } from '../lib/swipe-gesture.js'
+import { motionSnapshot } from '../lib/motion-snapshot.js'
 import { t } from '../lib/i18n.js'
 import './SwipeNavigation.css'
 
@@ -15,11 +16,12 @@ const subscribeMotion=callback=>{
   query?.addEventListener?.('change',callback)
   return()=>query?.removeEventListener?.('change',callback)
 }
-const ENTER_MS=180,SETTLE_MS=180
+const ENTER_MS=280,SETTLE_MS=180
 
 export default function SwipeNavigation({children}) {
   const location=useLocation(),navigate=useNavigate()
   const region=useRef(null),content=useRef(null),gesture=useRef(null),transition=useRef(null)
+  const motionNode=useRef(null),picture=useRef(null),pictureLayer=useRef(null),minHeight=useRef('')
   const frame=useRef(0),dragFrame=useRef(0),timer=useRef(0),clickTimer=useRef(0)
   const surfaceFrame=useRef(0)
   const generation=useRef(0)
@@ -37,10 +39,39 @@ export default function SwipeNavigation({children}) {
     const value=`${Math.max(0,(Number.isFinite(top)?top:0)+window.scrollY)}px`
     if(region.current.style.getPropertyValue('--swipe-surface-top')!==value)region.current.style.setProperty('--swipe-surface-top',value)
   }
-  const paint=(offset=0,opacity=1)=>{
-    if(!content.current)return
-    content.current.style.transform=offset?`translate3d(${offset}px,0,0)`:''
-    content.current.style.opacity=opacity===1?'':String(opacity)
+  const paint=(offset=0,opacity=1,scale=1)=>{
+    const node=motionNode.current||content.current
+    if(!node)return
+    node.style.transform=offset||scale!==1?`translate3d(${offset}px,0,0)${scale!==1?` scale(${scale})`:''}`:''
+    node.style.opacity=opacity===1?'':String(opacity)
+  }
+  const clearPicture=()=>{pictureLayer.current?.replaceChildren();picture.current=null}
+  const clearMotion=()=>{
+    const node=motionNode.current
+    if(node){node.style.transform='';node.style.opacity='';node.style.minHeight=minHeight.current;delete node.dataset.pageMotion}
+    motionNode.current=null;minHeight.current='';clearPicture()
+  }
+  const internalStats=target=>moduleForPath(current.current.location.pathname)==='stats'&&moduleForPath(target.split('?')[0])==='stats'
+  const chooseMotion=target=>{
+    const stats=internalStats(target),node=stats?content.current?.querySelector('[data-stats-motion]'):content.current
+    const selected=node||content.current
+    if(motionNode.current!==selected){clearMotion();motionNode.current=selected;minHeight.current=selected?.style.minHeight||''}
+    if(selected)selected.dataset.pageMotion=stats?'depth':'cover'
+    return stats?'depth':'cover'
+  }
+  const capture=kind=>{
+    const node=motionNode.current||content.current;if(!node)return null
+    const transform=node.style.transform
+    try{
+      node.style.transform=''
+      const bounds=node.getBoundingClientRect(),copy=motionSnapshot(node)
+      if(!copy)return null
+      copy.style.transform=transform;copy.style.transition='none';copy.style.margin='0'
+      copy.style.position='relative';copy.style.width=`${bounds.width||window.innerWidth}px`
+      const top=Math.max(0,bounds.top||0)
+      copy.style.top=`${(bounds.top||0)-top}px`
+      return {copy,kind,top,left:bounds.left||0,width:bounds.width||window.innerWidth,height:Math.max(0,window.innerHeight-top)}
+    }catch{return null}finally{node.style.transform=transform}
   }
   const setMode=value=>{
     mode.current=value
@@ -56,15 +87,15 @@ export default function SwipeNavigation({children}) {
     const g=gesture.current;gesture.current=null
     if(g)try{region.current?.releasePointerCapture(g.id)}catch{}
   }
-  const reset=()=>{clearScheduled();release();transition.current=null;paint();setMode('idle')}
-  const finish=()=>{clearScheduled();transition.current=null;paint();setMode('idle')}
+  const reset=()=>{clearScheduled();release();transition.current=null;paint();clearMotion();setMode('idle')}
+  const finish=()=>{clearScheduled();transition.current=null;paint();clearMotion();setMode('idle')}
   const suppressCompatClick=()=>{
     ignoreClick.current=true;clearTimeout(clickTimer.current)
     clickTimer.current=setTimeout(()=>{ignoreClick.current=false;clickTimer.current=0},400)
   }
   const settle=()=>{
     clearScheduled();release();transition.current=null
-    if(current.current.reduced||!content.current?.style.transform){paint();setMode('idle');return}
+    if(current.current.reduced||!(motionNode.current||content.current)?.style.transform){finish();return}
     const token=generation.current
     setMode('settling');paint();timer.current=setTimeout(()=>{if(generation.current===token)finish()},SETTLE_MS+60)
   }
@@ -73,8 +104,9 @@ export default function SwipeNavigation({children}) {
     const target=swipeTarget(useStore.getState().S,current.current.location,step)
     if(!target)return false
     clearScheduled();release();setDirection(step)
-    transition.current={target,direction:step,origin:current.current.location.key}
-    // Commit immediately instead of waiting for a blank full-width exit.
+    const kind=chooseMotion(target),snapshot=current.current.reduced?null:capture(kind)
+    transition.current={target,direction:step,origin:current.current.location.key,kind,snapshot}
+    // Commit once on release. The old page survives only as an inert picture.
     navigate(target)
     return true
   }
@@ -83,18 +115,32 @@ export default function SwipeNavigation({children}) {
     sizeSurface()
     release();clearScheduled()
     const next=transition.current
-    if(!next||location.key===next.origin||location.pathname+location.search!==next.target||blocked()||current.current.reduced){reset();return}
+    if(!next||!next.snapshot||location.key===next.origin||location.pathname+location.search!==next.target||blocked()||current.current.reduced){reset();return}
     transition.current=null
+    const node=next.kind==='depth'?content.current?.querySelector('[data-stats-motion]')||content.current:content.current
+    if(motionNode.current!==node){clearMotion();motionNode.current=node;minHeight.current=node?.style.minHeight||''}
+    if(node)node.dataset.pageMotion=next.kind
     const width=region.current?.getBoundingClientRect().width||window.innerWidth
-    setMode('preparing');paint(next.direction*Math.min(56,width*.12),.78)
-    // Establish the entry before paint. No cloned pages or duplicate effects.
-    content.current?.getBoundingClientRect()
+    if(next.snapshot&&pictureLayer.current){
+      const {copy,top,left,width:pictureWidth,height}=next.snapshot
+      Object.assign(pictureLayer.current.style,{top:`${top}px`,left:`${left}px`,width:`${pictureWidth}px`,height:`${height}px`})
+      pictureLayer.current.replaceChildren(copy);picture.current=copy
+    }
+    if(node){const top=node.getBoundingClientRect().top||0;node.style.minHeight=`${Math.max(node.offsetHeight,window.innerHeight-Math.max(0,top))}px`}
+    const depth=next.kind==='depth'
+    setMode('preparing');paint(next.direction*width*(depth ? .28 : 1),depth ? .2 : 1,depth ? .96 : 1)
+    node?.getBoundingClientRect()
     const token=generation.current
     timer.current=setTimeout(()=>{if(generation.current===token)finish()},ENTER_MS+60)
     frame.current=requestAnimationFrame(()=>{
       if(generation.current!==token||mode.current!=='preparing')return
       if(blocked()){reset();return}
       frame.current=0;setMode('entering');paint()
+      if(picture.current){
+        picture.current.style.transition=`transform ${ENTER_MS}ms cubic-bezier(.2,.75,.25,1),opacity ${ENTER_MS}ms ease`
+        picture.current.style.transform=next.kind==='depth'?`translate3d(${-next.direction*width*.18}px,0,0) scale(.94)`:''
+        picture.current.style.opacity=next.kind==='depth'?'0':'1'
+      }
     })
     return clearScheduled
   },[location.key,location.pathname,location.search])
@@ -113,13 +159,9 @@ export default function SwipeNavigation({children}) {
     const stop=()=>{pointers.current.clear();reset()}
     const resize=()=>{stop();sizeSurface()}
     const hidden=()=>{if(document.visibilityState==='hidden')stop();else sizeSurface()}
-    const scroll=()=>{
-      if(mode.current==='preparing'||mode.current==='entering'||gesture.current?.state==='horizontal')return
-      if(gesture.current)reset()
-    }
     document.addEventListener('pointerdown',down,true)
     document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true)
-    document.addEventListener('keydown',key,true);document.addEventListener('scroll',scroll,{capture:true,passive:true})
+    document.addEventListener('keydown',key,true)
     document.addEventListener('visibilitychange',hidden)
     window.addEventListener('blur',stop);window.addEventListener('resize',resize)
     const scheduleSurface=()=>{
@@ -140,10 +182,10 @@ export default function SwipeNavigation({children}) {
     const animationEnd=event=>{if(event.target===parent)sizeSurface()}
     parent?.addEventListener('animationend',animationEnd)
     return()=>{
-      clearScheduled();clearTimeout(clickTimer.current);transition.current=null;gesture.current=null
+      clearScheduled();clearMotion();clearTimeout(clickTimer.current);transition.current=null;gesture.current=null
       document.removeEventListener('pointerdown',down,true)
       document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true)
-      document.removeEventListener('keydown',key,true);document.removeEventListener('scroll',scroll,true)
+      document.removeEventListener('keydown',key,true)
       document.removeEventListener('visibilitychange',hidden)
       window.removeEventListener('blur',stop);window.removeEventListener('resize',resize)
       observer?.disconnect();structure?.disconnect();cancelAnimationFrame(surfaceFrame.current)
@@ -185,7 +227,10 @@ export default function SwipeNavigation({children}) {
       if(selection?.anchorNode&&region.current?.contains(selection.anchorNode))selection.removeAllRanges()
       try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}
     }
+    const target=swipeTarget(useStore.getState().S,current.current.location,g.dx<0?1:-1)
+    if(target)chooseMotion(target)
     event.preventDefault()
+    if(current.current.reduced)return
     if(!dragFrame.current)dragFrame.current=requestAnimationFrame(()=>{
       dragFrame.current=0
       if(blocked()){reset();return}
@@ -215,7 +260,8 @@ export default function SwipeNavigation({children}) {
     onClickCapture={event=>{if(ignoreClick.current&&event.detail!==0){ignoreClick.current=false;clearTimeout(clickTimer.current);event.preventDefault();event.stopPropagation()}}}
     onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key)||blocked())return;reset();event.preventDefault();start(event.key==='ArrowRight'?1:-1)}}>
     <div ref={content} className="swipe-navigation-content" onTransitionEnd={event=>{
-      if(event.target===content.current&&event.propertyName==='transform'&&['entering','settling'].includes(mode.current))finish()
+      if(event.target===(motionNode.current||content.current)&&event.propertyName==='transform'&&['entering','settling'].includes(mode.current))finish()
     }}>{children}</div>
+    <div ref={pictureLayer} className="swipe-navigation-picture" aria-hidden="true" inert/>
   </div>
 }
