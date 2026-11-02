@@ -1273,6 +1273,11 @@ export const dayOverrideSheet = iso => ui().openSheet(close => <DayOverride iso=
 function DayAssign({ day, close }) { return <ScheduleEditor day={day} close={close}/> }
 export const dayAssignSheet = day => ui().openSheet(close => <DayAssign day={day} close={close} />)
 
+function StreakProfileAvatar({ name, photo }) {
+  const [failedPhoto, setFailedPhoto] = useState(null)
+  return <span className="streak-profile-avatar">{name ? name.split(/\s+/).slice(0,2).map(part=>[...part][0]).join('').toLocaleUpperCase() : <Icon name="person"/>}{photo&&photo!==failedPhoto&&<img src={photo} alt={t('Profile photo')} onError={()=>setFailedPhoto(photo)}/>}</span>
+}
+
 function StreakDetail() {
   const st = useStore(s => s.S)
   const change = useStore(s => s.update)
@@ -1283,21 +1288,26 @@ function StreakDetail() {
   const profileControlsId = useId()
   const recent = loggedWorkouts(st).filter(hasWorkoutActivity).sort((a,b) => (b.d || '').localeCompare(a.d || '') || Number(b.start || b.end || 0) - Number(a.start || a.end || 0))
   const shownRecent = showAllRecent ? recent : recent.slice(0,5)
-  return <>
+  const profileName = st.profile?.name?.trim()
+  const profileToggle = { 'aria-label':t('Profile visibility'), 'aria-expanded':profileControlsOpen, 'aria-controls':profileControlsOpen ? profileControlsId : undefined, onClick:()=>setProfileControlsOpen(open=>!open) }
+  const heading = <div className="streak-calendar-heading">
+    {st.streakCalendarShowProfile && profileName && <button type="button" className="streak-profile-name" {...profileToggle} aria-label={`${profileName}, ${t('Profile visibility')}`} title={profileName}>{profileName}</button>}
     <div className={'streak-hero compact streak-main streak-' + streakTier(streak.current)} data-streak-state={streak.state}>
       <StreakFlame value={streak.current} />
       <div className="streak-number">{streak.current}</div>
       <div className="streak-main-label">{t('Training days in this streak')}</div>
     </div>
+  </div>
+  const avatar = st.streakCalendarShowProfile && <button type="button" className="streak-profile" {...profileToggle}><StreakProfileAvatar name={profileName} photo={st.profile?.photo}/></button>
+  return <>
+    {(!st.streakCalendarShowProfile || profileControlsOpen) && <div className="streak-profile-tools" id={profileControlsId}><button type="button" className="iconbtn" aria-pressed={!!st.streakCalendarShowProfile} aria-label={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} title={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} onClick={()=>{change(s=>{s.streakCalendarShowProfile=!s.streakCalendarShowProfile});setProfileControlsOpen(false)}}><Icon name="person"/></button></div>}
+    <ZoomCalendar S={st} streakView streakHeading={heading} periodAvatar={avatar} levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
     <StreakStatus streak={streak} className="small muted" />
     <p className="small muted">{t('Completed training days, counted once per day. Scheduled rest days preserve the streak.')}</p>
     <div className="tiles" style={{ margin: '14px 0' }}>
       <div className="tile"><div className="l">{t('Best streak')}</div><div className="v">{streak.best}</div></div>
-      <div className="tile"><div className="l">{t('Next milestone')}</div><div className="v">{streak.nextMilestone}</div></div>
+      <div className="tile"><div className="l">{t('Total training days')}</div><div className="v">{streak.rows.filter(row=>row.status==='completed').length}</div></div>
     </div>
-    {(!st.streakCalendarShowProfile || profileControlsOpen) && <div className="streak-profile-tools" id={profileControlsId}><button type="button" className="iconbtn" aria-pressed={!!st.streakCalendarShowProfile} aria-label={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} title={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} onClick={()=>{change(s=>{s.streakCalendarShowProfile=!s.streakCalendarShowProfile});setProfileControlsOpen(false)}}><Icon name="person"/></button></div>}
-    {st.streakCalendarShowProfile && <button type="button" className="streak-profile" aria-label={t('Profile visibility')} aria-expanded={profileControlsOpen} aria-controls={profileControlsOpen ? profileControlsId : undefined} onClick={()=>setProfileControlsOpen(open=>!open)}><span className="streak-profile-avatar">{st.profile?.photo ? <img src={st.profile.photo} alt={t('Profile photo')}/> : st.profile?.name?.trim() ? st.profile.name.trim().split(/\s+/).slice(0,2).map(part=>[...part][0]).join('').toLocaleUpperCase() : <Icon name="person"/>}</span>{st.profile?.name?.trim()&&<span className="streak-profile-name">{st.profile.name.trim()}</span>}</button>}
-    <ZoomCalendar S={st} streakView levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
     <section className="streak-recent-workouts" aria-label={t('Recent workouts')}>
       <h4 className="sec">{t('Recent workouts')}</h4>
       {recent.length ? <div className="list">{shownRecent.map((workout,index) => <button type="button" className="item recent-streak-item" key={workout.id || `${workout.d}-${index}`} data-workout-id={workout.id} onClick={() => workoutDetailSheet(workout)}><span className="lrow-i" style={{color:'var(--green)'}}><Icon name="checkCircle" /></span><div className="grow recent-streak-row"><div className="tt">{fmtDate(workout.d,true)}<span className="recent-routine-name">{workout.name || st.routines.find(r=>r.id===workout.routineId)?.name || ''}</span></div></div><Icon name="chevronRight" /></button>)}</div> : <div className="muted small">{t('No workouts yet')}</div>}
@@ -1467,7 +1477,7 @@ function WorkoutDetail({ w: original, close }) {
 export const workoutDetailSheet = w => ui().openSheet(close => <WorkoutDetail w={w} close={close} />)
 
 /* ============================ calendar ============================ */
-export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAnchor, exporting = false, includeMeasurements = true, levels = ['week', 'month', 'months', 'years'], editable = false, streakView = false, datePicker = false, selectedDate, onSelectDate, markedDates = [] }) {
+export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAnchor, exporting = false, includeMeasurements = true, levels = ['week', 'month', 'months', 'years'], editable = false, streakView = false, streakHeading, periodAvatar, datePicker = false, selectedDate, onSelectDate, markedDates = [] }) {
   const [level, setLevel] = useState(initialLevel)
   const [anchor, setAnchor] = useState(() => initialAnchor ? new Date(initialAnchor) : new Date())
   const [selected, setSelected] = useState(selectedDate || todayISO())
@@ -1565,17 +1575,19 @@ export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAncho
   const openView=()=>ui().openSheet(close=><><h3>{t('Calendar view')}</h3><div className="sect-b" role="radiogroup" aria-label={t('Calendar view')}>{viewOptions.map(option=><button type="button" className="lrow tap" role="radio" aria-checked={level===option.value} key={option.value} onClick={()=>{setLevel(option.value);close()}}><span className="lrow-m"><span className="lrow-t">{option.label}</span></span>{level===option.value&&<Icon name="check" className="lrow-k"/>}</button>)}</div></>)
   const periodCount=!datePicker&&<div className="zoomcal-period-active" data-active-days={activeCount} data-period-start={periodStart} data-period-end={periodEnd}><strong aria-label={`${t('Active days')}: ${activeCount}`}>{activeCount}</strong></div>
   const trackingVisible=!datePicker&&trackedSince>=periodStart&&trackedSince<=periodEnd
+  const legend=!datePicker&&<div className="zoomcal-legend">
+    {isDeloadVisible&&<span><i className="deload"/>{t('Deload Week')}</span>}
+    {calendarLegend().map(visual=><span key={visual.status} data-legend={visual.status}><i aria-hidden="true" className={visual.status} style={calendarVisualStyle(visual.status)}/>{t(visual.label)}</span>)}
+    {streakView&&trackingVisible&&<span data-legend="tracking-start"><i className="calendar-tracking-key" aria-hidden="true" style={{background:TRACKING_START_MARKER.fill,borderColor:TRACKING_START_MARKER.border}}/>{t('Tracking start')}</span>}
+  </div>
   return <div className={'zoomcal' + (streakView ? ' streak-calendar' : '') + (datePicker ? ' date-picker' : '')} data-level={level} data-tour={streakView ? 'streak-calendar' : undefined}>
+    {streakView&&streakHeading}
     {!streakView&&<div className="zoomcal-toolbar">{!exporting&&<Segmented value={level==='years'?'months':level} onChange={setLevel} options={viewOptions}/>}<div className="zoomcal-scale"><button className="iconbtn" aria-label={t('Zoom out')} title={t('Zoom out')} disabled={zi>=levels.length-1} onClick={()=>setLevel(levels[zi+1])}><Icon name="minus"/></button><button className="iconbtn" aria-label={t('Zoom in')} title={t('Zoom in')} disabled={zi<=0} onClick={()=>setLevel(levels[zi-1])}><Icon name="plus"/></button></div></div>}
-    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView ? <div className="zoomcal-period-heading"><button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{visiblePeriod}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
+    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView ? <div className="zoomcal-period-heading">{periodAvatar}<button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{visiblePeriod}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
     {!streakView&&periodCount}
     {!streakView&&trackingVisible&&<div className="zoomcal-tracking-start" data-tracking-start={trackedSince} style={{'--tracking-fill':TRACKING_START_MARKER.fill,'--tracking-border':TRACKING_START_MARKER.border}}><i aria-hidden="true"/><span>{t('Tracking since {0}',fmtDate(trackedSince,true,true))}</span></div>}
     {body}
-    {!datePicker&&<div className="zoomcal-legend">
-      {isDeloadVisible&&<span><i className="deload"/>{t('Deload Week')}</span>}
-      {calendarLegend().map(visual=><span key={visual.status} data-legend={visual.status}><i aria-hidden="true" className={visual.status} style={calendarVisualStyle(visual.status)}/>{t(visual.label)}</span>)}
-      {streakView&&trackedSince>=periodStart&&trackedSince<=periodEnd&&<span data-legend="tracking-start"><i className="calendar-tracking-key" aria-hidden="true" style={{background:TRACKING_START_MARKER.fill,borderColor:TRACKING_START_MARKER.border}}/>{t('Tracking start')}</span>}
-    </div>}
+    {streakView&&!exporting&&!datePicker ? <details className="zoomcal-key"><summary>{t('Calendar key')}<Icon name="chevronDown"/></summary>{legend}</details> : legend}
     {!exporting&&streakView&&selectedState.planned&&<div className="zoomcal-streak-muscles"><Button size="sm" onClick={()=>routineMuscleSheet(effectiveRoutineId(st,selected))}>{t('Muscles trained')}</Button></div>}
     {!exporting&&!datePicker&&!streakView&&(level==='week'||level==='month')&&<div className={`zoomcal-selection ${selectedState.status}`} style={calendarVisualStyle(selectedState.status)}><div><b>{fmtDate(selected,true)}</b>{selectedState.status!=='untracked'&&<span>{selectedWorkout?.name||st.routines.find(r=>r.id===effectiveRoutineId(st,selected))?.name||t(calendarState(selectedState.status).label)}</span>}</div>{selectedWorkout&&<Icon name="chevronRight"/>}</div>}
     {!exporting&&!datePicker&&!streakView&&<DailyPlan date={selected} compact onStart={selected===today?startFlow:undefined}/>}

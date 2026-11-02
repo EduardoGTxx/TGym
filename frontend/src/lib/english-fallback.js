@@ -1,5 +1,7 @@
 // Explicit source-language fallback. Entries in language packs override these values.
 export default {
+  "Calendar key": "Calendar key",
+  "Total training days": "Total training days",
   "Kilograms": "Kilograms",
   "Pounds": "Pounds",
   "Weight ruler": "Weight ruler",

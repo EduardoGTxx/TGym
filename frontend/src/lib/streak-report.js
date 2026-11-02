@@ -58,18 +58,19 @@ export function streakReportPages(S, { format = 'pdf', t = x => x, ...options } 
   const report = buildStreakReport(S, options)
   if (report.range.error) throw Error(report.range.error)
   const trackingSince = trackingStart(S, report.range.today)
+  const profile = S.streakCalendarShowProfile === true ? S.profile : undefined
   if (options.period === 'years') return report.yearReports.flatMap((annual, i) => calendarYearReportPages({ kind: 'streak', year: report.range.years[i], days: annual.days, trackingSince,
     metrics: [['Training streak', annual.current], ['Best streak', annual.best]], context: t('Streak as of {0}').replace('{0}', annual.asOf),
     note: `${t('Activity days advance the streak; missed scheduled days reset it.')} ${t('Counts training dates, not calendar days.')}`, emptyMessage: annual.noData ? t('No recorded activity in this period.') : '',
-    t }))
+    profile, t }))
   if (format === 'png' && report.days.length > 366) throw Error('Use PDF for ranges longer than one year.')
   if (format === 'pdf' && options.period === 'full') return calendarFullReportPages({ kind: 'streak', days: report.days, start: report.range.start, end: report.range.end, trackingSince,
     metrics: [['Training streak', report.current], ['Best streak', report.best]], context: t('Streak as of {0}').replace('{0}', report.asOf),
-    note: `${t('Activity days advance the streak; missed scheduled days reset it.')} ${t('Counts training dates, not calendar days.')}`, emptyMessage: report.noData ? t('No recorded activity in this period.') : '', t })
+    note: `${t('Activity days advance the streak; missed scheduled days reset it.')} ${t('Counts training dates, not calendar days.')}`, emptyMessage: report.noData ? t('No recorded activity in this period.') : '', profile, t })
   return calendarReportLayout({ kind: 'streak', days: report.days, start: report.range.start, end: report.range.end, trackingSince,
     metrics: [['Training streak', report.current], ['Best streak', report.best]], context: t('Streak as of {0}').replace('{0}', report.asOf),
     note: `${t('Activity days advance the streak; missed scheduled days reset it.')} ${t('Counts training dates, not calendar days.')}`,
-    emptyMessage: report.noData ? t('No recorded activity in this period.') : '', format, week: (options.period || 'this-week').endsWith('week'), t })
+    emptyMessage: report.noData ? t('No recorded activity in this period.') : '', profile, format, week: (options.period || 'this-week').endsWith('week'), t })
 }
 export function streakFilename(options = {}) {
   const range=streakRange(options)
