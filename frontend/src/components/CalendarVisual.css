@@ -105,6 +105,10 @@
 .zoomcal.date-picker .zoomcal-picker-today { display:flex; justify-content:center; margin-top:12px; }
 .consistency-active-label { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 @container (max-width:430px) {
+  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-picker>b { font-size:28px; }
+  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-active>strong { font-size:28px; }
+  .zoomcal.streak-calendar .zoomcal-period-heading { gap:6px; }
+  .streak-profile-avatar { width:56px; height:56px; }
   .zoomcal.streak-calendar .zoomcal-periods.months { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 14px; }
   .zoomcal.streak-calendar.zoomcal .zoomcal-mini-cell b { display:block; }
   .zoomcal .zoomcal-periods.months { gap:10px 7px; }
@@ -127,8 +131,8 @@
   .zoomcal.streak-calendar .zoomcal-period-active>strong { font-size:22px; }
   .zoomcal .zoomcal-periods.months,.zoomcal .zoomcal-periods.years { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .zoomcal .zoomcal-week,.zoomcal .zoomcal-month { gap:4px; }
-  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-picker>b { font-size:28px; }
-  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-active>strong { font-size:28px; }
+  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-picker>b { font-size:26px; }
+  .zoomcal.streak-calendar[data-level="months"] .zoomcal-period-active>strong { font-size:24px; }
   .zoomcal.streak-calendar[data-level="month"] .zoomcal-period-picker>b { font-size:18px; }
 }
 @container (max-width:210px) {
