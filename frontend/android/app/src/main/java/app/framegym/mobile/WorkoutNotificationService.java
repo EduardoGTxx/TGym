@@ -48,11 +48,11 @@ public class WorkoutNotificationService extends Service {
             return START_STICKY;
         } catch(Exception error){android.util.Log.e("TGymWorkoutNotification","Unable to render workout notification",error);stopSelf();return START_NOT_STICKY;}
     }
-    private String duration(long millis){
+    private static String duration(long millis){
         long seconds=Math.max(0,millis/1000);
         return seconds>=3600?String.format(Locale.ROOT,"%02d:%02d:%02d",seconds/3600,(seconds%3600)/60,seconds%60):String.format(Locale.ROOT,"%02d:%02d",seconds/60,seconds%60);
     }
-    private String workoutLabel() {
+    private static String workoutLabel(JSONObject state) {
         if(state.optBoolean("paused") && "inactivity".equals(state.optString("pauseReason"))) {
             String paused=state.optString("pauseLabel","");
             return paused.trim().isEmpty()?"Workout paused":paused;
@@ -64,15 +64,33 @@ public class WorkoutNotificationService extends Service {
         return new Intent(context,MainActivity.class).setAction(Intent.ACTION_VIEW)
             .setData(Uri.parse("tgym://workout")).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
     }
-    private RemoteViews timerView(int layout, long elapsed, long rest) {
-        RemoteViews content=new RemoteViews(getPackageName(),layout);
-        content.setInt(R.id.accent_rail,"setBackgroundColor",notificationColor());
-        content.setTextViewText(R.id.workout_label,workoutLabel());
-        content.setTextViewText(R.id.set_label,state.optString("setLabel",""));
+    static RemoteViews timerView(Context context, JSONObject state, int layout, long elapsed, long rest) {
+        boolean expanded=layout!=R.layout.workout_notification;
+        boolean large=expanded&&context.getResources().getConfiguration().fontScale>1.3f;
+        if(large)layout=R.layout.workout_notification_expanded_large_text;
+        RemoteViews content=new RemoteViews(context.getPackageName(),layout);
+        content.setInt(R.id.accent_rail,"setBackgroundColor",notificationColor(state.optString("accentColor","")));
+        content.setTextViewText(R.id.workout_label,workoutLabel(state));
+        String setLabel=state.optString("setLabel","");
+        content.setTextViewText(R.id.set_label,setLabel);
+        content.setViewVisibility(R.id.set_label,setLabel.isEmpty()?View.GONE:View.VISIBLE);
         boolean resting=rest>0;
-        int size=layout==R.layout.workout_notification_expanded ? 30 : 22;
-        content.setTextViewTextSize(R.id.workout_clock,android.util.TypedValue.COMPLEX_UNIT_SP,resting?14:size);
-        content.setTextViewTextSize(R.id.workout_duration,android.util.TypedValue.COMPLEX_UNIT_SP,resting?14:size);
+        int size=expanded ? (large||resting?24:30) : (resting?18:22);
+        content.setTextViewTextSize(R.id.workout_clock,android.util.TypedValue.COMPLEX_UNIT_SP,size);
+        content.setTextViewTextSize(R.id.workout_duration,android.util.TypedValue.COMPLEX_UNIT_SP,size);
+        if(expanded)content.setTextViewText(R.id.workout_duration_label,state.optString("durationLabel","Duration"));
+        else {
+            // Android may give the collapsed custom view only 48dp. Keep both
+            // rows inside that budget at large system font sizes; expanding the
+            // notification retains the full user-selected text scale.
+            float scale=Math.min(1.2f,context.getResources().getConfiguration().fontScale);
+            for(int label:new int[]{R.id.workout_label,R.id.set_label})
+                content.setTextViewTextSize(label,android.util.TypedValue.COMPLEX_UNIT_DIP,11*scale);
+            content.setTextViewTextSize(R.id.rest_label,android.util.TypedValue.COMPLEX_UNIT_DIP,10*scale);
+            for(int clock:new int[]{R.id.workout_clock,R.id.workout_duration})
+                content.setTextViewTextSize(clock,android.util.TypedValue.COMPLEX_UNIT_DIP,size*scale);
+            content.setTextViewTextSize(R.id.rest_clock,android.util.TypedValue.COMPLEX_UNIT_DIP,22*scale);
+        }
         boolean live=!state.optBoolean("paused");
         content.setViewVisibility(R.id.workout_clock,live?View.VISIBLE:View.GONE);
         content.setViewVisibility(R.id.workout_duration,live?View.GONE:View.VISIBLE);
@@ -109,13 +127,15 @@ public class WorkoutNotificationService extends Service {
         Intent open=workoutIntent(this);
         PendingIntent tap=PendingIntent.getActivity(this,3100,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         long rest=state.optLong("restEndsAt")-now;
-        RemoteViews content=timerView(R.layout.workout_notification,elapsed,rest);
+        RemoteViews content=timerView(this,state,R.layout.workout_notification,elapsed,rest);
         Notification notice=new NotificationCompat.Builder(this,CHANNEL)
-            .setSmallIcon(R.drawable.ic_workout_notification).setContentTitle(rest>0?state.optString("restLabel","REST"):workoutLabel())
-            .setContentText((rest>0?duration(rest)+" · ":"")+workoutLabel()+" "+duration(elapsed)+" · "+state.optString("setLabel",""))
+            .setSmallIcon(R.drawable.ic_workout_notification).setContentTitle(rest>0?state.optString("restLabel","REST"):workoutLabel(state))
+            .setContentText((rest>0?duration(rest)+" · ":"")+workoutLabel(state)+" "+duration(elapsed)+" · "+state.optString("setLabel",""))
             .setCustomContentView(content)
-            .setCustomBigContentView(timerView(R.layout.workout_notification_expanded,elapsed,rest))
+            .setCustomBigContentView(timerView(this,state,R.layout.workout_notification_expanded,elapsed,rest))
             .setColor(notificationColor()).setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+            .setShowWhen(false).setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setContentIntent(tap).setOngoing(true).setOnlyAlertOnce(true).setSilent(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setPriority(NotificationCompat.PRIORITY_LOW).build();

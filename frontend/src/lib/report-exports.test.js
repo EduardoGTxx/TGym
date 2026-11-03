@@ -71,14 +71,15 @@ it('keeps complete-year filters and readable pagination in independent and mixed
  const years={period:'years',fromYear:'2024',toYear:'2026',anchor:'invalid',format:'png'},before=structuredClone(S)
  for(const id of ['streak','consistency']){
   const pages=await buildDashboardReportPages(id,S,years,{now})
-  expect(pages).toHaveLength(9);expect(pages.every(page=>!page.orientation&&page.width<page.height)).toBe(true)
+  expect(pages).toHaveLength(id==='streak'?3:9);expect(pages.every(page=>!page.orientation&&page.width<page.height)).toBe(true)
+  expect(pages.every(page=>page.imageType===(id==='streak'?'PNG':'JPEG'))).toBe(true)
   const file=await buildReportFile(id,S,years,{now})
   expect(file.name).toBe(`TGym-${id==='streak'?'Streak':'Consistency'}-Years-2024_2026.pdf`)
   expect(file.blob.type).toBe('application/pdf')
  }
  await buildDashboardReports(S,['streak','consistency'],{streak:years,consistency:{period:'full'}},{now})
  const pages=reportPagesFile.mock.calls.at(-1)[0]
- expect(pages).toHaveLength(12)
+ expect(pages).toHaveLength(6)
  expect(pages.every(page=>!page.orientation&&page.width<page.height)).toBe(true)
  expect(S).toEqual(before)
 })

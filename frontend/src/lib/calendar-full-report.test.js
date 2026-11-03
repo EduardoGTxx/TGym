@@ -14,7 +14,7 @@ const fixture = year => ({
 })
 
 describe('readable Full Reports', () => {
-  it.each([2024, 2026, 2027])('keeps every date and status in %i exactly once, in complete four-month pages', year => {
+  it.each([2024, 2026, 2027])('keeps every date and status in %i exactly once, in complete month grids', year => {
     const S = fixture(year), now = new Date(`${year}-01-07T12:00:00`), before = JSON.stringify(S)
     const streak = buildStreakReport(S, { period: 'full', anchor: now, now }), consistency = calendarPeriod(S, now, 'year', now)
     const expectedDates = consistency.days.map(day => day.iso)
@@ -22,7 +22,7 @@ describe('readable Full Reports', () => {
       ['streak', streakReportPages(S, { period: 'full', anchor: now, now }), streak.days],
       ['consistency', calendarReportPages(S, now, 'full', 'pdf', { now }), consistency.days],
     ]) {
-      expect(pages).toHaveLength(3)
+      expect(pages).toHaveLength(kind === 'streak' ? 1 : 3)
       const cells = pages.flatMap(page => [...parse(page.svg).querySelectorAll('[data-date]')])
       expect(cells.map(cell => cell.getAttribute('data-date'))).toEqual(expectedDates)
       expect(new Set(cells.map(cell => cell.getAttribute('data-date'))).size).toBe(year === 2024 ? 366 : 365)
@@ -34,7 +34,8 @@ describe('readable Full Reports', () => {
         const doc = parse(page.svg)
         expect(doc.querySelector('parsererror')).toBeNull()
         expect(doc.documentElement.getAttribute('data-part')).toBe(String(i + 1))
-        expect([...doc.querySelectorAll('[data-month]')].map(month => month.getAttribute('data-month'))).toEqual(Array.from({ length: 4 }, (_, month) => `${year}-${String(i * 4 + month + 1).padStart(2, '0')}`))
+        const monthsPerPage = kind === 'streak' ? 12 : 4
+        expect([...doc.querySelectorAll('[data-month]')].map(month => month.getAttribute('data-month'))).toEqual(Array.from({ length: monthsPerPage }, (_, month) => `${year}-${String(i * monthsPerPage + month + 1).padStart(2, '0')}`))
         expect(doc.querySelector('[data-date] pattern, [data-date] [data-symbol], [data-date] path, [data-date] circle')).toBeNull()
       }
     }
@@ -48,13 +49,14 @@ describe('readable Full Reports', () => {
         const doc = parse(page.svg), scale = Math.min(190 / page.width, 277 / page.height)
         const months = [...doc.querySelectorAll('[data-month]')]
         for (const [i, month] of months.entries()) {
-          const nextRow = months[i + 2], bottom = nextRow ? +nextRow.querySelector('text').getAttribute('y') - 20 : +doc.querySelector('[data-legend] rect').getAttribute('y') - 20
+          const nextRow = months[i + (kind === 'streak' ? 3 : 2)], bottom = nextRow ? +nextRow.querySelector('text').getAttribute('y') - 24 : +doc.querySelector('[data-legend] rect').getAttribute('y') - 20
           for (const cell of month.querySelectorAll('[data-date]')) {
             const box = cell.querySelector('rect'), number = cell.querySelector('text'), status = cell.getAttribute('data-status')
             expect(cell.querySelectorAll('rect')).toHaveLength(1); expect(cell.querySelectorAll('text')).toHaveLength(1)
-            expect(+box.getAttribute('width')).toBe(48); expect(box.getAttribute('width')).toBe(box.getAttribute('height'))
-            expect(+box.getAttribute('y') + 48).toBeLessThanOrEqual(bottom)
-            expect(+number.getAttribute('font-size') * scale * 72 / 25.4).toBeGreaterThanOrEqual(15)
+            const cellSize = kind === 'streak' ? 36 : 48
+            expect(+box.getAttribute('width')).toBe(cellSize); expect(box.getAttribute('width')).toBe(box.getAttribute('height'))
+            expect(+box.getAttribute('y') + cellSize).toBeLessThanOrEqual(bottom)
+            expect(+number.getAttribute('font-size') * scale * 72 / 25.4).toBeGreaterThanOrEqual(kind === 'streak' ? 10 : 15)
             expect(box.getAttribute('fill')).toBe(calendarReportState(status, kind).fill)
             expect(box.getAttribute('fill')).toBe(doc.querySelector(`[data-legend][data-semantic="${calendarReportState(status, kind).semantic}"] rect`).getAttribute('fill'))
             expect(number.textContent).toBe(String(Number(cell.getAttribute('data-date').slice(-2))))
@@ -84,7 +86,7 @@ describe('readable Full Reports', () => {
   })
   it('preserves the existing Year and low-level Streak PNG options and handles empty Full Reports', () => {
     const now = new Date('2024-03-01T12:00:00')
-    expect(streakReportPages({}, { period: 'year', now })).toHaveLength(3)
+    expect(streakReportPages({}, { period: 'year', now })).toHaveLength(1)
     expect(calendarReportPages({}, now, 'year', 'pdf', { now })).toHaveLength(3)
     expect(streakReportPages({}, { period: 'full', format: 'png', now })).toHaveLength(1)
     for (const page of streakReportPages({}, { period: 'full', now })) expect(page.svg).toContain('No recorded activity in this period.')

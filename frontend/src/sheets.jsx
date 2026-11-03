@@ -1291,17 +1291,18 @@ function StreakDetail() {
   const profileName = st.profile?.name?.trim()
   const profileToggle = { 'aria-label':t('Profile visibility'), 'aria-expanded':profileControlsOpen, 'aria-controls':profileControlsOpen ? profileControlsId : undefined, onClick:()=>setProfileControlsOpen(open=>!open) }
   const heading = <div className="streak-calendar-heading">
-    {st.streakCalendarShowProfile && profileName && <button type="button" className="streak-profile-name" {...profileToggle} aria-label={`${profileName}, ${t('Profile visibility')}`} title={profileName}>{profileName}</button>}
-    <div className={'streak-hero compact streak-main streak-' + streakTier(streak.current)} data-streak-state={streak.state}>
+    <div className={'streak-hero compact streak-main streak-' + streakTier(streak.current)} data-streak-state={streak.state} aria-label={`${t('Training streak')}: ${streak.current}`}>
       <StreakFlame value={streak.current} />
       <div className="streak-number">{streak.current}</div>
-      <div className="streak-main-label">{t('Training days in this streak')}</div>
     </div>
+    {st.streakCalendarShowProfile && <div className="streak-profile-identity">
+      <button type="button" className="streak-profile" {...profileToggle}><StreakProfileAvatar name={profileName} photo={st.profile?.photo}/></button>
+      {profileName && <button type="button" className="streak-profile-name" {...profileToggle} aria-label={`${profileName}, ${t('Profile visibility')}`} title={profileName}>{profileName}</button>}
+    </div>}
   </div>
-  const avatar = st.streakCalendarShowProfile && <button type="button" className="streak-profile" {...profileToggle}><StreakProfileAvatar name={profileName} photo={st.profile?.photo}/></button>
   return <>
     {(!st.streakCalendarShowProfile || profileControlsOpen) && <div className="streak-profile-tools" id={profileControlsId}><button type="button" className="iconbtn" aria-pressed={!!st.streakCalendarShowProfile} aria-label={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} title={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} onClick={()=>{change(s=>{s.streakCalendarShowProfile=!s.streakCalendarShowProfile});setProfileControlsOpen(false)}}><Icon name="person"/></button></div>}
-    <ZoomCalendar S={st} streakView streakHeading={heading} periodAvatar={avatar} levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
+    <ZoomCalendar S={st} streakView streakHeading={heading} levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
     <StreakStatus streak={streak} className="small muted" />
     <p className="small muted">{t('Completed training days, counted once per day. Scheduled rest days preserve the streak.')}</p>
     <div className="tiles" style={{ margin: '14px 0' }}>

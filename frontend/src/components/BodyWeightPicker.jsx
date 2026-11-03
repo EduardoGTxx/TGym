@@ -261,7 +261,10 @@ const BodyWeightPicker = forwardRef(function BodyWeightPicker({ value, onChange,
     if (change == null && !['Home','End'].includes(event.key)) return
     event.preventDefault(); event.stopPropagation()
     const current = stopMotion() ?? shown; cancel()
-    const next = event.key === 'Home' ? min : event.key === 'End' ? max : clamp(snapRulerValue(current + change, step), min, max)
+    // Move to the next mark from a precise imported value too, rather than
+    // skipping a whole-unit mark when the inherited load lies between ticks.
+    const tick = change > 0 ? Math.floor(current / step + 1e-10) : Math.ceil(current / step - 1e-10)
+    const next = event.key === 'Home' ? min : event.key === 'End' ? max : clamp(snapRulerValue((tick + change / step) * step, step), min, max)
     const canonical = clamp(next, bounds.min, bounds.max)
     if (!Object.is(canonical, lastEmitted.current) || !valid) publish(canonical)
   }

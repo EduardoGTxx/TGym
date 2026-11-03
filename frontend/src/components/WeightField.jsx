@@ -28,8 +28,10 @@ function WeightEditor({ snapshot, current, close }) {
   }
   return <div className="weight-field-editor">
     <h2>{snapshot.title || snapshot.label || t('Weight')}</h2>
+    {/* The ruler selects any whole-unit load; inline +/- retains the exercise's
+        equipment increment. Opening or confirming keeps precise legacy loads. */}
     <BodyWeightPicker ref={picker} value={draft} unit={snapshot.unit} min={snapshot.min} max={snapshot.max}
-      step={snapshot.step} precision={snapshot.precision} label={snapshot.label}
+      step={1} precision={snapshot.precision} label={snapshot.label}
       onChange={setDraft} onValidityChange={setValid}/>
     {error && <p className="bodyweight-picker-error" role="alert">{t('Could not save. Check available storage and try again.')}</p>}
     <div className="weight-field-actions" data-nodrag>

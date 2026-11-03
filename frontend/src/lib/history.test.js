@@ -925,10 +925,13 @@ describe('exNoteFor', () => {
   })
 })
 
-it('preserves manually edited and partially completed back-off loads and reps',()=>{
+it('restores pending back-off loads on a Top edit while preserving manual reps and partially completed work',()=>{
  const rows=[{role:'top',w:100,r:6},{role:'backoff',w:80,r:7,manualFields:{w:true,r:true}},{role:'backoff',w:90,r:8,leftDone:true},{role:'backoff',w:90,r:8}];
  const cfg={setScheme:'topback',backoffPct:10,backoffRepOffset:2};
- expect(cascadeTopBackWeight(rows,0,120,cfg,2.5).map(s=>s.w)).toEqual([120,80,90,107.5]);
+ const weights=cascadeTopBackWeight(rows,0,120,cfg,2.5)
+ expect(weights.map(s=>s.w)).toEqual([120,107.5,90,107.5]);
+ expect(weights[1].manualFields).toEqual({r:true});
+ expect(rows[1].manualFields).toEqual({w:true,r:true});
  expect(cascadeTopBackReps(rows,0,10,cfg).map(s=>s.r)).toEqual([10,7,8,12])
 })
 
@@ -973,11 +976,23 @@ describe('Back-off group isolation',()=>{
   expect(cascadeTopBackWeight(rows,0,120,cfg)).toEqual(rows)
   expect(cascadeTopBackReps(rows,0,8,cfg)).toEqual(rows)
  })
- it('does not rewrite manual reps or load across JSON persistence',()=>{
+ it('restores automatic load after JSON persistence without rewriting manual reps',()=>{
   const rows=seed();rows[1].manualFields={r:true,w:true}
   const reopened=JSON.parse(JSON.stringify(rows))
-  expect(cascadeTopBackWeight(reopened,0,120,cfg)[1]).toEqual(rows[1])
+  expect(cascadeTopBackWeight(reopened,0,120,cfg)[1]).toEqual({...rows[1],w:107.5,manualFields:{r:true}})
   expect(cascadeTopBackReps(reopened,0,8,cfg)[1]).toEqual(rows[1])
+ })
+ it('clears only pending load overrides in the edited group and leaves performed work exact',()=>{
+  const rows=[{role:'top',w:100,manualFields:{w:true}},{role:'backoff',w:83.125,manualFields:{w:true}},{role:'backoff',w:84.375,done:true,manualFields:{w:true}},{role:'backoff',w:85.625,rightDone:true,manualFields:{w:true}},{role:'top',w:80},{role:'backoff',w:70.125,manualFields:{w:true}}]
+  const before=structuredClone(rows),next=cascadeTopBackWeight(rows,0,120,cfg)
+  expect(next[1]).toEqual({role:'backoff',w:107.5})
+  for(const i of [2,3,4,5])expect(next[i]).toEqual(before[i])
+  expect(rows).toEqual(before)
+ })
+ it('restores a manually cleared pending Back-off when the Top changes and clears it with the Top',()=>{
+  const rows=[{role:'top',w:100},{role:'backoff',manualFields:{w:true,r:true},r:7}]
+  expect(cascadeTopBackWeight(rows,0,120,cfg)[1]).toEqual({role:'backoff',w:107.5,r:7,manualFields:{r:true}})
+  expect(cascadeTopBackWeight(rows,0,null,cfg)[1]).toEqual({role:'backoff',r:7,manualFields:{r:true}})
  })
 })
 

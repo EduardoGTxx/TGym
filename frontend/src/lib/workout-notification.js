@@ -17,7 +17,7 @@ export function workoutNotificationState(active, rest, now=Date.now()) {
   const setNumber=index < 0 ? 0 : rows.slice(0,index+1).filter(s=>isWarmupRow(s)===isWarmupRow(rows[index])).length
   const es=getLang()==='es'
   return {active:true,paused,observedAt:now,
-    elapsedMs:workoutElapsedMs(active,now),workoutLabel:paused?t('Paused').toUpperCase():es?'ENTRENO':t('Workout').toUpperCase(),restLabel:es?'DESCANSO':t('Rest').toUpperCase(),
+    elapsedMs:workoutElapsedMs(active,now),workoutLabel:paused?t('Paused').toUpperCase():es?'ENTRENO':t('Workout').toUpperCase(),restLabel:es?'DESCANSO':t('Rest').toUpperCase(),durationLabel:t('Duration'),
     setNumber,setLabel:setNumber ? `${es?'SERIE':t('Set').toUpperCase()} ${setNumber}` : '',
     restEndsAt:rest?.endsAt > now ? rest.endsAt : 0,
     restSignalAt:Number.isFinite(rest?.endsAt)?rest.endsAt:0,

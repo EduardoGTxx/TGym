@@ -49,9 +49,9 @@ it('marks empty/untracked periods and splits PDF dates without duplicates',()=>{
  expect(pages[0].svg).toContain('No recorded activity in this period.')
  for(const page of pages)expect(new DOMParser().parseFromString(page.svg,'image/svg+xml').querySelector('parsererror')).toBeNull()
 })
-it('preserves compact Year, paginates Full Reports into readable month pages, and rejects unsafe PNG spans',()=>{
- expect(streakReportPages(fixture(),{period:'year',now,anchor})).toHaveLength(3)
- expect(streakReportPages(fixture(),{period:'full',now,anchor})).toHaveLength(3)
+it('keeps Year and Full Reports together in a 3×4 overview and rejects unsafe PNG spans',()=>{
+ expect(streakReportPages(fixture(),{period:'year',now,anchor})).toHaveLength(1)
+ expect(streakReportPages(fixture(),{period:'full',now,anchor})).toHaveLength(1)
  expect(streakRange({period:'month',anchor:'2026-02-30',now}).error).toBeTruthy()
  expect(()=>streakReportPages({}, {period:'custom',from:'2024-01-01',to:'2026-10-05',now,format:'png'})).toThrow('Use PDF')
 })

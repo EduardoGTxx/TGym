@@ -26,7 +26,7 @@ export async function buildDashboardReportPages(id, S, settings = {}, options = 
   const now=options.now || new Date(),today=isoOf(now)
   if(['streak','consistency'].includes(id)&&settings.period!=='years'&&!validDate(settings.anchor??today))throw Error('Choose a valid date range.')
   const anchor=new Date((settings.anchor??today)+'T12:00:00')
-  if(id==='streak')return streakReportPages(S,{...options,...settings,now,anchor,period:settings.period||'this-week',format:'pdf'}).map(page=>({...page,imageType:'JPEG',fullPage:false}))
+  if(id==='streak')return streakReportPages(S,{...options,...settings,now,anchor,period:settings.period||'this-week',format:'pdf'}).map(page=>({...page,imageType:'PNG',fullPage:false}))
   if(id==='consistency')return calendarReportPages(S,anchor,settings.period||'month','pdf',{...options,...settings,now}).map(page=>({...page,imageType:'JPEG',fullPage:false}))
   if(id==='progress')return (await buildProgressPages(buildProgressReport(S,{...settings,now}),options)).map(page=>({...page,fullPage:true}))
   if(id==='stats'){

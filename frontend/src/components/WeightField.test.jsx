@@ -64,16 +64,16 @@ it('accepts zero and large legacy loads without the bodyweight upper limit', asy
   expect(changed).toHaveBeenLastCalledWith(0)
 })
 
-it('uses the caller increment for ruler and keyboard without writing on moving frames', async () => {
+it('uses whole-unit ruler marks independently of the inline loading increment', async () => {
   await mount({ initial:40, step:.25 }); await open()
   await pointer('pointerdown',200); await pointer('pointermove',180)
-  expect(input().value).toBe('41'); expect(Number(editor().querySelector('[role=slider]').getAttribute('aria-valuenow'))).toBe(40.5); expect(changed).not.toHaveBeenCalled()
+  expect(input().value).toBe('42'); expect(Number(editor().querySelector('[role=slider]').getAttribute('aria-valuenow'))).toBe(42); expect(changed).not.toHaveBeenCalled()
   await pointer('pointerup',180); await key('ArrowRight')
-  expect(input().value).toBe('41'); expect(Number(editor().querySelector('[role=slider]').getAttribute('aria-valuenow'))).toBe(40.75); expect(changed).not.toHaveBeenCalled()
-  await act(() => action('Done').click()); expect(changed).toHaveBeenCalledExactlyOnceWith(40.75)
+  expect(input().value).toBe('43'); expect(Number(editor().querySelector('[role=slider]').getAttribute('aria-valuenow'))).toBe(43); expect(changed).not.toHaveBeenCalled()
+  await act(() => action('Done').click()); expect(changed).toHaveBeenCalledExactlyOnceWith(43)
 })
 
-it('settles a fling on the caller grid while keeping all animated drafts local', async () => {
+it('settles a fling on a whole-unit mark while keeping all animated drafts local', async () => {
   const frames = new Map(); let sequence = 0, now = 0
   vi.spyOn(performance,'now').mockImplementation(() => now)
   vi.spyOn(globalThis,'requestAnimationFrame').mockImplementation(callback => { const id = ++sequence; frames.set(id,callback); return id })
@@ -87,14 +87,32 @@ it('settles a fling on the caller grid while keeping all animated drafts local',
     await act(() => ruler.dispatchEvent(event))
   }
   await dispatch('pointerdown',200,0); await dispatch('pointermove',170,30); await dispatch('pointerup',160,50)
-  expect(input().value).toBe('50'); expect(changed).not.toHaveBeenCalled()
+  expect(input().value).toBe('44'); expect(changed).not.toHaveBeenCalled()
   now = 250; const pending = [...frames.values()]; frames.clear(); await act(() => pending.forEach(callback => callback(now)))
-  const moving = Number(ruler.getAttribute('aria-valuenow')); expect(moving).toBeGreaterThan(50); expect(moving/2.5).toBe(Math.round(moving/2.5))
+  const moving = Number(ruler.getAttribute('aria-valuenow')); expect(moving).toBeGreaterThan(44); expect(Number.isInteger(moving)).toBe(true)
   expect(input().value).toBe(String(Math.round(moving))); expect(ruler.getAttribute('aria-valuetext')).toBe(`${Math.round(moving)} kg`)
   expect(input().style.width).toBe(width); expect(changed).not.toHaveBeenCalled()
   now = 2050; const remaining = [...frames.values()]; frames.clear(); await act(() => remaining.forEach(callback => callback(now)))
-  const settled = Number(ruler.getAttribute('aria-valuenow')); expect(settled/2.5).toBe(Math.round(settled/2.5)); expect(frames.size).toBe(0)
+  const settled = Number(ruler.getAttribute('aria-valuenow')); expect(Number.isInteger(settled)).toBe(true); expect(frames.size).toBe(0)
   await act(() => action('Done').click()); expect(changed).toHaveBeenCalledExactlyOnceWith(settled)
+})
+
+it.each([['kg',5],['lb',10]])('reaches adjacent %s loads with a coarse %s-unit equipment increment', async (unit,step) => {
+  await mount({ initial:140,unit,step }); await open()
+  await pointer('pointerdown',200); await pointer('pointermove',190); await pointer('pointerup',190)
+  expect(input().value).toBe('141'); expect(changed).not.toHaveBeenCalled()
+  await key('ArrowRight'); expect(input().value).toBe('142')
+  await key('ArrowLeft'); expect(input().value).toBe('141')
+  await act(() => action('Done').click())
+  expect(changed).toHaveBeenCalledExactlyOnceWith(141)
+  await act(() => host.querySelector('button[aria-label="Increase"]').click())
+  expect(changed).toHaveBeenLastCalledWith(141+step)
+})
+
+it.each([['ArrowRight',43],['ArrowLeft',42]])('uses the nearest whole-unit mark for %s from an inherited precise load', async (pressed,expected) => {
+  await mount({initial:42.75,step:5});await open();await key(pressed)
+  expect(input().value).toBe(String(expected));expect(changed).not.toHaveBeenCalled()
+  await act(() => action('Done').click());expect(changed).toHaveBeenCalledExactlyOnceWith(expected)
 })
 
 it('cancels edited values and canceled gestures without publishing the draft', async () => {

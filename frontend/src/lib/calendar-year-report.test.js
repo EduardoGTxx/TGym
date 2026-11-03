@@ -45,19 +45,21 @@ describe('readable complete-year PDF pages', () => {
   it.each(['streak', 'consistency'])('keeps each %s annual data set, metric and context identical to the existing year calculations', kind => {
     const options = { period: 'years', fromYear: 2024, toYear: 2027, now }, before = JSON.stringify(S)
     const pages = kind === 'streak' ? streakReportPages(S, options) : calendarReportPages(S, 'irrelevant', 'years', 'pdf', options)
-    expect(pages).toHaveLength(12)
+    const pagesPerYear = kind === 'streak' ? 1 : 3
+    expect(pages).toHaveLength(4 * pagesPerYear)
     const allDates = []
     pages.forEach((page, i) => {
-      const year = 2024 + Math.floor(i / 3), doc = parse(page.svg), anchor = `${year}-01-01`
+      const year = 2024 + Math.floor(i / pagesPerYear), doc = parse(page.svg), anchor = `${year}-01-01`
       const annual = kind === 'streak' ? buildStreakReport(S, { period: 'year', anchor, now }) : calendarPeriod(S, new Date(anchor + 'T12:00:00'), 'year', now)
       const cells = [...doc.querySelectorAll('[data-date]')]
       expect(doc.querySelector('parsererror')).toBeNull()
       expect(doc.documentElement.getAttribute('data-layout')).toBe('complete-year')
       expect(doc.documentElement.getAttribute('data-year')).toBe(String(year))
       expect(page.orientation).toBeUndefined(); expect(page.width).toBe(1000); expect(page.height).toBeGreaterThanOrEqual(1414)
-      expect(doc.querySelectorAll('[data-month]')).toHaveLength(4)
-      expect(cells.map(cell => cell.getAttribute('data-date'))).toEqual(annual.days.filter(day => Math.floor((Number(day.iso.slice(5,7)) - 1) / 4) === i % 3).map(day => day.iso))
-      expect(cells.map(cell => cell.getAttribute('data-status'))).toEqual(annual.days.filter(day => Math.floor((Number(day.iso.slice(5,7)) - 1) / 4) === i % 3).map(day => day.status))
+      expect(doc.querySelectorAll('[data-month]')).toHaveLength(kind === 'streak' ? 12 : 4)
+      const expectedDays = kind === 'streak' ? annual.days : annual.days.filter(day => Math.floor((Number(day.iso.slice(5,7)) - 1) / 4) === i % 3)
+      expect(cells.map(cell => cell.getAttribute('data-date'))).toEqual(expectedDays.map(day => day.iso))
+      expect(cells.map(cell => cell.getAttribute('data-status'))).toEqual(expectedDays.map(day => day.status))
       expect(cells.length).toBeGreaterThanOrEqual(120)
       allDates.push(...cells.map(cell => cell.getAttribute('data-date')))
       const expectedMetrics = kind === 'streak' ? [['Training streak', annual.current], ['Best streak', annual.best]] : [['Completed', annual.stats.completed], ['Missed', annual.stats.missed], ['Completion', annual.completion == null ? '—' : `${annual.completion}%`]]
@@ -67,12 +69,13 @@ describe('readable complete-year PDF pages', () => {
       for (const cell of cells) {
         const box = cell.querySelector('rect'), number = cell.querySelector('text')
         expect(cell.querySelectorAll('rect')).toHaveLength(1); expect(cell.querySelectorAll('text')).toHaveLength(1)
-        expect(box.getAttribute('width')).toBe('48'); expect(box.getAttribute('height')).toBe('48')
+        const cellSize = kind === 'streak' ? 36 : 48
+        expect(+box.getAttribute('width')).toBe(cellSize); expect(+box.getAttribute('height')).toBe(cellSize)
         expect(box.getAttribute('fill')).toBe(calendarReportState(cell.getAttribute('data-status'), kind).fill)
         expect(box.getAttribute('fill')).toBe(doc.querySelector(`[data-legend][data-semantic="${calendarReportState(cell.getAttribute('data-status'), kind).semantic}"] rect`).getAttribute('fill'))
-        expect(+box.getAttribute('y') + 48).toBeLessThan(+doc.querySelector('[data-legend] rect').getAttribute('y') - 20)
-        expect(+number.getAttribute('x')).toBe(+box.getAttribute('x') + 24)
-        expect(+number.getAttribute('y')).toBe(+box.getAttribute('y') + 24)
+        expect(+box.getAttribute('y') + cellSize).toBeLessThan(+doc.querySelector('[data-legend] rect').getAttribute('y') - 20)
+        expect(+number.getAttribute('x')).toBe(+box.getAttribute('x') + cellSize / 2)
+        expect(+number.getAttribute('y')).toBe(+box.getAttribute('y') + cellSize / 2)
         const scale = Math.min(190 / page.width, 277 / page.height)
         expect(+number.getAttribute('font-size') * scale * 72 / 25.4).toBeGreaterThanOrEqual(9)
       }

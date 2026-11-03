@@ -34,6 +34,51 @@ public class WorkoutNotificationTest {
         assertEquals(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP,
             intent.getFlags()&(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
+    @Test public void timerCardsKeepStatusAndLongSetLabelsAboveTheirClockRows() throws Exception {
+        Context target=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        org.json.JSONObject payload=new org.json.JSONObject().put("paused",true)
+            .put("pauseReason","inactivity").put("pauseLabel","Pausado por inactividad")
+            .put("setLabel","SERIE 12345678901234567890").put("restLabel","DESCANSO").put("durationLabel","Duración");
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{
+            for(float scale:new float[]{1f,1.3f,2f}) {
+                android.content.res.Configuration config=new android.content.res.Configuration(target.getResources().getConfiguration());
+                config.fontScale=scale;
+                Context themed=target.createConfigurationContext(config);
+                for(int layout:new int[]{R.layout.workout_notification,R.layout.workout_notification_expanded}) {
+                    for(long rest:new long[]{0,90000}) {
+                        View view=WorkoutNotificationService.timerView(themed,payload,layout,3723000,rest).apply(themed,new FrameLayout(themed));
+                        int width=Math.round(320*themed.getResources().getDisplayMetrics().density);
+                        view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+                        view.layout(0,0,width,view.getMeasuredHeight());
+                        android.graphics.Rect clock=new android.graphics.Rect(),set=new android.graphics.Rect();
+                        View elapsed=view.findViewById(R.id.workout_duration),setView=view.findViewById(R.id.set_label);
+                        elapsed.getDrawingRect(clock);setView.getDrawingRect(set);
+                        ((android.view.ViewGroup)view).offsetDescendantRectToMyCoords(elapsed,clock);
+                        ((android.view.ViewGroup)view).offsetDescendantRectToMyCoords(setView,set);
+                        assertTrue("Set label occupies a separate row from the elapsed clock",set.bottom<=clock.top);
+                        assertTrue("Elapsed time fits the card width",clock.left>=0&&clock.right<=width);
+                        assertTrue("Elapsed time fits the card height at font scale "+scale,clock.bottom<=view.getMeasuredHeight());
+                        assertEquals("01:02:03",((android.widget.TextView)elapsed).getText().toString());
+                        assertEquals(rest>0?View.VISIBLE:View.GONE,view.findViewById(R.id.rest_row).getVisibility());
+                        android.widget.TextView duration=(android.widget.TextView)elapsed;
+                        assertEquals("Elapsed clock stays on one line",1,duration.getLineCount());
+                        assertTrue("All elapsed digits fit",duration.getLayout().getLineWidth(0)<=duration.getWidth());
+                        if(rest>0) {
+                            View restClock=view.findViewById(R.id.rest_clock);
+                            android.graphics.Rect restBounds=new android.graphics.Rect();restClock.getDrawingRect(restBounds);
+                            ((android.view.ViewGroup)view).offsetDescendantRectToMyCoords(restClock,restBounds);
+                            assertTrue("Rest clock fits the card",restBounds.left>=0&&restBounds.right<=width&&restBounds.bottom<=view.getMeasuredHeight());
+                            assertFalse("Independent clocks do not overlap",android.graphics.Rect.intersects(clock,restBounds));
+                        }
+                        if(layout==R.layout.workout_notification_expanded) {
+                            assertEquals("Duración",((android.widget.TextView)view.findViewById(R.id.workout_duration_label)).getText().toString());
+                            assertTrue("Expanded content fits Android's 252dp budget",view.getMeasuredHeight()<=Math.ceil(252*themed.getResources().getDisplayMetrics().density));
+                        } else assertTrue("Collapsed content remains within Android's 48dp budget",view.getMeasuredHeight()<=Math.ceil(48*themed.getResources().getDisplayMetrics().density));
+                    }
+                }
+            }
+        });
+    }
     private void shell(String command) throws Exception {
         try(android.os.ParcelFileDescriptor.AutoCloseInputStream stream=new android.os.ParcelFileDescriptor.AutoCloseInputStream(InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command))) {
             byte[] buffer=new byte[1024]; while(stream.read(buffer)!=-1) {}
@@ -55,6 +100,9 @@ public class WorkoutNotificationTest {
             assertNotNull(notification());
             assertNotNull(notification().getNotification().contentView);
             assertNotNull(notification().getNotification().bigContentView);
+            assertEquals(android.app.Notification.CATEGORY_STOPWATCH,notification().getNotification().category);
+            assertEquals(android.app.Notification.VISIBILITY_PRIVATE,notification().getNotification().visibility);
+            assertFalse("Do not crowd the live clocks with a second system timestamp",notification().getNotification().extras.getBoolean(android.app.Notification.EXTRA_SHOW_WHEN));
             long restDeadline=new org.json.JSONObject(context.getSharedPreferences("tgym_workout_live",0).getString("state","{}")).getLong("restEndsAt");
             shell("input keyevent KEYCODE_HOME");
             SystemClock.sleep(6000);

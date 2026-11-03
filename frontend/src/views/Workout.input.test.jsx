@@ -170,16 +170,16 @@ it.each([true,false])('guards the initial workout render before replay or first-
  expect(localStorage.getItem('gym_state_v1')).toBeNull()
 })
 
-it('derives Back-off weight and reps, protects manual fields and retains them in reopened history',()=>{
+it('restores automatic Back-off weight after a Top edit and retains manual reps in reopened history',()=>{
  mount({setScheme:'topback',reps:6,topRepsMin:4,topRepsMax:6,backoffRepOffset:0,backoffPct:10},[{role:'top',w:100,r:6},{role:'backoff',w:90,r:8},{role:'backoff',w:90,r:8}]);
  type(input('Actual reps'),'5');type(input('Weight (kg)'),'110');
  expect(rows().map(s=>[s.w,s.r])).toEqual([[110,5],[100,7],[100,7]]);
  type(input('Actual reps',1),'6');type(input('Weight (kg)',1),'95');type(input('Actual reps'),'6');type(input('Weight (kg)'),'120');
- expect(rows().map(s=>[s.w,s.r])).toEqual([[120,6],[95,6],[107.5,8]]);
+ expect(rows().map(s=>[s.w,s.r])).toEqual([[120,6],[107.5,6],[107.5,8]]);
  const saved=JSON.parse(localStorage.getItem('gym_state_v1'));
  act(()=>{root.unmount();root=createRoot(container);useStore.getState().replaceState(saved);root.render(<MemoryRouter><Workout/></MemoryRouter>)});
- expect(rows()[1]).toMatchObject({w:95,r:6,manualFields:{w:true,r:true}});
+ expect(rows()[1]).toMatchObject({w:107.5,r:6,manualFields:{r:true}});expect(rows()[1].manualFields.w).toBeUndefined();
  act(()=>{for(const el of container.querySelectorAll('[role="checkbox"]'))el.click()});
  act(()=>doFinishWorkout());expect(state().active).toBeNull();
- expect(state().workouts[0].entries[0].sets.map(s=>[s.w,s.r])).toEqual([[120,6],[95,6],[107.5,8]]);
+ expect(state().workouts[0].entries[0].sets.map(s=>[s.w,s.r])).toEqual([[120,6],[107.5,6],[107.5,8]]);
 })

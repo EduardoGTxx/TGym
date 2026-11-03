@@ -499,10 +499,19 @@ export function cascadeTopBackWeight(rows, from, value, cfg, step = 2.5) {
   if (edited.role === 'top') {
     const backoff = backoffWeightFor(value, cfg, step)
     next.forEach((row, index) => {
-      if (index < group.start || index >= group.end || index === from || preservesInput(row, 'w') || isWarmupRow(row)) return
+      if (index < group.start || index >= group.end || index === from || row.done || row.leftDone || row.rightDone || isWarmupRow(row)) return
       if (row.role === 'top') {
+        if (row.manualFields?.w) return
         if (value == null) delete row.w; else row.w = value
       } else if (row.role === 'backoff') {
+        // A manual Back-off load belongs to this Top weight. Explicitly changing
+        // Top restores the prescription for pending work, including after reopen.
+        // Only release the load override; manual reps/effort stay independent.
+        if (row.manualFields?.w) {
+          row.manualFields = { ...row.manualFields }
+          delete row.manualFields.w
+          if (!Object.keys(row.manualFields).length) delete row.manualFields
+        }
         if (backoff == null) delete row.w; else row.w = Math.round(backoff * 1000) / 1000
       }
     })
