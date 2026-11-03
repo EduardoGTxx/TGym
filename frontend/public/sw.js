@@ -169,7 +169,10 @@ self.addEventListener('fetch',e=>{
  if(e.request.method!=='GET'||url.origin!==base.origin||!url.pathname.startsWith(base.pathname)||url.pathname.endsWith('/build.json')||url.pathname.includes('/api/')||url.pathname.includes('/updates/')||url.pathname.includes('/downloads/')) return
  const path=url.pathname.slice(base.pathname.length)
  const shell=e.request.mode==='navigate'&&(path===''||path==='index.html')
- const key=shell?'index.html':e.request
+ // Install stores build assets under canonical, header-free keys. A server may
+ // vary by Origin while module/CSS requests add that header only at page load.
+ // Normalize only exact precache URLs; query variants keep their own identity.
+ const key=shell?'index.html':!url.search&&PRECACHE.includes(path)?path:e.request
  e.respondWith((async()=>{
   let cache
   try {
@@ -178,7 +181,14 @@ self.addEventListener('fetch',e=>{
    if(hit)return hit
    if(path.startsWith('assets/')) {
     for(const previous of (await caches.keys()).filter(k=>appCache(k)&&k!==CACHE).reverse()){
-     const old=await (await caches.open(previous)).match(e.request)
+     const oldCache=await caches.open(previous)
+     let old=await oldCache.match(e.request)
+     if(!old&&!url.search){
+      // An existing tab can still import its previous build's hashed chunk.
+      // Match only an exact key already owned by that versioned app cache.
+      const stored=(await oldCache.keys()).find(key=>key.method==='GET'&&key.url===url.href)
+      if(stored)old=await oldCache.match(stored)
+     }
      if(old)return old
     }
    }

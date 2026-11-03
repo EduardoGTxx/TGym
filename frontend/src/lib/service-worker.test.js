@@ -4,7 +4,7 @@ import vm from 'node:vm'
 const source=readFileSync(new URL('../../public/sw.js',import.meta.url),'utf8').replaceAll('__TGYM_CACHE__','tgym-app-1.15.25-test').replace("['__TGYM_PRECACHE__']",JSON.stringify(['index.html','assets/new.js'])).replace("['__TGYM_MEDIA__']",JSON.stringify(['img/','gif/']))
 function worker({offline=false,failInstall=false,failWrite=false,oldChunk=false,failRead=false,base='https://app.test/',mediaHit=false,mediaType}={}) {
  const handlers={}, data=new Map([['index.html',new Response('offline shell')]])
- const cache={match:async key=>{if(failRead)throw Error('denied');return data.get(typeof key==='string'?key:key.url)},put:vi.fn(async(key,value)=>{if(failWrite)throw Error('quota');data.set(typeof key==='string'?key:key.url,value.clone())})}
+ const cache={match:async key=>{if(failRead)throw Error('denied');return data.get(typeof key==='string'?key:key.url)},put:vi.fn(async(key,value)=>{if(failWrite)throw Error('quota');data.set(typeof key==='string'?key:key.url,value.clone())}),keys:async()=>[...data.keys()].map(key=>new Request(new URL(key,base)))}
  const mediaCache={match:async()=>{if(!mediaHit)return;const response=new Response('saved image');if(mediaType)Object.defineProperty(response,'type',{value:mediaType});return response},put:vi.fn(async()=>{}),keys:async()=>Array.from({length:43},(_,i)=>'image'+i),delete:vi.fn(async()=>true)}
  const caches={keys:async()=>['tgym-1.15.18-old','tgym-app-1.15.24-old','tgym-app-1.15.25-test','tgym-user-data','unrelated'],delete:vi.fn(),open:async key=>key==='tgym-exercise-media-v1'?mediaCache:key==='tgym-app-1.15.24-old'&&oldChunk?{match:async()=>new Response('old chunk')}:cache}
  const self={location:{origin:new URL(base).origin,href:base+'sw.js'},addEventListener:(name,fn)=>{const previous=handlers[name];handlers[name]=previous?e=>{previous(e);fn(e)}:fn},clients:{claim:vi.fn()},skipWaiting:vi.fn()}
@@ -208,4 +208,88 @@ it('rejects unavailable new assets without activating the incomplete build',asyn
  const w=worker();w.fetch.mockResolvedValue(new Response('missing',{status:404}))
  let done;w.handlers.install({waitUntil:p=>done=p});await expect(done).rejects.toThrow('Cannot cache shell asset')
  expect(w.cache.put).not.toHaveBeenCalled();expect(w.self.skipWaiting).not.toHaveBeenCalled();expect(w.caches.delete).not.toHaveBeenCalled()
+})
+
+// Cache API matching includes a stored response's Vary headers. Keep real
+// Request/Response objects here so a URL-only mock cannot hide cold-open failures.
+function varyWorker(base) {
+ const handlers={},stores=new Map(),precache=['index.html','assets/new.js','assets/theme.css']
+ const request=input=>input instanceof Request?input:new Request(new URL(typeof input==='string'?input:input.url,base),input instanceof Object?input:undefined)
+ const open=name=>{
+  if(!stores.has(name)){
+   const entries=[]
+   stores.set(name,{
+    match:vi.fn(async(input,options={})=>{
+     const query=request(input),entry=entries.find(({key,response})=>{
+      if(key.method!==query.method||key.url!==query.url)return false
+      if(options.ignoreVary)return true
+      const vary=(response.headers.get('Vary')||'').split(',').map(value=>value.trim().toLowerCase()).filter(Boolean)
+      return !vary.includes('*')&&vary.every(header=>key.headers.get(header)===query.headers.get(header))
+     })
+     return entry?.response.clone()
+    }),
+    put:vi.fn(async(input,response)=>{
+     const key=request(input),index=entries.findIndex(entry=>entry.key.method===key.method&&entry.key.url===key.url)
+     const entry={key:key.clone(),response:response.clone()};if(index<0)entries.push(entry);else entries[index]=entry
+    }),
+    keys:vi.fn(async()=>entries.map(({key})=>key.clone())),
+   })
+  }
+  return stores.get(name)
+ }
+ let offline=false
+ const fetch=vi.fn(async input=>{if(offline)throw Error('offline');const url=new URL(typeof input==='string'?input:input.url||String(input));return new Response('network '+url.pathname+url.search,{headers:{Vary:'Origin','Content-Type':url.pathname.endsWith('.css')?'text/css':'text/javascript'}})})
+ const caches={open:async name=>open(name),keys:async()=>[...stores.keys()]}
+ const self={location:{origin:new URL(base).origin,href:base+'sw.js'},addEventListener:(type,handler)=>{const prior=handlers[type];handlers[type]=prior?event=>{prior(event);handler(event)}:handler}}
+ vm.runInNewContext(source.replace(JSON.stringify(['index.html','assets/new.js']),JSON.stringify(precache)),{self,caches,URL,Response,fetch,console})
+ return{handlers,caches,fetch,open,offline:()=>{offline=true},current:open('tgym-app-1.15.25-test')}
+}
+async function installedVaryWorker(base){const w=varyWorker(base);let installed;w.handlers.install({waitUntil:promise=>installed=promise});await installed;w.fetch.mockClear();return w}
+async function workerResponse(w,request){let pending;const tasks=[];w.handlers.fetch({request,respondWith:promise=>pending=promise,waitUntil:promise=>tasks.push(promise)});const response=await pending;await Promise.all(tasks);return response}
+const corsAsset=(base,path)=>new Request(new URL(path,base),{headers:{Origin:new URL(base).origin},mode:'cors'})
+
+it.each(['https://app.test/','https://app.test/TGym/'])('cold-opens precached JS and CSS with Vary: Origin under %s',async base=>{
+ const w=await installedVaryWorker(base);w.offline()
+ for(const path of ['assets/new.js','assets/theme.css']){
+  // The model reproduces the real mismatch: URL equality alone is insufficient.
+  expect(await w.current.match(corsAsset(base,path))).toBeUndefined()
+  expect(await w.current.match(path)).toBeInstanceOf(Response)
+  const response=await workerResponse(w,corsAsset(base,path))
+  expect(await response.text()).toBe('network '+new URL(path,base).pathname+'?tgymBuild=tgym-app-1.15.25-test')
+ }
+ expect(w.fetch).not.toHaveBeenCalled()
+ expect(w.current.match.mock.calls.every(([,options])=>!options?.ignoreVary)).toBe(true)
+})
+it.each(['https://app.test/','https://app.test/TGym/'])('keeps arbitrary asset queries distinct from canonical shell keys under %s',async base=>{
+ const w=await installedVaryWorker(base);w.offline()
+ for(const query of ['?variant=unknown','?tgymBuild=another-build'])expect((await workerResponse(w,corsAsset(base,'assets/new.js'+query))).type).toBe('error')
+ expect(w.fetch).toHaveBeenCalledTimes(2)
+ expect(w.current.put).toHaveBeenCalledTimes(3)
+})
+it.each(['https://app.test/','https://app.test/TGym/'])('retains only exact previous cached chunk URLs with Vary: Origin under %s',async base=>{
+ const w=await installedVaryWorker(base),previous=w.open('tgym-app-1.15.24-old')
+ await previous.put('assets/old-hashed.js',new Response('previous build chunk',{headers:{Vary:'Origin'}}));w.offline()
+ expect(await previous.match(corsAsset(base,'assets/old-hashed.js'))).toBeUndefined()
+ expect(await(await workerResponse(w,corsAsset(base,'assets/old-hashed.js'))).text()).toBe('previous build chunk')
+ expect(w.fetch).not.toHaveBeenCalled()
+ for(const path of ['assets/old-hashed.js?variant=unknown','assets/not-cached.js'])expect((await workerResponse(w,corsAsset(base,path))).type).toBe('error')
+ expect(w.fetch).toHaveBeenCalledTimes(2)
+ expect(previous.match.mock.calls.every(([,options])=>!options?.ignoreVary)).toBe(true)
+})
+it.each(['https://app.test/','https://app.test/TGym/'])('bypasses live endpoints, other origins, sibling apps and writes under %s',async base=>{
+ const w=await installedVaryWorker(base);w.offline();w.current.match.mockClear()
+ const urls=['api/state?check=1','build.json?check=1','updates/latest.json','downloads/TGym.apk'].map(path=>new URL(path,base).href)
+ urls.push('https://outside.test/assets/new.js')
+ if(new URL(base).pathname!=='/')urls.push('https://app.test/sibling/assets/new.js')
+ for(const url of urls)expect(await workerResponse(w,new Request(url))).toBeUndefined()
+ expect(await workerResponse(w,new Request(new URL('assets/new.js',base),{method:'POST'}))).toBeUndefined()
+ expect(w.current.match).not.toHaveBeenCalled();expect(w.fetch).not.toHaveBeenCalled()
+})
+it('preserves Vary matching for optional exercise media rather than broadening cache reads',async()=>{
+ const base='https://app.test/TGym/',w=await installedVaryWorker(base),media=w.open('tgym-exercise-media-v1')
+ await media.put('gif/exercise.gif',new Response('unmatched media variant',{headers:{Vary:'Origin'}}));w.offline()
+ const request=corsAsset(base,'gif/exercise.gif');Object.defineProperty(request,'destination',{value:'image'})
+ expect((await workerResponse(w,request)).type).toBe('error')
+ expect(media.match.mock.calls.every(([,options])=>!options?.ignoreVary)).toBe(true)
+ expect(w.fetch).toHaveBeenCalledExactlyOnceWith(request)
 })
