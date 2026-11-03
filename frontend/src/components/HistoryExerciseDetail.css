@@ -9,7 +9,7 @@
 .history-exercise-open>.icn { width:18px; height:18px; }
 .history-exercise-row:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
 .history-exercise-row::after { content:""; position:absolute; left:0; bottom:0; width:100%; height:3px; background:var(--acc); transform:scaleX(0); transform-origin:left; pointer-events:none; }
-.history-exercise-row.is-holding::after { animation:history-exercise-hold 2s linear forwards; }
+.history-exercise-row.is-holding::after { animation:history-exercise-hold var(--history-exercise-hold-duration) linear forwards; }
 .history-exercise-hint { margin:0 0 14px; color:var(--label-2); font-size:12px; line-height:1.5; }
 .workout-history-fields { min-width:0; margin:0; padding:0; border:0; }
 .history-exercise-save-error { color:var(--red); font-size:13px; line-height:1.5; }

@@ -11,6 +11,7 @@ import Icon from './Icon.jsx'
 import './HistoryExerciseDetail.css'
 
 const validUnit = value => value === 'kg' || value === 'lb' ? value : null
+const HOLD_MS = 1500
 // A recorded target can have its own prescription unit; it does not relabel results.
 export const historyResultUnit = (set, entry, workout, state) => validUnit(set?.unit) || validUnit(entry?.unit) || validUnit(workout?.unit) || validUnit(state?.unit) || 'kg'
 export function historyExercise(state, entry) {
@@ -116,7 +117,7 @@ export default function HistoryExerciseRow({ entry, workout, pr }) {
     // Allow small finger drift during the hold. Native scrolling still owns its
     // gesture and cancels through pointercancel/scroll; no move is prevented.
     press.current={id:event.pointerId,x:event.clientX,y:event.clientY,slop:event.pointerType==='touch'?14:8,at:performance.now(),eventAt:inputTimestamp(event)};setHolding(true)
-    timer.current=setTimeout(open,2000)
+    timer.current=setTimeout(open,HOLD_MS)
   }
   const release = event => {
     const current=press.current
@@ -125,11 +126,11 @@ export default function HistoryExerciseRow({ entry, workout, pr }) {
     // Compare event creation times so a queued short tap cannot become a hold.
     const eventAt=inputTimestamp(event)
     const elapsed=current.eventAt!=null&&eventAt!=null?eventAt-current.eventAt:performance.now()-current.at
-    if(elapsed>=2000)open()
+    if(elapsed>=HOLD_MS)open()
     else cancel()
   }
-  const hint = t('Tap the expand icon, hold for 2 seconds or press Enter to view sets.')
-  return <button type="button" ref={button} className={'history-exercise-row'+(holding?' is-holding':'')} data-exercise-id={entry.id} aria-haspopup="dialog" aria-label={`${name}. ${hint}`}
+  const hint = t('Tap the expand icon, hold for 1.5 seconds or press Enter to view sets.')
+  return <button type="button" ref={button} className={'history-exercise-row'+(holding?' is-holding':'')} style={{'--history-exercise-hold-duration':`${HOLD_MS}ms`}} data-exercise-id={entry.id} aria-haspopup="dialog" aria-label={`${name}. ${hint}`}
     onPointerDown={start} onPointerUp={release} onPointerCancel={cancel} onPointerLeave={cancel} onTouchCancel={cancel} onContextMenu={event=>event.preventDefault()}
     onDragStart={event=>{event.preventDefault();cancel()}}
     onClick={event=>{if(event.detail===0||event.target.closest?.('[data-history-open]'))open()}}>
