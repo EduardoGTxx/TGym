@@ -33,11 +33,15 @@ export function historySetGroups(entry) {
 }
 const number = value => value == null || value === '' || !Number.isFinite(Number(value)) ? '—' : new Intl.NumberFormat(dateLocale(), {maximumFractionDigits:10}).format(Number(value))
 const groupTitle = group => t(group.kind === 'warmup' ? 'Warm-up sets' : group.kind === 'top' ? group.rows.length === 1 ? 'Top set' : 'Top sets' : group.kind === 'backoff' ? 'Back-off sets' : 'Working sets')
+// Older local records can contain empty or primitive nested rows. Keep the
+// saved record intact while showing only actual drop/burst objects.
+const recordedParts = rows => rows.filter(row => row && typeof row === 'object' && !Array.isArray(row))
 function RecordedSet({ set, index, phaseNumber, entry, workout, state, exercise }) {
   const mode = modeForSet(set, entry.target), cfg = { ...entry.target, id: entry.id, mode }
   if (cfg.bodyweight == null && exercise.eq === 'body weight') cfg.bodyweight = true
   if (set.side) cfg.side = true
   const unit = historyResultUnit(set, entry, workout, state), sides = setSideState(set)
+  const drops = recordedParts(dropsOf(set)), clusters = recordedParts(clustersOf(set))
   const reps = value => number(displayReps(value, cfg))
   const load = value => isBw(cfg) && !(Number(value) > 0) ? t('Body weight') : `${isBw(cfg) && Number(value) > 0 ? '+' : ''}${fmtWeight(value)} ${unit}`
   const metrics = mode === 'cardio'
@@ -52,9 +56,9 @@ function RecordedSet({ set, index, phaseNumber, entry, workout, state, exercise 
     {['dropset','restpause'].includes(set.type) && <div className="history-exercise-technique">{t(set.type === 'dropset' ? 'Drop-set' : 'Rest-pause')}</div>}
     <dl className="history-exercise-values">{metrics.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     {isPerSide(cfg) && mode !== 'cardio' && <div className="history-exercise-sides">{['left','right'].map(side=><span key={side}>{t(side === 'left' ? 'Left' : 'Right')}: {t(sides[side] ? 'Completed' : 'Pending')}</span>)}{mode === 'reps' && <span>{t('Reps per side')}</span>}</div>}
-    {(dropsOf(set).length > 0 || clustersOf(set).length > 0) && <ul className="history-exercise-extras">
-      {dropsOf(set).map((drop,i)=><li key={'drop-'+i}><b>{t('Drop {0}',i+1)}</b><span>{fmtWeight(drop.w)} {validUnit(drop.unit) || unit} × {reps(drop.r)} {t('reps')}</span></li>)}
-      {clustersOf(set).map((cluster,i)=><li key={'burst-'+i}><b>{t('Burst {0}',i+1)}</b><span>{reps(cluster.r)} {t('reps')} · {number(cluster.restSec)} s</span></li>)}
+    {(drops.length > 0 || clusters.length > 0) && <ul className="history-exercise-extras">
+      {drops.map((drop,i)=><li key={'drop-'+i}><b>{t('Drop {0}',i+1)}</b><span>{fmtWeight(drop.w)} {validUnit(drop.unit) || unit} × {reps(drop.r)} {t('reps')}</span></li>)}
+      {clusters.map((cluster,i)=><li key={'burst-'+i}><b>{t('Burst {0}',i+1)}</b><span>{reps(cluster.r)} {t('reps')} · {number(cluster.restSec)} s</span></li>)}
     </ul>}
   </article>
 }
@@ -71,6 +75,12 @@ export function HistoryExerciseDetail({ entry, workout }) {
   </div>
 }
 
+// React replaces unavailable native timestamps with a wall-clock value. Keep
+// input timing monotonic instead of mixing that fallback with real events.
+const inputTimestamp = event => {
+  const value = event.nativeEvent ? event.nativeEvent.timeStamp : event.timeStamp
+  return Number.isFinite(value) ? value : null
+}
 export default function HistoryExerciseRow({ entry, workout, pr }) {
   const state = useStore(s=>s.S), exercise = historyExercise(state,entry), name = exerciseNameFor(exercise,{state,entry,routineId:workout.routineId})
   const [holding,setHolding] = useState(false), press = useRef(null), timer = useRef(0), detail = useRef(null), button = useRef(null), latest = useRef(null)
@@ -105,16 +115,26 @@ export default function HistoryExerciseRow({ entry, workout, pr }) {
     if (event.button !== 0 || event.isPrimary === false || detail.current) return
     // Allow small finger drift during the hold. Native scrolling still owns its
     // gesture and cancels through pointercancel/scroll; no move is prevented.
-    press.current={id:event.pointerId,x:event.clientX,y:event.clientY,slop:event.pointerType==='touch'?14:8};setHolding(true)
+    press.current={id:event.pointerId,x:event.clientX,y:event.clientY,slop:event.pointerType==='touch'?14:8,at:performance.now(),eventAt:inputTimestamp(event)};setHolding(true)
     timer.current=setTimeout(open,2000)
   }
-  const hint = t('Hold for 2 seconds or press Enter to view sets.')
-  return <button type="button" ref={button} className={'history-exercise-row'+(holding?' is-holding':'')} data-exercise-id={entry.id} aria-haspopup="dialog" aria-label={`${name}. ${hint}`} title={hint}
-    onPointerDown={start} onPointerUp={cancel} onPointerCancel={cancel} onPointerLeave={cancel} onTouchCancel={cancel} onContextMenu={event=>event.preventDefault()}
+  const release = event => {
+    const current=press.current
+    if(!current||current.id!==event.pointerId||event.isPrimary===false||Math.hypot(event.clientX-current.x,event.clientY-current.y)>current.slop){cancel();return}
+    // Input can reach a busy main thread before an overdue timer callback.
+    // Compare event creation times so a queued short tap cannot become a hold.
+    const eventAt=inputTimestamp(event)
+    const elapsed=current.eventAt!=null&&eventAt!=null?eventAt-current.eventAt:performance.now()-current.at
+    if(elapsed>=2000)open()
+    else cancel()
+  }
+  const hint = t('Tap the expand icon, hold for 2 seconds or press Enter to view sets.')
+  return <button type="button" ref={button} className={'history-exercise-row'+(holding?' is-holding':'')} data-exercise-id={entry.id} aria-haspopup="dialog" aria-label={`${name}. ${hint}`}
+    onPointerDown={start} onPointerUp={release} onPointerCancel={cancel} onPointerLeave={cancel} onTouchCancel={cancel} onContextMenu={event=>event.preventDefault()}
     onDragStart={event=>{event.preventDefault();cancel()}}
-    onClick={event=>{if(event.detail===0)open()}}>
+    onClick={event=>{if(event.detail===0||event.target.closest?.('[data-history-open]'))open()}}>
     <Thumb ex={exercise}/><span className="history-exercise-row-copy"><span className="tt history-exercise-name">{name}{pr&&<span className="pr"><Icon name="trophy"/>PR</span>}</span>
       {entry.substitutedFor&&<span className="small dim">{t('Substituted for {0}',exerciseNameFor(exOr(entry.substitutedFor),{state,routineId:workout.routineId}))}</span>}
-    </span><Icon name="expand" className="history-exercise-open"/>
+    </span><span className="history-exercise-open" data-history-open aria-hidden="true"><Icon name="expand"/></span>
   </button>
 }

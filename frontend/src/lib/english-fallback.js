@@ -1758,6 +1758,7 @@ export default {
 ,"Counts training dates, not calendar days.":"Counts training dates, not calendar days."
 ,"Four months per PDF page.":"Four months per PDF page."
 ,"Hold for 2 seconds or press Enter to view sets.":"Hold for 2 seconds or press Enter to view sets."
+,"Tap the expand icon, hold for 2 seconds or press Enter to view sets.":"Tap the expand icon, hold for 2 seconds or press Enter to view sets."
 ,"Years":"Years"
 ,"This workout changed while you were editing. Cancel and reopen it before saving.":"This workout changed while you were editing. Cancel and reopen it before saving."
 }

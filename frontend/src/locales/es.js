@@ -2189,6 +2189,7 @@ export default {
   "PIN keypad": "Teclado del PIN",
   "Delete last digit": "Borrar último dígito",
   "Hold for 2 seconds or press Enter to view sets.": "Mantén pulsado 2 segundos o pulsa Intro para ver las series.",
+  "Tap the expand icon, hold for 2 seconds or press Enter to view sets.": "Pulsa el icono de ampliar, mantén pulsado 2 segundos o pulsa Intro para ver las series.",
   "Years": "Años",
   "This workout changed while you were editing. Cancel and reopen it before saving.": "Este entrenamiento cambió mientras lo editabas. Cancela y vuelve a abrirlo antes de guardar.",
 };

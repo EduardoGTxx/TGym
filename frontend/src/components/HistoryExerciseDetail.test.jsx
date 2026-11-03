@@ -22,6 +22,14 @@ const pointer=(type,options={},target=host.querySelector('.history-exercise-row'
 const advance=ms=>act(()=>vi.advanceTimersByTime(ms))
 const state=()=>useStore.getState().S
 const mountRow=()=>act(()=>root.render(<><HistoryExerciseRow entry={state().workouts[0].entries[0]} workout={state().workouts[0]} pr/><Sheets/></>))
+const openSavedSets=sets=>{
+  const S={...state(),workouts:[{...workout(),entries:[{...entry(),sets}]}]}
+  act(()=>useStore.setState({S}));localStorage.setItem('gym_state_v1',JSON.stringify(S))
+  const saved=JSON.stringify(S),stored=localStorage.getItem('gym_state_v1')
+  mountRow();pointer('pointerdown');advance(2000)
+  expect(host.querySelector('.history-exercise-detail')).not.toBeNull()
+  return()=>{expect(JSON.stringify(state())).toBe(saved);expect(localStorage.getItem('gym_state_v1')).toBe(stored)}
+}
 beforeEach(()=>{
   globalThis.IS_REACT_ACT_ENVIRONMENT=true;vi.useFakeTimers();_setLangState('en');bindUI(useUI)
   initialState=useStore.getState().S;initialStored=localStorage.getItem('gym_state_v1');initialFlush=useStore.getState().flushPersistence
@@ -53,6 +61,30 @@ it('opens only after a full two-second hold and preserves every saved field and 
   pointer('pointerup');advance(3000);expect(useUI.getState().sheets).toHaveLength(1)
   act(()=>useUI.getState().closeAll());expect(host.querySelector('.history-exercise-detail')).toBeNull()
   expect(JSON.stringify(state())).toBe(before);expect(localStorage.getItem('gym_state_v1')).toBe(stored)
+})
+it.each([
+  ['dropset','drops',[{w:60,r:4},{w:45,r:7}],['Drop 1','Drop 2'],['60 lb','45 lb']],
+  ['restpause','clusters',[{r:6,restSec:15},{r:3,restSec:20}],['Burst 1','Burst 2'],['6 reps','3 reps']],
+])('opens saved %s details and retains valid nested results after malformed rows', (type,key,valid,labels,results)=>{
+  const unchanged=openSavedSets([{type,w:70,r:9,done:true,[key]:[null,false,12,'invalid',[],...valid]}])
+  const rows=[...host.querySelectorAll('.history-exercise-extras li')]
+  expect(rows).toHaveLength(2)
+  expect(rows.map(row=>row.querySelector('b').textContent)).toEqual(labels)
+  rows.forEach((row,index)=>expect(row.textContent).toContain(results[index]))
+  expect(host.querySelector('.history-exercise-set').textContent).toContain('70 lb')
+  unchanged()
+})
+it('keeps main results readable without an empty extras list when saved nested rows are all malformed',()=>{
+  const malformed=[null,false,12,'invalid',[]]
+  const unchanged=openSavedSets([
+    {type:'dropset',w:80,r:6,done:true,drops:malformed},
+    {type:'restpause',w:65,r:8,done:true,clusters:malformed},
+  ])
+  expect(host.querySelectorAll('.history-exercise-set')).toHaveLength(2)
+  expect(host.querySelector('.history-exercise-extras')).toBeNull()
+  const text=host.querySelector('.history-exercise-detail').textContent
+  expect(text).toContain('80 lb');expect(text).toContain('65 lb')
+  unchanged()
 })
 it.each(['pointerup','pointercancel','pointerleave','pointermove','scroll','blur','touchcancel','multitouch','secondary-pointer'])('cancels an incomplete hold on %s without opening another sheet',kind=>{
   mountRow();pointer('pointerdown');advance(1500)
@@ -202,4 +234,96 @@ it('seeds the editor from the latest record at Edit instead of an obsolete mount
   await act(()=>useStore.setState({S:latest}));await act(()=>exactButton('Edit workout').click())
   expect(host.querySelector('textarea').value).toBe('Saved before editing');await confirmEdit()
   expect(state().workouts[0].entries[0].sets[1].r).toBe(11);expect(state().workouts[0].note).toBe('Saved before editing')
+})
+
+// Contact timestamps distinguish a full hold from a short release queued while
+// the main thread is busy. Leave the timer pending in these release-order cases.
+const timedPointer=(type,stamp,options={},target=host.querySelector('.history-exercise-row'))=>{
+  const event=new PointerEvent(type,{bubbles:true,button:0,pointerId:1,isPrimary:true,clientX:20,clientY:20,...options})
+  Object.defineProperty(event,'timeStamp',{value:stamp})
+  act(()=>target.dispatchEvent(event))
+}
+it('opens a completed two-second hold when release arrives before its overdue timer',()=>{
+  mountRow();timedPointer('pointerdown',100);timedPointer('pointerup',2100)
+  expect(useUI.getState().sheets).toHaveLength(1)
+  const ids=useUI.getState().sheets.map(sheet=>sheet.id)
+  advance(5000);expect(useUI.getState().sheets.map(sheet=>sheet.id)).toEqual(ids)
+})
+it('does not turn a queued short release into a hold by using its late processing time',()=>{
+  mountRow();let now=100;vi.spyOn(performance,'now').mockImplementation(()=>now)
+  timedPointer('pointerdown',100);now=5000;timedPointer('pointerup',2099)
+  expect(useUI.getState().sheets).toHaveLength(0)
+  advance(5000);expect(useUI.getState().sheets).toHaveLength(0)
+})
+it.each(['scroll','pointercancel','pointerleave','pointermove','multitouch','blur'])('never revives a cancelled %s hold on a late release',kind=>{
+  mountRow();timedPointer('pointerdown',100)
+  if(kind==='scroll')act(()=>document.dispatchEvent(new Event('scroll')))
+  else if(kind==='blur')act(()=>window.dispatchEvent(new Event('blur')))
+  else if(kind==='multitouch'){
+    const event=new Event('touchstart',{bubbles:true});Object.defineProperty(event,'touches',{value:[{},{}]})
+    act(()=>document.dispatchEvent(event))
+  }else if(kind==='pointerleave')pointer('pointerout',{relatedTarget:document.body})
+  else timedPointer(kind,150,{clientX:kind==='pointermove'?40:20})
+  timedPointer('pointerup',2500);advance(5000)
+  expect(useUI.getState().sheets).toHaveLength(0)
+})
+it('rejects release outside the movement tolerance even without a delivered move event',()=>{
+  mountRow();timedPointer('pointerdown',100,{pointerType:'touch'});timedPointer('pointerup',2300,{pointerType:'touch',clientX:35})
+  advance(5000);expect(useUI.getState().sheets).toHaveLength(0)
+})
+it('cancels a late window release outside the exercise instead of opening it',()=>{
+  mountRow();timedPointer('pointerdown',100);timedPointer('pointerup',2500,{},window)
+  advance(5000);expect(useUI.getState().sheets).toHaveLength(0)
+})
+it('does not duplicate a detail already opened by the timer on release or assistive click',()=>{
+  mountRow();timedPointer('pointerdown',100);advance(2000)
+  const ids=useUI.getState().sheets.map(sheet=>sheet.id);expect(ids).toHaveLength(1)
+  timedPointer('pointerup',2300)
+  act(()=>host.querySelector('.history-exercise-row').click());advance(5000)
+  expect(useUI.getState().sheets.map(sheet=>sheet.id)).toEqual(ids)
+})
+it('uses monotonic processing time only when event timestamps are unavailable',()=>{
+  mountRow();let now=100;vi.spyOn(performance,'now').mockImplementation(()=>now)
+  timedPointer('pointerdown',NaN);now=2099;timedPointer('pointerup',NaN)
+  expect(useUI.getState().sheets).toHaveLength(0)
+  now=3000;timedPointer('pointerdown',NaN);now=5000;timedPointer('pointerup',NaN)
+  expect(useUI.getState().sheets).toHaveLength(1)
+})
+it('does not fall back to processing time for backwards but available event timestamps',()=>{
+  mountRow();let now=100;vi.spyOn(performance,'now').mockImplementation(()=>now)
+  timedPointer('pointerdown',100);now=5000;timedPointer('pointerup',50)
+  advance(5000);expect(useUI.getState().sheets).toHaveLength(0)
+})
+it('still refuses a completed hold if its source became inert before release',()=>{
+  mountRow();timedPointer('pointerdown',100);host.setAttribute('inert','');timedPointer('pointerup',2200)
+  advance(5000);expect(useUI.getState().sheets).toHaveLength(0)
+})
+it.each(['area','icon'])('opens saved sets with one short tap on the expand %s without editing data',kind=>{
+  const before=JSON.stringify(state()),stored=localStorage.getItem('gym_state_v1');mountRow()
+  const row=host.querySelector('.history-exercise-row'),area=row.querySelector('[data-history-open]'),target=kind==='icon'?area.querySelector('svg'):area
+  expect(row.tagName).toBe('BUTTON');expect(row.querySelector('button')).toBeNull();expect(row.hasAttribute('title')).toBe(false)
+  pointer('pointerdown',{},target);advance(80);pointer('pointerup',{},target)
+  act(()=>target.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})))
+  expect(useUI.getState().sheets).toHaveLength(1);const id=useUI.getState().sheets[0].id
+  act(()=>target.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})))
+  expect(useUI.getState().sheets.map(sheet=>sheet.id)).toEqual([id])
+  expect(host.querySelector('.history-exercise-detail')).not.toBeNull()
+  expect(JSON.stringify(state())).toBe(before);expect(localStorage.getItem('gym_state_v1')).toBe(stored)
+})
+it.each(['.history-exercise-row-copy','.thumb'])('keeps a short tap on %s from opening saved sets',selector=>{
+  const before=JSON.stringify(state()),stored=localStorage.getItem('gym_state_v1');mountRow()
+  const target=host.querySelector('.history-exercise-row').querySelector(selector)
+  pointer('pointerdown',{},target);advance(80);pointer('pointerup',{},target)
+  act(()=>target.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})));advance(2500)
+  expect(useUI.getState().sheets).toHaveLength(0)
+  expect(JSON.stringify(state())).toBe(before);expect(localStorage.getItem('gym_state_v1')).toBe(stored)
+})
+it('does not open another detail from the expand compatibility click after a complete hold',()=>{
+  const before=JSON.stringify(state()),stored=localStorage.getItem('gym_state_v1');mountRow()
+  const area=host.querySelector('[data-history-open]')
+  pointer('pointerdown',{},area);advance(2000);expect(useUI.getState().sheets).toHaveLength(1)
+  const id=useUI.getState().sheets[0].id
+  pointer('pointerup',{},area);act(()=>area.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})));advance(2500)
+  expect(useUI.getState().sheets.map(sheet=>sheet.id)).toEqual([id])
+  expect(JSON.stringify(state())).toBe(before);expect(localStorage.getItem('gym_state_v1')).toBe(stored)
 })
