@@ -10,6 +10,45 @@ function Sheet({ sheet, active }) {
   const panel = useRef(null)
   const titleId = useId()
   const opener = useRef(null)
+  const backdropPress = useRef(null)
+  // A long hold can open a sheet before the initiating contact ends. Its
+  // compatibility mouse click may then land on this new backdrop. Only a
+  // pointer gesture that started here can dismiss it; mousedown cannot arm it.
+  useEffect(() => {
+    const reset = () => { backdropPress.current = null }
+    const release = event => {
+      const press = backdropPress.current
+      if (press && event.pointerId === press.id && event.isPrimary !== false && event.target === press.target) press.released = true
+      else reset()
+    }
+    const multi = event => { if (event.touches?.length > 1) reset() }
+    const hidden = () => { if (document.hidden) reset() }
+    window.addEventListener('pointerdown', reset, true)
+    window.addEventListener('pointerup', release, true)
+    window.addEventListener('pointercancel', reset, true)
+    window.addEventListener('blur', reset)
+    document.addEventListener('touchstart', multi, true)
+    document.addEventListener('visibilitychange', hidden)
+    return () => {
+      window.removeEventListener('pointerdown', reset, true)
+      window.removeEventListener('pointerup', release, true)
+      window.removeEventListener('pointercancel', reset, true)
+      window.removeEventListener('blur', reset)
+      document.removeEventListener('touchstart', multi, true)
+      document.removeEventListener('visibilitychange', hidden)
+    }
+  }, [])
+  useEffect(() => { backdropPress.current = null }, [active, sheet.locked])
+  const backdropDown = event => {
+    if (active && !sheet.locked && event.button === 0 && event.isPrimary !== false && event.target === event.currentTarget) {
+      backdropPress.current = { id: event.pointerId, target: event.currentTarget, released: false }
+    }
+  }
+  const backdropClick = event => {
+    const press = backdropPress.current
+    backdropPress.current = null
+    if (active && !sheet.locked && (event.detail === 0 || (press?.target === event.currentTarget && press.released))) closeSheet(sheet.id)
+  }
   useEffect(() => {
     if (!active || !panel.current) return
     const el = panel.current
@@ -107,14 +146,14 @@ function Sheet({ sheet, active }) {
   if (sheet.kind === 'center') {
     return (
       <div inert={!active} aria-hidden={!active || undefined}>
-        <div className="mback" onClick={() => { if (!sheet.locked) close() }} />
+        <div className="mback" onPointerDown={backdropDown} onClick={backdropClick} />
         <div className="center" ref={panel} role="dialog" aria-label="TGym" aria-modal={active || undefined} tabIndex={-1}>{toolbar}{sheet.render(close)}</div>
       </div>
     )
   }
   return (
     <div inert={!active} aria-hidden={!active || undefined}>
-      <div className="mback" onClick={() => { if (!sheet.locked) close() }} />
+      <div className="mback" onPointerDown={backdropDown} onClick={backdropClick} />
       <div className="sheet" role="dialog" aria-label="TGym" aria-modal={active || undefined} tabIndex={-1} ref={el => { ref.current = el; panel.current = el }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onTouchCancel={onTouchCancel}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
         {toolbar}
