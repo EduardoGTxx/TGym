@@ -22,6 +22,7 @@ import { t, instrFor, exerciseNameFor, originalExerciseNameFor, getLang, INSTR_L
 import { nav } from './lib/nav.js'
 import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
+import HistoryExerciseRow, { historyExercise, historyResultUnit } from './components/HistoryExerciseDetail.jsx'
 import PlateCalculator from './components/PlateCalculator.jsx'
 import Stepper from './components/Stepper.jsx'
 import BodyWeightPicker from './components/BodyWeightPicker.jsx'
@@ -51,7 +52,7 @@ import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, loadingStepFor, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { buildCompletedWorkout } from './lib/finish-workout.js'
-import { isWarmupRow } from './lib/workout-model.js'
+import { isWarmupRow, modeForSet } from './lib/workout-model.js'
 import { GUIDED_PLANS, createGuidedPlan } from './lib/guided-plans.js'
 import { saveImportUndo } from './lib/import-undo.js'
 import { MEASURE_FIELDS, measurementValue } from './lib/stats-insights.js'
@@ -1423,6 +1424,8 @@ function WorkoutDetail({ w: original, close }) {
   const st = useStore(s => s.S)
   const update = useStore(s => s.update)
   const w=st.workouts.find(row=>row.id===original.id)||original
+  const historyUnit=historyResultUnit(null,null,w,st)
+  const bodyweightUnit=historyResultUnit({unit:w.bwUnit||w.bodyweightUnit},null,w,st)
   const [duration,setDuration]=useState(()=>String(Math.round(workoutElapsedMs(original)/6000)/10))
   const [durationError,setDurationError]=useState('')
   // The session note is editable here rather than only at the finish sheet: what you want to
@@ -1430,36 +1433,55 @@ function WorkoutDetail({ w: original, close }) {
   const [note, setNote] = useState(w.note || '')
   const [editing, setEditing] = useState(false)
   const [draftEntries, setDraftEntries] = useState(() => JSON.parse(JSON.stringify(w.entries || [])))
-  const saveNote = () => update(s => {
-    const rec = s.workouts.find(x => x.id === w.id)
-    if (!rec) return
-    const text = note.trim().slice(0, NOTE_MAX)
-    if (text) rec.note = text; else delete rec.note
-  })
-  // onBlur alone loses the note: Escape, the Android back gesture and swipe-to-dismiss all
-  // close the sheet without ever moving focus out of the textarea. Flush on unmount too. The
-  // ref is what makes that work — a cleanup closes over the note from its own render, which
-  // is the empty string this started with.
-  const saveEdits = () => confirmSheet({ title: t('Save history changes?'), message: t('This updates the selected workout record. The change can only be reversed by restoring a backup.'), confirmText: t('Save changes'), onConfirm: () => {
-    update(s => { const rec = s.workouts.find(x => x.id === w.id); if (!rec) return; rec.entries = JSON.parse(JSON.stringify(draftEntries)); const text = note.trim().slice(0, NOTE_MAX); if (text) rec.note = text; else delete rec.note; rec.vol = workoutVolume(rec) })
-    setEditing(false); toast(t('Workout updated'))
-  } })
+  const [historySaving,setHistorySaving]=useState(false),[historyError,setHistoryError]=useState('')
+  const editBaseline=useRef(null),savingHistory=useRef(false),historyMounted=useRef(true)
+  useEffect(()=>{historyMounted.current=true;return()=>{historyMounted.current=false}},[])
+  const beginEdit=()=>{
+    editBaseline.current=JSON.stringify(w);setDraftEntries(JSON.parse(JSON.stringify(w.entries||[])));setNote(w.note||'');setHistoryError('');setEditing(true)
+  }
+  const commitEdits=async()=>{
+    if(savingHistory.current)return
+    savingHistory.current=true;setHistorySaving(true);setHistoryError('')
+    try{
+      update(s=>{
+        const rec=s.workouts.find(x=>x.id===w.id)
+        if(!rec||JSON.stringify(rec)!==editBaseline.current)throw Object.assign(new Error('history_changed'),{code:'history_changed'})
+        rec.entries=JSON.parse(JSON.stringify(draftEntries));const text=note.trim().slice(0,NOTE_MAX)
+        if(text)rec.note=text;else delete rec.note
+        rec.vol=workoutVolume(rec)
+      })
+      // Primary persistence succeeded. Retain that revision for an idempotent retry
+      // if the native mirror fails, while rejecting any later external edit.
+      editBaseline.current=JSON.stringify(useStore.getState().S.workouts.find(row=>row.id===w.id))
+      await useStore.getState().flushPersistence()
+      if(historyMounted.current){setEditing(false);toast(t('Workout updated'))}
+    }catch(error){
+      if(historyMounted.current)setHistoryError(t(error.code==='history_changed'?'This workout changed while you were editing. Cancel and reopen it before saving.':'Could not save. Check available storage and try again.'))
+    }finally{savingHistory.current=false;if(historyMounted.current)setHistorySaving(false)}
+  }
+  const saveEdits = () => {
+    if(savingHistory.current)return
+    confirmSheet({ title: t('Save history changes?'), message: t('This updates the selected workout record. The change can only be reversed by restoring a backup.'), confirmText: t('Save changes'), onConfirm:()=>{void commitEdits()} })
+  }
   return <>
     <h3>{w.name}</h3>
     {['inactivity','abandoned','auto_completed'].includes(w.finishReason)&&<div className="card"><p>{t('Auto-ended at {0}',clockAt(w.end))}</p><label>{t('Duration (minutes)')}<input className="input" type="number" min="0.1" step="0.1" value={duration} onChange={e=>setDuration(e.target.value)}/></label>{durationError&&<p role="alert">{durationError}</p>}<Button onClick={()=>{const corrected=correctWorkoutDuration(w,duration);if(!corrected){setDurationError(t('Enter a valid duration ending before now.'));return}update(s=>{const i=s.workouts.findIndex(row=>row.id===w.id);if(i>=0)s.workouts[i]=corrected});setDurationError('');toast(t('Workout updated'))}}>{t('Save duration')}</Button></div>}
     <ActivityMetrics workout={st.workouts.find(row=>row.id===w.id) || w} />
     {['inactivity','abandoned','auto_completed'].includes(w.finishReason) && w.resumeSnapshot && !st.active && <Button onClick={()=>{update(s=>resumeAutoFinished(s,w.id));close();nav('/workout')}}>{t('Continue in a new session')}</Button>}
-    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...(Number(w.end) > Number(w.start) ? [clockAt(w.start) + '–' + clockAt(w.end)] : []), ...durPart(workoutElapsedMs(w)), ...(!w.activity || w.activity.preservesWorkout ? [fmtVol(w.vol, st.unit)] : []), ...(w.bw ? [fmtWeight(w.bw) + ' ' + st.unit] : [])].join(' · ')}</div>
-    {(w.activity && !w.activity.preservesWorkout ? [] : editing ? draftEntries : w.entries).map((e, i) => {
-      const ex = EXIDX[e.id]
+    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...(Number(w.end) > Number(w.start) ? [clockAt(w.start) + '–' + clockAt(w.end)] : []), ...durPart(workoutElapsedMs(w)), ...(!w.activity || w.activity.preservesWorkout ? [fmtVol(w.vol, historyUnit)] : []), ...(w.bw ? [fmtWeight(w.bw) + ' ' + bodyweightUnit] : [])].join(' · ')}</div>
+    <fieldset className="workout-history-fields" disabled={historySaving}>
+    {!editing && (!w.activity || w.activity.preservesWorkout) && w.entries?.length > 0 && <p className="history-exercise-hint">{t('Hold for 2 seconds or press Enter to view sets.')}</p>}
+    {(w.activity && !w.activity.preservesWorkout ? [] : editing ? draftEntries : w.entries || []).map((e, i) => {
+      const ex = historyExercise(st,e)
+      if (!editing) return <HistoryExerciseRow key={i} entry={e} workout={w} pr={w.prs?.includes(e.id)}/>
       return <div key={i} className="row" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
         {ex && <Thumb ex={ex} />}
-        <div className="grow"><div className="tt capitalize" style={{ fontWeight: 600 }}>{exerciseNameFor(ex || e, { entry: e, routineId: w.routineId })} {w.prs && w.prs.includes(e.id) && <span className="pr"><Icon name="trophy" />PR</span>}</div>
-          {e.substitutedFor && <div className="small dim">{t('Substituted for {0}', exerciseNameFor(exOr(e.substitutedFor), { routineId: w.routineId }))}</div>}
-          {editing ? <div className="workout-edit-sets">{e.sets.map((set, si) => <div className="workout-edit-set" key={si}>
+        <div className="grow"><div className="tt capitalize" style={{ fontWeight: 600 }}>{exerciseNameFor(ex || e, { state:st, entry: e, routineId: w.routineId })} {w.prs && w.prs.includes(e.id) && <span className="pr"><Icon name="trophy" />PR</span>}</div>
+          {e.substitutedFor && <div className="small dim">{t('Substituted for {0}', exerciseNameFor(exOr(e.substitutedFor), { state:st, routineId: w.routineId }))}</div>}
+          <div className="workout-edit-sets">{(e.sets || []).map((set, si) => <div className="workout-edit-set" key={si}>
             <div className="edit-set-number">{t('Set')} {si + 1}</div>
-            {modeOf({ ...(e.target || {}), id: e.id }) === 'cardio' ? <><label><span>{t('Duration (min)')}</span><NumberField value={set.min} decimal={false} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, min: v } : x) }))} /></label><label><span>{t('Speed (km/h)')}</span><NumberField value={set.speed} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, speed: v } : x) }))} /></label></> : <><div><WeightField showLabel label={t('Weight ({0})', st.unit)} unit={st.unit} value={set.w || 0} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, w: v } : x) }))} /></div><label><span>{set.sec != null ? t('Seconds') : t('Reps')}</span><NumberField value={set.r ?? set.sec ?? 0} decimal={false} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, ...(x.sec != null ? { sec: v } : { r: v }) } : x) }))} /></label></>}
-          </div>)}</div> : <div className="ss">{e.sets.filter(s => s.done).map((s, si) => `${t('Set')} ${si + 1}: ${setLabel(e.id, s, e.target)}`).join('  ·  ') || t('no sets')}</div>}
+            {modeForSet(set,e.target) === 'cardio' ? <><label><span>{t('Duration (min)')}</span><NumberField value={set.min} decimal={false} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, min: v } : x) }))} /></label><label><span>{t('Speed (km/h)')}</span><NumberField value={set.speed} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, speed: v } : x) }))} /></label></> : <><div><WeightField showLabel label={t('Weight ({0})', historyResultUnit(set,e,w,st))} unit={historyResultUnit(set,e,w,st)} value={set.w || 0} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, w: v } : x) }))} /></div><label><span>{modeForSet(set,e.target) === 'time' ? t('Seconds') : t('Reps')}</span><NumberField value={modeForSet(set,e.target) === 'time' ? set.sec ?? set.seconds ?? set.durationSec ?? 0 : set.r ?? 0} decimal={false} onChange={v => setDraftEntries(rows => rows.map((row, ri) => ri !== i ? row : { ...row, sets: row.sets.map((x, xi) => xi === si ? { ...x, ...(modeForSet(x,row.target) === 'time' ? { sec: v } : { r: v }) } : x) }))} /></label></>}
+          </div>)}</div>
           {e.note && <div className="small dim" style={{ marginTop: 3 }}>
             {e.notePin && <Icon name="flag" style={{ fontSize: 12, marginRight: 4, verticalAlign: '-1px', color: 'var(--yellow)' }} />}{e.note}
           </div>}</div>
@@ -1470,15 +1492,17 @@ function WorkoutDetail({ w: original, close }) {
       placeholder={t('How the session went as a whole.')}
       onChange={e => setNote(e.target.value)} />
     <div style={{ height: 10 }} />
-    {editing ? <div className="row" style={{ gap: 8 }}><Button variant="primary" style={{ flex: 1 }} onClick={saveEdits}>{t('Save changes')}</Button><Button style={{ flex: 1 }} onClick={() => { setDraftEntries(JSON.parse(JSON.stringify(w.entries || []))); setNote(w.note || ''); setEditing(false) }}>{t('Cancel')}</Button></div> : <Button icon="pencil" onClick={() => w.activity?.source === 'manual' ? (close(), openActivityEditor({existing:w})) : setEditing(true)}>{t('Edit workout')}</Button>}
+    {historyError&&<p role="alert" className="history-exercise-save-error">{historyError}</p>}
+    {editing ? <div className="row" style={{ gap: 8 }}><Button variant="primary" style={{ flex: 1 }} onClick={saveEdits}>{t('Save changes')}</Button><Button style={{ flex: 1 }} onClick={() => { setDraftEntries(JSON.parse(JSON.stringify(w.entries || []))); setNote(w.note || ''); setHistoryError('');setEditing(false) }}>{t('Cancel')}</Button></div> : <Button icon="pencil" onClick={() => w.activity?.source === 'manual' ? (close(), openActivityEditor({existing:w})) : beginEdit()}>{t('Edit workout')}</Button>}
+    </fieldset>
     <div style={{ height: 14 }} />
-    <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => { s.workouts = s.workouts.filter(x => x.id !== w.id) }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
+    <Button variant="danger" disabled={historySaving} onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => { s.workouts = s.workouts.filter(x => x.id !== w.id) }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
   </>
 }
 export const workoutDetailSheet = w => ui().openSheet(close => <WorkoutDetail w={w} close={close} />)
 
 /* ============================ calendar ============================ */
-export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAnchor, exporting = false, includeMeasurements = true, levels = ['week', 'month', 'months', 'years'], editable = false, streakView = false, streakHeading, datePicker = false, selectedDate, onSelectDate, markedDates = [] }) {
+export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAnchor, exporting = false, includeMeasurements = true, levels = ['week', 'month', 'months', 'years'], editable = false, streakView = false, streakHeading, compactNavigation = false, datePicker = false, selectedDate, onSelectDate, markedDates = [] }) {
   const [level, setLevel] = useState(initialLevel)
   const [anchor, setAnchor] = useState(() => initialAnchor ? new Date(initialAnchor) : new Date())
   const [selected, setSelected] = useState(selectedDate || todayISO())
@@ -1571,22 +1595,25 @@ export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAncho
   const visibleStart=new Date(anchor); visibleStart.setDate(visibleStart.getDate()-(visibleStart.getDay()+6)%7)
   const isDeloadVisible=!datePicker&&level==='week'&&Array.from({length:7},(_,i)=>{const date=new Date(visibleStart);date.setDate(date.getDate()+i);return calendarDeload(st,isoOf(date))}).some(Boolean)
   const exportCalendar = () => ui().openSheet(close=><CalendarExport S={st} anchor={anchor} close={close}/>)
-  const viewOptions=[{value:'week',label:t('Week')},{value:'month',label:t('Month')},{value:'months',label:t('Year')}].filter(option=>levels.includes(option.value))
-  const visiblePeriod = level==='week' ? `${Number(periodStart.slice(-2))}-${Number(periodEnd.slice(-2))}` : level==='month' ? t(MONTHS_LONG[anchor.getMonth()]) : title
+  const viewOptions=[{value:'week',label:t('Week')},{value:'month',label:t('Month')},{value:'months',label:t('Year')},...(compactNavigation ? [{value:'years',label:t('Years')}] : [])].filter(option=>levels.includes(option.value))
+  const visiblePeriod = level==='week' ? compactNavigation ? `${fmtDate(periodStart)} – ${fmtDate(periodEnd)}` : `${Number(periodStart.slice(-2))}-${Number(periodEnd.slice(-2))}` : level==='month' ? t(MONTHS_LONG[anchor.getMonth()]) : title
+  const periodYear = compactNavigation && (level==='week'||level==='month') ? periodStart.slice(0,4)===periodEnd.slice(0,4) ? periodStart.slice(0,4) : `${periodStart.slice(0,4)}–${periodEnd.slice(0,4)}` : null
   const openView=()=>ui().openSheet(close=><><h3>{t('Calendar view')}</h3><div className="sect-b" role="radiogroup" aria-label={t('Calendar view')}>{viewOptions.map(option=><button type="button" className="lrow tap" role="radio" aria-checked={level===option.value} key={option.value} onClick={()=>{setLevel(option.value);close()}}><span className="lrow-m"><span className="lrow-t">{option.label}</span></span>{level===option.value&&<Icon name="check" className="lrow-k"/>}</button>)}</div></>)
   const periodCount=!datePicker&&<div className="zoomcal-period-active" data-active-days={activeCount} data-period-start={periodStart} data-period-end={periodEnd}><strong aria-label={`${t('Active days')}: ${activeCount}`}>{activeCount}</strong></div>
   const trackingVisible=!datePicker&&trackedSince>=periodStart&&trackedSince<=periodEnd
+  const trackingCaption=!streakView&&trackingVisible&&<div className="zoomcal-tracking-start" data-tracking-start={trackedSince} style={{'--tracking-fill':TRACKING_START_MARKER.fill,'--tracking-border':TRACKING_START_MARKER.border}}><i aria-hidden="true"/><span>{t('Tracking since {0}',fmtDate(trackedSince,true,true))}</span></div>
   const legend=!datePicker&&<div className="zoomcal-legend">
     {isDeloadVisible&&<span><i className="deload"/>{t('Deload Week')}</span>}
     {calendarLegend().map(visual=><span key={visual.status} data-legend={visual.status}><i aria-hidden="true" className={visual.status} style={calendarVisualStyle(visual.status)}/>{t(visual.label)}</span>)}
     {streakView&&trackingVisible&&<span data-legend="tracking-start"><i className="calendar-tracking-key" aria-hidden="true" style={{background:TRACKING_START_MARKER.fill,borderColor:TRACKING_START_MARKER.border}}/>{t('Tracking start')}</span>}
   </div>
-  return <div className={'zoomcal' + (streakView ? ' streak-calendar' : '') + (datePicker ? ' date-picker' : '')} data-level={level} data-tour={streakView ? 'streak-calendar' : undefined}>
+  return <div className={'zoomcal' + (streakView ? ' streak-calendar' : '') + (compactNavigation ? ' compact-navigation' : '') + (datePicker ? ' date-picker' : '')} data-level={level} data-tour={streakView ? 'streak-calendar' : undefined}>
     {streakView&&streakHeading}
-    {!streakView&&<div className="zoomcal-toolbar">{!exporting&&<Segmented value={level==='years'?'months':level} onChange={setLevel} options={viewOptions}/>}<div className="zoomcal-scale"><button className="iconbtn" aria-label={t('Zoom out')} title={t('Zoom out')} disabled={zi>=levels.length-1} onClick={()=>setLevel(levels[zi+1])}><Icon name="minus"/></button><button className="iconbtn" aria-label={t('Zoom in')} title={t('Zoom in')} disabled={zi<=0} onClick={()=>setLevel(levels[zi-1])}><Icon name="plus"/></button></div></div>}
-    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView ? <div className="zoomcal-period-heading"><button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{visiblePeriod}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
-    {!streakView&&periodCount}
-    {!streakView&&trackingVisible&&<div className="zoomcal-tracking-start" data-tracking-start={trackedSince} style={{'--tracking-fill':TRACKING_START_MARKER.fill,'--tracking-border':TRACKING_START_MARKER.border}}><i aria-hidden="true"/><span>{t('Tracking since {0}',fmtDate(trackedSince,true,true))}</span></div>}
+    {!streakView&&!compactNavigation&&<div className="zoomcal-toolbar">{!exporting&&<Segmented value={level==='years'?'months':level} onChange={setLevel} options={viewOptions}/>}<div className="zoomcal-scale"><button className="iconbtn" aria-label={t('Zoom out')} title={t('Zoom out')} disabled={zi>=levels.length-1} onClick={()=>setLevel(levels[zi+1])}><Icon name="minus"/></button><button className="iconbtn" aria-label={t('Zoom in')} title={t('Zoom in')} disabled={zi<=0} onClick={()=>setLevel(levels[zi-1])}><Icon name="plus"/></button></div></div>}
+    {compactNavigation&&trackingCaption}
+    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView||compactNavigation ? <div className="zoomcal-period-heading"><button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{visiblePeriod}{periodYear&&<small>{periodYear}</small>}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
+    {!streakView&&!compactNavigation&&periodCount}
+    {!compactNavigation&&trackingCaption}
     {body}
     {streakView&&!exporting&&!datePicker ? <details className="zoomcal-key"><summary>{t('Calendar key')}<Icon name="chevronDown"/></summary>{legend}</details> : legend}
     {!exporting&&streakView&&selectedState.planned&&<div className="zoomcal-streak-muscles"><Button size="sm" onClick={()=>routineMuscleSheet(effectiveRoutineId(st,selected))}>{t('Muscles trained')}</Button></div>}
@@ -1665,10 +1692,9 @@ function ActivityHistory({ close }) {
     if (rows.length === 1) { close(); workoutDetailSheet(rows[0]) }
     else if (rows.length) { close(); calendarSheet(iso) }
   }
-  return <><h3>{t('Workout calendar')}</h3>
-    <div className="muted small" style={{ marginBottom: 14 }}>{t('Start with one week. Zoom out to browse months and years; tap a trained day for its workout.')}</div>
-    <ZoomCalendar S={st} onDay={openDay} />
-  </>
+  return <div className="workout-history-calendar"><h3>{t('Workout calendar')}</h3>
+    <ZoomCalendar S={st} onDay={openDay} compactNavigation />
+  </div>
 }
 export const activityHistorySheet = () => ui().openSheet(close => <ActivityHistory close={close} />)
 
@@ -1706,13 +1732,13 @@ export const sessionTimingSheet = () => ui().openSheet(() => <SessionTiming />)
 export function WorkoutRow({ w, onClick }) {
   const st = useStore(s => s.S)
   const glyph = glyphOf((st.routines.find(r => r.id === w.routineId) || {}).emoji)
-  return <div className="item" onClick={onClick}>
+  return <button type="button" className="item" onClick={onClick}>
     <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19 }}><Icon name={glyph} /></span>
     <div className="grow"><div className="tt">{w.name}</div>
-      <div className="ss">{[fmtDate(w.d, true), ...durPart(workoutElapsedMs(w)), ...(w.activity && !w.activity.preservesWorkout ? [w.activity.distanceKm!=null ? fmtNum(w.activity.distanceKm)+' km' : null, w.activity.source==='manual'?t('Manual'):'Health Connect'].filter(Boolean) : [t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit)])].join(' · ')}</div></div>
+      <div className="ss">{[fmtDate(w.d, true), ...durPart(workoutElapsedMs(w)), ...(w.activity && !w.activity.preservesWorkout ? [w.activity.distanceKm!=null ? fmtNum(w.activity.distanceKm)+' km' : null, w.activity.source==='manual'?t('Manual'):'Health Connect'].filter(Boolean) : [t('{0} sets', setsDone(w)), fmtVol(w.vol, historyResultUnit(null,null,w,st))])].join(' · ')}</div></div>
     {w.prs && w.prs.length > 0 && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
     <Icon name="chevronRight" className="chev" />
-  </div>
+  </button>
 }
 
 /* ============================ workout lifecycle ============================ */

@@ -6,6 +6,7 @@ import { workoutElapsedMs } from './workout-time.js'
 import { loggedWorkouts } from './daily-plan.js'
 import { isoOf } from './format.js'
 import { isWarmupRow } from './workout-model.js'
+import { weightUnit } from './weight-units.js'
 
 const csvCell = value => {
   const text = String(value ?? '')
@@ -28,7 +29,7 @@ export function historyCsv(S, filters) {
     const start = Number(w.start) > 0 && Number.isFinite(Number(w.start)) ? new Date(Number(w.start)).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) : ''
     const end = Number(w.end) > Number(w.start) ? new Date(Number(w.end)).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) : ''
     const duration = Number(w.end) > Number(w.start) ? Math.round(workoutElapsedMs(w) / 60000) : ''
-    sets.forEach((s, i) => rows.push([w.d, start, end, duration, w.name, exerciseNameFor(ex, S), S.exerciseAliases?.[e.id] || '', i + 1, s.w ?? '', s.unit || w.unit || S.unit, displayReps(s.r, e.target) ?? '', s.sec ?? '', w.note || '', w.activity?.type || e.target?.activityType || '', w.activity?.source || '', w.activity?.distanceKm ?? s.distanceKm ?? '', w.activity?.averageHeartRate ?? '', w.activity?.calories ?? '', w.activity?.steps ?? '', w.activity?.elevationM ?? '', w.activity?.rpe ?? '', t(s.done ? 'Completed' : 'Pending'), isWarmupRow(s) ? t('Warm-up') : '', s.rir ?? '', s.rpe ?? '', isPerSide(e.target) && modeOf(e.target) === 'reps' ? displayReps(s.r, e.target) ?? '' : '']))
+    sets.forEach((s, i) => rows.push([w.d, start, end, duration, w.name, exerciseNameFor(ex, S), S.exerciseAliases?.[e.id] || '', i + 1, s.w ?? '', weightUnit(s.unit, weightUnit(e.unit, weightUnit(w.unit, S.unit))), displayReps(s.r, e.target) ?? '', s.sec ?? '', w.note || '', w.activity?.type || e.target?.activityType || '', w.activity?.source || '', w.activity?.distanceKm ?? s.distanceKm ?? '', w.activity?.averageHeartRate ?? '', w.activity?.calories ?? '', w.activity?.steps ?? '', w.activity?.elevationM ?? '', w.activity?.rpe ?? '', t(s.done ? 'Completed' : 'Pending'), isWarmupRow(s) ? t('Warm-up') : '', s.rir ?? '', s.rpe ?? '', isPerSide(e.target) && modeOf(e.target) === 'reps' ? displayReps(s.r, e.target) ?? '' : '']))
   }
   return '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n')
 }

@@ -4,6 +4,7 @@ import { progressReportHTML,progressReportPages,wrapProgressText } from './progr
 import { convertWeightState,convertMeasurementState } from './unit-conversion.js'
 import { recordHeight } from './body-records.js'
 import { createBackup,validateBackupState } from './backup.js'
+import { LB_PER_KG } from './weight-units.js'
 const now=new Date('2026-09-26T12:00:00'), date=d=>new Date(d+'T12:00:00').getTime()
 const base=()=>({unit:'kg',measurementUnit:'cm',routines:[],week:{},workouts:[],bodyweight:[],measurements:[],inbody:[]})
 const workout=(id,d,w=80,r=8,rir=2,extra={})=>({id,d,start:date(d),end:date(d)+3600000,entries:[{id:'0025',target:{mode:'reps',bodyweight:false},sets:[{done:true,w,r,rir}]}],...extra})
@@ -48,6 +49,30 @@ describe('progress report: real history only',()=>{
  })
 })
 describe('exercise comparison and training aggregation',()=>{
+ it('projects entry and row unit stamps into report loads and volume without changing saved history',()=>{
+  const s=base(),w=workout('mixed','2026-09-01');w.unit='kg';w.entries[0].unit='lb'
+  w.entries[0].sets=[{done:true,w:80,r:10},{done:true,w:20,r:10,unit:'kg'},{done:true,w:20,r:10,unit:'invalid'},{done:true,w:200,r:10,phase:'warmup'}]
+  s.workouts=[w];const before=structuredClone(s),r=report(s)
+  expect(r.exercises).toHaveLength(1);expect(r.summary.workouts).toBe(1)
+  expect(r.exercises[0].sessions[0].sets).toBe(3)
+  expect(r.exercises[0].metrics.find(m=>m.key==='w').first.y).toBeCloseTo(80/LB_PER_KG,10)
+  expect(r.summary.volume).toBeCloseTo((80*10+20*10)/LB_PER_KG+20*10,10)
+  expect(r.routines[0].volume).toBeCloseTo(r.summary.volume,10)
+  expect(s).toEqual(before)
+ })
+ it('keeps mixed drop units distinct and counts rest-pause and per-side totals once',()=>{
+  const s={...base(),unit:'lb'},w=workout('mixed-drops','2026-09-01');w.unit='lb';w.entries[0].target.side=true;w.entries[0].unit='kg'
+  w.entries[0].sets=[
+   {done:true,type:'dropset',w:20,r:8,unit:'lb',drops:[{w:10,r:4,unit:'kg'},{w:10,r:4}]},
+   {done:true,type:'restpause',w:10,r:12,clusters:[{r:8},{r:4}]},
+   {done:false,type:'dropset',w:50,r:10,drops:[{unit:'kg',w:40,r:10}]},
+  ];s.workouts=[w];const before=structuredClone(s),r=report(s)
+  expect(r.summary.volume).toBeCloseTo(20*8+10*4+(10*4+10*12)*LB_PER_KG,10)
+  expect(r.exercises).toHaveLength(2)
+  expect(r.exercises.find(e=>e.type==='dropset').metrics.find(m=>m.key==='r').first.y).toBe(4)
+  expect(r.exercises.reduce((sum,e)=>sum+e.sessions[0].sets,0)).toBe(2)
+  expect(s).toEqual(before)
+ })
  it('does not infer improvement from missing load and retains dated legacy height alone',()=>{
   expect(comparePerformance({w:null,r:8,rir:2},{w:10,r:8,rir:2})).toBe('Insufficient Data')
   const r=report({...base(),heightCm:170,heightRecordedAt:'2026-08-01'})

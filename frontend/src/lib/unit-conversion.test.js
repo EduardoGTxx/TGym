@@ -86,3 +86,70 @@ it('updates stamped bodyweight and samples together without converting pounds tw
   expect(S.bodyweight[0]).toEqual({unit:'lb',w:154,samples:[{w:153}]})
   expect(S.bodyweight[1]).toEqual({unit:'lb',w:154.32,samples:[{w:152.12}]})
 })
+
+it('does not convert or round historical sessions already recorded in the destination unit', () => {
+  const workout = {
+    id:'already-lb', unit:'lb', bw:154.123456, vol:800.123456,
+    entries:[{id:'bench',target:{weight:80.123456,loadingStep:2.5000005},sets:[{unit:'lb',w:'80.123456',r:10,done:true,drops:[{w:40.123456}]}]}],
+    audit:{source:'portable history'},
+  }
+  const S={unit:'kg',workouts:[structuredClone(workout)]}
+  convertWeightState(S,'lb')
+  expect(S.workouts[0]).toEqual(workout)
+  expect(S.unit).toBe('lb')
+})
+
+it('uses the authoritative session, entry, target and set units independently', () => {
+  const S={unit:'kg',workouts:[{
+    unit:'lb',bw:70,bwUnit:'kg',bodyweight:154.123456,bodyweightUnit:'lb',vol:800.123456,
+    entries:[{unit:'kg',topW:20,target:{unit:'lb',weight:40.123456,inc:2.500005,loadingStep:5.5000005},sets:[
+      {unit:'lb',w:80.123456,r:10,done:true,role:'top',drops:[{w:40.123456},{unit:'kg',w:10}],note:'keep'},
+      {w:20,r:8,done:false,phase:'warmup'},
+    ]}],
+  }]}
+  convertWeightState(S,'lb')
+  const w=S.workouts[0],entry=w.entries[0]
+  expect(w).toMatchObject({unit:'lb',bw:154.32,bwUnit:'lb',bodyweight:154.123456,bodyweightUnit:'lb',vol:800.123456})
+  expect(entry).toMatchObject({unit:'lb',topW:44.09,target:{unit:'lb',weight:40.123456,inc:2.500005,loadingStep:5.5000005}})
+  expect(entry.sets).toEqual([
+    {unit:'lb',w:80.123456,r:10,done:true,role:'top',drops:[{w:40.123456},{unit:'lb',w:22.05}],note:'keep'},
+    {w:44.09,r:8,done:false,phase:'warmup'},
+  ])
+})
+
+it('converts a resume snapshot from its own unit and keeps timed progressions and legacy mode units intact', () => {
+  const S={unit:'kg',active:{unit:'lb',bw:70,bodyweightUnit:'kg',entries:[{sets:[{w:80,r:10}]}]},workouts:[{
+    unit:'lb',entries:[{sets:[{w:80,r:10}]}],
+    resumeSnapshot:{unit:'kg',entries:[{mode:'time',target:{mode:'time',unit:'sec',weight:20,inc:5,loadingStep:2.5},sets:[{sec:60,w:20,done:true}]}]},
+  }]}
+  convertWeightState(S,'lb')
+  expect(S.active).toMatchObject({unit:'lb',bw:154.32,bodyweightUnit:'lb',entries:[{sets:[{w:80,r:10}]}]})
+  expect(S.workouts[0].entries[0].sets[0].w).toBe(80)
+  const snapshot=S.workouts[0].resumeSnapshot,entry=snapshot.entries[0]
+  expect(snapshot.unit).toBe('lb')
+  expect(entry.target).toEqual({mode:'time',unit:'sec',weight:44.09,inc:5,loadingStep:5.511557})
+  expect(entry.sets[0]).toEqual({sec:60,w:44.09,done:true})
+})
+
+it('round-trips mixed historical units without converting an already matching set twice', () => {
+  const S={unit:'kg',workouts:[{unit:'lb',entries:[{unit:'kg',target:{unit:'lb',weight:80},sets:[{unit:'lb',w:80,r:10,done:true},{w:20,r:8}]}]}]}
+  convertWeightState(S,'lb')
+  expect(S.workouts[0].entries[0].sets.map(s=>s.w)).toEqual([80,44.09])
+  convertWeightState(S,'kg')
+  const entry=S.workouts[0].entries[0]
+  expect(S.workouts[0].unit).toBe('kg')
+  expect(entry.unit).toBe('kg');expect(entry.target).toEqual({unit:'kg',weight:36.29})
+  expect(entry.sets).toEqual([{unit:'kg',w:36.29,r:10,done:true},{w:20,r:8}])
+  const before=structuredClone(S)
+  convertWeightState(S,'kg')
+  expect(S).toEqual(before)
+})
+
+it('falls back through blank or unsupported load-unit stamps without reinterpreting legacy mode units', () => {
+  const S={unit:'kg',workouts:[{unit:'legacy',bw:70,entries:[{
+    unit:'',mode:'time',target:{unit:'sec',mode:'time',weight:20,inc:5},
+    sets:[{unit:'unsupported',w:20,sec:60,done:true}],
+  }]}]}
+  convertWeightState(S,'lb')
+  expect(S.workouts[0]).toMatchObject({unit:'lb',bw:154.32,entries:[{target:{unit:'sec',weight:44.09,inc:5},sets:[{w:44.09,sec:60,done:true}]}]})
+})

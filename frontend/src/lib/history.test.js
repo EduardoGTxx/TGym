@@ -4,6 +4,7 @@ import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, freestyleC
 import { EXDB } from './exercises.js'
 import { effortValue, effortLabel, rirRangeLabel } from './history.js'
 import { _setLangState } from './i18n-core.js'
+import { LB_PER_KG } from './weight-units.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
 const CARDIO = EXDB.find(e => e.bp === 'cardio').id
@@ -597,6 +598,35 @@ describe('applyIntensifierPlan', () => {
 })
 
 describe('workoutVolume', () => {
+  it('projects mixed saved row and drop units into the session unit without changing history', () => {
+    const w={unit:'kg',entries:[{unit:'lb',sets:[
+      {unit:'lb',w:80,r:10,done:true},
+      {unit:'kg',w:20,r:10,done:true},
+      {type:'dropset',w:40,r:5,done:true,drops:[{unit:'kg',w:10,r:5},{w:20,r:5}]},
+    ]}]}
+    const before=structuredClone(w)
+    expect(workoutVolume(w)).toBeCloseTo((80*10+40*5+20*5)/LB_PER_KG+20*10+10*5,10)
+    expect(w).toEqual(before)
+  })
+
+  it('resolves invalid stamps through the entry/session and excludes unfinished, warm-up and duplicate side volume', () => {
+    const w={unit:'lb',entries:[{unit:'kg',target:{side:true},sets:[
+      {unit:'unknown',w:20,r:8,done:true,leftDone:true,rightDone:true},
+      {unit:'kg',w:100,r:8,done:false,leftDone:true},
+      {unit:'kg',w:100,r:8,done:true,phase:'warmup'},
+      {unit:'kg',w:100,r:8,done:true,warmup:true},
+    ]},{unit:'unsupported',sets:[{w:10,r:2,done:true}]}]}
+    expect(workoutVolume(w)).toBeCloseTo(20*8*LB_PER_KG+20,10)
+  })
+
+  it('retains exact existing volume arithmetic for matching units and raw legacy sessions', () => {
+    const sets=[{w:20.123456789,r:7,done:true,type:'dropset',drops:[{w:11.987654321,r:5}]}]
+    const raw=20.123456789*7+11.987654321*5
+    expect(workoutVolume({unit:'kg',entries:[{unit:'kg',sets}]})).toBe(raw)
+    expect(workoutVolume({entries:[{unit:'lb',sets}]})).toBe(raw)
+    expect(workoutVolume({unit:'unknown',entries:[{unit:'lb',sets}]})).toBe(raw)
+  })
+
   it('counts reps work and leaves timed/cardio sets out — there is no weight × reps for a hold', () => {
     const w = { entries: [
       { id: LIFT, sets: [{ w: 60, r: 10, done: true }, { w: 60, r: 10, done: false }] },

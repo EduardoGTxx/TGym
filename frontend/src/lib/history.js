@@ -3,7 +3,8 @@ import { hasWorkoutActivity } from './session-activity.js'
 // Pure helpers over the state object S (ported 1:1 from the vanilla app).
 import { todayISO, isoOf, weekKey, fmtNum, fmtWeight } from './format.js'
 import { isCardio, isBodyweightEq } from './exercises.js'
-import { phaseForSet, modeForSet, modeForEntry, isWarmupRow, normalizeMode, extraVolumeOf, nextDropWeight, splitBurstReps } from './workout-model.js'
+import { phaseForSet, modeForSet, modeForEntry, isWarmupRow, normalizeMode, extraVolumeOf, dropsOf, nextDropWeight, splitBurstReps } from './workout-model.js'
+import { weightUnit, weightConversionFactor } from './weight-units.js'
 import { warmupPrescription, recalculatePendingWarmups } from './warmup.js'
 import { seedPlannedRir, backoffWeightFor, backoffRepsFor } from './training-plan.js'
 const objectOf = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {}
@@ -405,17 +406,28 @@ export function applyIntensifierPlan(sets, cfg) {
 }
 export function workoutVolume(w) {
   let v = 0
+  const volumeUnit = weightUnit(w.unit, null)
   // Count each saved row once; side confirmations never multiply recorded reps or volume.
-  // Drop-set drops and rest-pause bursts add their own weight x reps on top of the
-  // row's main/activation set (see extraVolumeOf).
+  // Drop-set drops add their weight x reps. Rest-pause reps already contain every
+  // burst, so the row's total is counted once (see extraVolumeOf).
   // Warm-ups are excluded here as everywhere else. The config sheet promises it in so many
   // words ("left out of volume, records and progression") and every other consumer already
   // does it; this line was the one that did not, which only stopped being harmless when a
   // routine started planning warm-ups by default. The number is written into the saved
   // workout, so an inflated one would stay wrong forever.
-  w.entries.forEach(e => e.sets.forEach(s => {
-    if (s.done && !isWarmupRow(s)) v += (s.w || 0) * (s.r || 0) + extraVolumeOf(s)
-  }))
+  w.entries.forEach(e => {
+    const entryUnit = weightUnit(e.unit, volumeUnit)
+    e.sets.forEach(s => {
+      if (!s.done || isWarmupRow(s)) return
+      // Historical imports can retain entry/row stamps different from the session.
+      // Project their tonnage into the declared session unit without rewriting loads.
+      // With no declared session unit, retain the legacy raw-volume convention.
+      if (!volumeUnit) { v += (s.w || 0) * (s.r || 0) + extraVolumeOf(s); return }
+      const rowUnit = weightUnit(s.unit, entryUnit)
+      const extra = dropsOf(s).reduce((sum,drop) => sum + (Number(drop?.w) || 0) * weightConversionFactor(weightUnit(drop?.unit, rowUnit), volumeUnit) * (Number(drop?.r) || 0), 0)
+      v += (s.w || 0) * weightConversionFactor(rowUnit, volumeUnit) * (s.r || 0) + extra
+    })
+  })
   return v
 }
 export function setsDone(w) {

@@ -13,6 +13,7 @@ import { musclesOf, MUSCLE_NAME } from './muscles.js'
 import { activityEntries, activityType } from './activities.js'
 import { hasWorkoutActivity } from './session-activity.js'
 import { LB_PER_KG, CM_PER_IN } from './unit-conversion.js'
+import { weightUnit } from './weight-units.js'
 
 export const PROGRESS_PERIODS = [['all','Since Start'],['1','1 Month'],['3','3 Months'],['6','6 Months'],['12','1 Year'],['custom','Custom Range']]
 export const INBODY_METRICS = [
@@ -100,12 +101,14 @@ export function buildProgressReport(S, options={}) {
         if(!s.done||isWarmupRow(s))continue
         const mode=modeForSet(s,cfg),type=setType(s),role=s.role||'work',side=!!cfg.side,bwMode=isBw(cfg)
         const key=JSON.stringify([routineKey,e.id??e.exercise?.id??['unlinked',w.id??w.start??w.d,entryIndex],mode,type,role,side,bwMode])
-        const rawWeight=load(s.w,s.unit||w.unit||unit,unit),weight=rawWeight!=null&&rawWeight>=0?rawWeight:null,r=number(displayReps(s.r,cfg)),rir=number(rirOf(s))
+        const rowUnit=weightUnit(s.unit,weightUnit(e.unit,weightUnit(w.unit,unit)))
+        const rawWeight=load(s.w,rowUnit,unit),weight=rawWeight!=null&&rawWeight>=0?rawWeight:null,r=number(displayReps(s.r,cfg)),rir=number(rirOf(s))
         const row={w:weight,r,rir:rir!=null&&rir>=0&&rir<=10?rir:null,sec:positive(s.sec),min:positive(s.min),speed:number(s.speed),mode}
         row.est=mode==='reps'&&type==='straight'&&!bwMode?estimate1RM(weight,r):null
         const rawReps=number(s.r),validReps=mode==='reps'&&rawReps>0&&r>0,validTime=mode==='time'&&row.sec>0||mode==='cardio'&&row.min>0
         if(!validReps&&!validTime)continue
-        row.volume=validReps&&weight>=0?load((number(s.w)||0)*rawReps+extraVolumeOf({...s,drops:dropsOf(s).filter(d=>number(d.w)>=0&&positive(d.r))}),s.unit||w.unit||unit,unit):0
+        const validDrops=dropsOf(s).filter(d=>number(d.w)>=0&&positive(d.r)),sameUnitDrops=validDrops.filter(d=>weightUnit(d.unit,rowUnit)===rowUnit)
+        row.volume=validReps&&weight>=0?load((number(s.w)||0)*rawReps+extraVolumeOf({...s,drops:sameUnitDrops}),rowUnit,unit)+sum(validDrops.filter(d=>weightUnit(d.unit,rowUnit)!==rowUnit).map(d=>load((number(d.w)||0)*positive(d.r),weightUnit(d.unit,rowUnit),unit))):0
         row.totalReps=validReps?rawReps+sum(dropsOf(s).map(d=>positive(d.r)||0)):0
         sets++;reps+=row.totalReps;volume+=row.volume
         if(!grouped.has(key))grouped.set(key,{rows:[],key,routineKey,id:e.id,exercise:ex,mode,type,role,side,bwMode})

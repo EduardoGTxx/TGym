@@ -44,6 +44,15 @@
 .zoomcal.streak-calendar .zoomcal-nav>.iconbtn>.icn { width:28px; height:28px; }
 .zoomcal .zoomcal-scale .iconbtn:disabled { opacity:.35; }
 .zoomcal .zoomcal-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; gap:10px; margin:0 0 12px; }
+.zoomcal.compact-navigation .zoomcal-period-heading { justify-content:center; gap:8px; }
+.zoomcal.compact-navigation .zoomcal-period-picker { flex:0 1 auto; padding:6px 0; }
+.zoomcal.compact-navigation .zoomcal-period-picker>b { min-width:0; font-size:22px; overflow-wrap:anywhere; }
+.zoomcal.compact-navigation .zoomcal-period-picker small { display:block; margin-top:3px; color:var(--label-2); font-size:12px; font-weight:500; letter-spacing:normal; }
+.zoomcal.compact-navigation .zoomcal-period-active { flex:none; padding:0; margin:0; }
+.zoomcal.compact-navigation .zoomcal-period-active>strong { color:var(--acc); font-size:28px; }
+.zoomcal.compact-navigation[data-level="months"] .zoomcal-period-picker>b { font-size:32px; }
+.zoomcal.compact-navigation[data-level="years"] .zoomcal-period-picker>b { font-size:22px; white-space:normal; }
+.zoomcal.compact-navigation .zoomcal-tracking-start { margin-bottom:12px; }
 .zoomcal .zoomcal-title { min-width:0; }
 .zoomcal .zoomcal-title>b { font-size:18px; font-weight:700; white-space:normal; overflow:visible; text-overflow:clip; line-height:1.3; overflow-wrap:anywhere; }
 .zoomcal[data-level="months"] .zoomcal-title>b { font-size:28px; letter-spacing:-.04em; }
@@ -122,6 +131,12 @@
   .zoomcal.zoomcal .zoomcal-mini-cell b { display:none; }
 }
 @container (max-width:300px) {
+  .zoomcal.compact-navigation .zoomcal-nav { gap:5px; }
+  .zoomcal.compact-navigation .zoomcal-period-heading { gap:6px; }
+  .zoomcal.compact-navigation .zoomcal-period-picker>b { font-size:18px; }
+  .zoomcal.compact-navigation .zoomcal-period-active>strong { font-size:24px; }
+  .zoomcal.compact-navigation[data-level="months"] .zoomcal-period-picker>b { font-size:28px; }
+  .zoomcal.compact-navigation[data-level="years"] .zoomcal-period-picker>b { font-size:18px; }
   .streak-calendar-heading { gap:20px; margin-bottom:12px; }
   .streak-profile-summary { gap:12px; }
   .streak-calendar-heading .streak-main { gap:4px; }

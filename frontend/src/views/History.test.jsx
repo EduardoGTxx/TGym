@@ -32,6 +32,13 @@ describe('history export', () => {
     expect(csv).toContain('"Pending"')
   })
 
+  it('exports the authoritative row, entry and session load units without changing the saved values', () => {
+    const state={unit:'kg',workouts:[{id:'mixed',unit:'kg',entries:[{id:'0025',unit:'lb',sets:[{done:true,w:80,r:10},{done:true,unit:'kg',w:20,r:8},{done:true,unit:'unsupported',w:30,r:6}]}]}]}
+    const before=structuredClone(state),rows=historyCsv(state).split('\r\n').slice(1).map(line=>line.split(','))
+    expect(rows.map(row=>[row[8],row[9]])).toEqual([['"80"','"lb"'],['"20"','"kg"'],['"30"','"lb"']])
+    expect(state).toEqual(before)
+  })
+
   it('treats user-entered spreadsheet formulas as text, without changing the saved values', () => {
     const state = { unit: 'kg', exerciseAliases: { '0025': '+SUM(1,1)' }, workouts: [{ name: '=1+1', note: '@SUM(1,1)', entries: [{ id: '0025', sets: [] }] }] }
     const csv = historyCsv(state)
