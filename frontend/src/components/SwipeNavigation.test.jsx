@@ -4,10 +4,11 @@ import {createRoot} from 'react-dom/client'
 import {MemoryRouter,useLocation,useNavigate} from 'react-router-dom'
 import {afterEach,beforeEach,expect,it,vi} from 'vitest'
 import SwipeNavigation from './SwipeNavigation.jsx'
+import {Slider} from './ui.jsx'
 import {DEF,useStore} from '../store/useStore.js'
 import {useUI} from '../store/useUI.js'
 
-let root,host,clicked,navigate,frames,frameId,systemReduced,motionListeners,now
+let root,host,clicked,sliderChanged,navigate,frames,frameId,systemReduced,motionListeners,now
 const visits=[]
 const roles=['button','checkbox','switch','radio','tab','combobox','spinbutton','slider']
 function Page(){
@@ -19,8 +20,12 @@ function Page(){
    <div data-stats-motion>
    <p data-current onClick={clicked}>{loc.pathname+loc.search}</p>
    <button data-control onClick={clicked}>Control</button>
+   <button data-press-control onPointerDown={event=>event.preventDefault()} onClick={clicked}>Press control</button>
    <input aria-label="Input"/><textarea aria-label="Text"/><select aria-label="Select"><option>One</option></select>
+   <input type="checkbox" data-checkbox/><input type="radio" data-radio/>
+   <input type="range" data-native-range min="0" max="100" defaultValue="40"/>
    <a href="#test">Link</a><label data-label>Label</label>
+   <img data-image src="/exercise.gif" alt="Exercise"/>
    <details><summary>Disclosure</summary><p>Details</p></details>
    {roles.map(role=><div key={role} role={role} data-role={role}><span>Role control</span></div>)}
    <div contentEditable suppressContentEditableWarning data-editable>Editable</div>
@@ -28,8 +33,12 @@ function Page(){
    <div draggable data-native-drag>Native drag</div>
    <svg className="chart-i"><g data-chart-child/></svg>
    <div className="bodymap tappable"><svg><path data-muscle/></svg></div>
-   <div className="zoomcal"/><div className="stats-view-control"/><div className="swipe-content"/>
-   <div data-nodrag/><div data-swipe-ignore/><div hidden data-hidden-pane/>
+   <div className="zoomcal"><button data-calendar-day>12</button></div><div className="stats-view-control"><button className="stats-sections-trigger">Move stats control</button></div><div className="swipe-content"/>
+   <div className="bodyweight-picker" data-nodrag><div className="bodyweight-picker-ruler"/><p data-weight-hint>Slide the ruler</p></div>
+   <div data-swipe-owner="horizontal"><span data-own-horizontal/></div><div data-swipe-owner="vertical"><span data-own-vertical/></div>
+   <Slider data-live-slider value={40} onChange={value=>sliderChanged(value)}/>
+   <video controls data-native-media/><video data-static-media/>
+   <div data-nodrag data-no-horizontal/><div data-swipe-ignore/><div hidden data-hidden-pane/>
    <div aria-hidden="true" data-app-pane="retained"><span data-retained-child/></div>
    <div data-scroll style={{overflowX:'auto'}}><span data-scroll-child>Horizontal data</span></div>
    <table><tbody><tr><td data-static-table>Static table</td></tr></tbody></table>
@@ -50,7 +59,7 @@ beforeEach(()=>{
  vi.stubGlobal('requestAnimationFrame',callback=>{frames.set(++frameId,callback);return frameId})
  vi.stubGlobal('cancelAnimationFrame',id=>frames.delete(id))
  vi.spyOn(window,'matchMedia').mockImplementation(()=>({get matches(){return systemReduced},addEventListener:(_,callback)=>motionListeners.add(callback),removeEventListener:(_,callback)=>motionListeners.delete(callback)}))
- clicked=vi.fn();host=document.createElement('div');document.body.append(host);root=createRoot(host)
+ clicked=vi.fn();sliderChanged=vi.fn();host=document.createElement('div');document.body.append(host);root=createRoot(host)
 })
 afterEach(async()=>{if(root)await act(()=>root.unmount());host.remove();window.getSelection()?.removeAllRanges();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()})
 const current=()=>host.querySelector('[data-current]').textContent
@@ -84,15 +93,65 @@ it('keeps touch when implicit capture transfers from a child to the navigation r
 it.each([['/stats?section=history',100,260,'/nutrition'],['/progress',250,100,'/home']])('continues between Stats and its neighboring module from %s',async(path,from,to,target)=>{
  await mount(path);await swipe(from,to);expect(current()).toBe(target);await settle()
 })
-const excluded=['[data-control]','input','textarea','select','a','[data-label]','summary','[data-editable]','[data-native-drag]',...roles.map(role=>`[data-role="${role}"] span`),'[data-chart-child]','[data-muscle]','.zoomcal','.stats-view-control','.swipe-content','[data-nodrag]','[data-swipe-ignore]']
+const excluded=['input:not([type])','textarea','select','[data-native-range]','[data-editable]','[data-native-drag]',...['combobox','spinbutton','slider'].map(role=>`[data-role="${role}"] span`),'[data-chart-child]','.stats-sections-trigger','.bodyweight-picker-ruler','.swipe-content','[data-swipe-ignore]','[data-own-horizontal]','[data-native-media]']
 it.each(excluded)('leaves %s interaction to that control',async selector=>{
  await mount('/home');const target=host.querySelector(selector)
  const down=await point('pointerdown',260,100,{target});await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});await settle()
  expectUnmoved();expect(down.defaultPrevented).toBe(false)
 })
-it.each(['[data-static-editable]','[data-static-table]','[data-static-figure]'])('allows deliberate navigation from static content %s',async selector=>{
+const unowned=['[data-control]','[data-press-control]','[data-checkbox]','[data-radio]','a','[data-label]','summary',...['button','checkbox','switch','radio','tab'].map(role=>`[data-role="${role}"] span`),'[data-muscle]','.zoomcal','[data-calendar-day]','[data-weight-hint]','[data-no-horizontal]','[data-own-vertical]','[data-static-media]','[data-static-editable]','[data-static-table]','[data-static-figure]','[data-image]']
+it.each(unowned)('navigates from %s when it has no horizontal operation, without activating or persisting it',async selector=>{
  await mount('/home');const target=host.querySelector(selector)
- await point('pointerdown',260,100,{target});await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});expect(current()).toBe('/plan')
+ const activate=vi.fn();target.addEventListener('click',activate);const before=structuredClone(useStore.getState().S)
+ await point('pointerdown',260,100,{target});const move=await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});await click(target)
+ expect(current()).toBe('/plan');expect(move.defaultPrevented).toBe(true);expect(activate).not.toHaveBeenCalled();expect(clicked).not.toHaveBeenCalled();expect(useStore.getState().S).toEqual(before);expect(localStorage.getItem('gym_state_v1')).toBeNull()
+})
+it.each(['[data-control]','[data-checkbox]','[data-radio]','[data-calendar-day]','[data-muscle]','summary'])('keeps ordinary taps on %s working',async selector=>{
+ await mount('/home');const target=host.querySelector(selector),activate=vi.fn();target.addEventListener('click',activate)
+ const down=await point('pointerdown',250,100,{target});const up=await point('pointerup',251,101,{target});await click(target)
+ expectUnmoved();expect(down.defaultPrevented).toBe(false);expect(up.defaultPrevented).toBe(false);expect(activate).toHaveBeenCalledOnce()
+})
+it.each(['[data-control]','[data-calendar-day]','[data-muscle]'])('leaves vertical scrolling from %s unclaimed',async selector=>{
+ await mount('/home');const target=host.querySelector(selector)
+ await point('pointerdown',250,100,{target});const move=await point('pointermove',246,160,{target});const up=await point('pointerup',245,220,{target})
+ expectUnmoved();expect(move.defaultPrevented).toBe(false);expect(up.defaultPrevented).toBe(false)
+})
+it('lets the actual slider change its value without also navigating the module deck',async()=>{
+ await mount('/home');const slider=host.querySelector('[data-live-slider]')
+ vi.spyOn(slider,'getBoundingClientRect').mockReturnValue({left:100,width:200})
+ await point('pointerdown',260,100,{target:slider});await point('pointermove',180,100,{target:slider});await point('pointerup',180,100,{target:slider})
+ expect(sliderChanged.mock.calls.map(call=>call[0])).toEqual([80,40]);expectUnmoved()
+})
+it('does not activate a button after a short horizontal drag settles back on the same page',async()=>{
+ await mount('/home');const target=host.querySelector('[data-control]')
+ await point('pointerdown',250,100,{target});await tick(50);await point('pointermove',220,100,{target});await tick(200);await point('pointerup',220,100,{target});await click(target);await settle()
+ expectUnmoved();expect(clicked).not.toHaveBeenCalled()
+ await point('pointerdown',220,100,{target});await point('pointerup',220,100,{target});await click(target);expect(clicked).toHaveBeenCalledOnce()
+})
+it.each(['blur','resize','sheet','route'])('suppresses the release click when a horizontal drag over a button is interrupted by %s',async cause=>{
+ await mount('/home');const target=host.querySelector('[data-control]')
+ await point('pointerdown',250,100,{target});await point('pointermove',150,100,{target})
+ if(cause==='sheet')await act(()=>useUI.setState({sheets:[{id:'cover'}]}))
+ else if(cause==='route')await act(()=>navigate('/nutrition'))
+ else await act(()=>window.dispatchEvent(new Event(cause)))
+ await tick(700);await point('pointerup',150,100,{target});await click(target);expect(clicked).not.toHaveBeenCalled()
+})
+it('keeps a claimed swipe from activating its button after turning vertical and pausing before release',async()=>{
+ await mount('/home');const target=host.querySelector('[data-control]')
+ await point('pointerdown',250,100,{target});await point('pointermove',190,100,{target});await point('pointermove',190,240,{target});await tick(700);await point('pointerup',190,240,{target});await click(target)
+ expectUnmoved();expect(clicked).not.toHaveBeenCalled()
+})
+it.each(['[data-image]','a'])('prevents an incidental native drag from stealing pending navigation started on %s',async selector=>{
+ await mount('/home');const target=host.querySelector(selector)
+ await point('pointerdown',250,100,{target,pointerType:'mouse'})
+ const drag=new Event('dragstart',{bubbles:true,cancelable:true});await act(()=>target.dispatchEvent(drag));expect(drag.defaultPrevented).toBe(true)
+ await point('pointermove',100,100,{target,pointerType:'mouse'});await point('pointerup',100,100,{target,pointerType:'mouse'});expect(current()).toBe('/plan')
+})
+it('leaves an explicitly draggable image to its native operation',async()=>{
+ await mount('/home');const target=host.querySelector('[data-image]');target.setAttribute('draggable','true')
+ await point('pointerdown',250,100,{target,pointerType:'mouse'})
+ const drag=new Event('dragstart',{bubbles:true,cancelable:true});await act(()=>target.dispatchEvent(drag));expect(drag.defaultPrevented).toBe(false)
+ await point('pointermove',100,100,{target,pointerType:'mouse'});await point('pointerup',100,100,{target,pointerType:'mouse'});expectUnmoved()
 })
 it.each([[210,240],[210,125]])('permanently rejects a clear vertical start (%s,%s)',async(x,y)=>{
  await mount('/home');await point('pointerdown',200,100);await point('pointermove',x,y);await point('pointermove',50,110);await point('pointerup',50,110);await settle();expectUnmoved()
@@ -112,6 +171,12 @@ it('keeps the Stats header and controls outside drag and depth animation',async(
  const picture=host.querySelector('.swipe-navigation-picture');expect(picture.querySelector('[data-stats-fixed]')).toBeNull()
  await frame();expect(picture.firstElementChild.style.transform).toContain('scale(.94)');expect(host.querySelector('[data-stats-fixed]')).toBe(header)
  await end(body);expect(phase()).toBe('idle');expect(body.style.transform).toBe('');expect(body.dataset.pageMotion).toBeUndefined();expect(picture.childElementCount).toBe(0)
+})
+it('recognizes a section swipe started over the fixed Stats export button without moving that header',async()=>{
+ await mount('/stats?section=history');const header=host.querySelector('[data-stats-fixed]'),target=header.querySelector('button'),body=host.querySelector('[data-stats-motion]'),activate=vi.fn();target.addEventListener('click',activate)
+ await point('pointerdown',250,100,{target});await point('pointermove',100,100,{target});await frame()
+ expect(body.style.transform).not.toBe('');expect(header.style.transform).toBe('');expect(content().style.transform).toBe('')
+ await point('pointerup',100,100,{target});await click(target);expect(current()).toBe('/stats?section=consistency');expect(activate).not.toHaveBeenCalled();expect(header.style.transform).toBe('');await settle()
 })
 it.each([8,window.innerWidth-8])('preserves the system edge gesture at x=%s',async x=>{
  await mount('/home');await point('pointerdown',x);await point('pointermove',x<100?250:100);await point('pointerup',x<100?250:100);expectUnmoved()
@@ -147,6 +212,13 @@ it('does not exclude a container merely because overflow auto is set when its co
  Object.defineProperties(scroller,{clientWidth:{value:120},scrollWidth:{value:120}})
  await point('pointerdown',260,100,{target});await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});expect(current()).toBe('/plan')
 })
+it('rechecks actual horizontal overflow after a reflow rather than keeping an earlier ownership decision',async()=>{
+ await mount('/home');const scroller=host.querySelector('[data-scroll]'),target=host.querySelector('[data-scroll-child]');let width=120
+ Object.defineProperties(scroller,{clientWidth:{value:120},scrollWidth:{get:()=>width}})
+ await point('pointerdown',260,100,{target});await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});expect(current()).toBe('/plan');await settle()
+ width=420
+ await point('pointerdown',260,100,{target});const move=await point('pointermove',80,100,{target});await point('pointerup',80,100,{target});expect(current()).toBe('/plan');expect(move.defaultPrevented).toBe(false);expect(visits).toHaveLength(2)
+})
 it('accepts a new deliberate contact immediately after a previous scroll without an artificial wait',async()=>{
  await mount('/home');await act(()=>document.dispatchEvent(new Event('scroll')));await swipe();expect(current()).toBe('/plan');await settle();expect(visits).toHaveLength(2)
 })
@@ -155,6 +227,9 @@ it('does not confuse an inertial scroll event with the intent of a new contact',
 })
 it('preserves a focused text input rather than treating another contact as navigation',async()=>{
  await mount('/home');host.querySelector('input').focus();await swipe();expectUnmoved();expect(document.activeElement).toBe(host.querySelector('input'))
+})
+it.each(['[data-checkbox]','[data-radio]'])('does not freeze navigation after a tap-only input %s receives focus',async selector=>{
+ await mount('/home');host.querySelector(selector).focus();await swipe();expect(current()).toBe('/plan');await settle()
 })
 it('preserves a selected text range without starting navigation',async()=>{
  await mount('/home');const range=document.createRange();range.selectNodeContents(host.querySelector('[data-current]'));range.getClientRects=()=>[{left:50,right:300,top:90,bottom:120}];window.getSelection().addRange(range);await swipe();expectUnmoved();expect(window.getSelection().toString()).toBe('/home')

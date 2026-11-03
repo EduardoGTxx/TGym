@@ -84,7 +84,7 @@ export default function HistoryExerciseRow({ entry, workout, pr }) {
     detail.current = useUI.getState().openSheet(()=> <HistoryExerciseDetail entry={saved.entry} workout={saved.workout}/>, {onClose:()=>{detail.current=null}})
   }
   useEffect(()=>{
-    const move = event => { if (press.current && event.pointerId === press.current.id && Math.hypot(event.clientX-press.current.x,event.clientY-press.current.y)>8) cancel() }
+    const move = event => { if (press.current && event.pointerId === press.current.id && Math.hypot(event.clientX-press.current.x,event.clientY-press.current.y)>press.current.slop) cancel() }
     const another = event => { if (press.current && event.pointerId !== press.current.id) cancel() }
     const touch = event => { if (event.touches?.length > 1) cancel() }
     const hidden = () => { if (document.hidden) cancel() }
@@ -103,7 +103,9 @@ export default function HistoryExerciseRow({ entry, workout, pr }) {
   const start = event => {
     cancel()
     if (event.button !== 0 || event.isPrimary === false || detail.current) return
-    press.current={id:event.pointerId,x:event.clientX,y:event.clientY};setHolding(true)
+    // Allow small finger drift during the hold. Native scrolling still owns its
+    // gesture and cancels through pointercancel/scroll; no move is prevented.
+    press.current={id:event.pointerId,x:event.clientX,y:event.clientY,slop:event.pointerType==='touch'?14:8};setHolding(true)
     timer.current=setTimeout(open,2000)
   }
   const hint = t('Hold for 2 seconds or press Enter to view sets.')

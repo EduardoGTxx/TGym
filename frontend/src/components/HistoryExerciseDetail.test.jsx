@@ -65,6 +65,32 @@ it.each(['pointerup','pointercancel','pointerleave','pointermove','scroll','blur
   else pointer(kind,kind==='pointermove'?{clientX:29}:{})
   advance(3000);expect(useUI.getState().sheets).toHaveLength(0)
 })
+it.each([
+  ['touch',10,0,true],['touch',10,8,true],['touch',14,0,true],
+  ['touch',15,0,false],['touch',11,10,false],
+  ['mouse',9,0,false],['pen',9,0,false],['',9,0,false],
+])('recognizes a %s hold with %ipx/%ipx travel using its own movement tolerance', (pointerType,dx,dy,opens)=>{
+  mountRow();pointer('pointerdown',{pointerType});advance(750)
+  const move=new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId:1,pointerType,clientX:20+dx,clientY:20+dy})
+  act(()=>host.querySelector('.history-exercise-row').dispatchEvent(move))
+  expect(move.defaultPrevented).toBe(false)
+  advance(1249);expect(useUI.getState().sheets).toHaveLength(0)
+  advance(1);expect(useUI.getState().sheets).toHaveLength(opens?1:0)
+  pointer('pointerup',{pointerType});advance(2500)
+  expect(useUI.getState().sheets).toHaveLength(opens?1:0)
+})
+it.each(['scroll','pointercancel','multitouch'])('still cancels a drifting touch hold on %s',kind=>{
+  mountRow();pointer('pointerdown',{pointerType:'touch'});advance(750)
+  pointer('pointermove',{pointerType:'touch',clientX:30});advance(750)
+  expect(host.querySelector('.history-exercise-row').classList.contains('is-holding')).toBe(true)
+  if(kind==='scroll')act(()=>host.querySelector('.history-exercise-row').parentElement.dispatchEvent(new Event('scroll')))
+  else if(kind==='multitouch'){
+    const event=new Event('touchstart',{bubbles:true});Object.defineProperty(event,'touches',{value:[{},{}]})
+    act(()=>document.dispatchEvent(event))
+  }else pointer('pointercancel',{pointerType:'touch'})
+  advance(3000);expect(useUI.getState().sheets).toHaveLength(0)
+  expect(host.querySelector('.history-exercise-row').classList.contains('is-holding')).toBe(false)
+})
 it('ignores a short pointer click and permits immediate keyboard/assistive activation exactly once',()=>{
   mountRow();pointer('pointerdown');advance(100);pointer('pointerup')
   act(()=>host.querySelector('.history-exercise-row').dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})))

@@ -4,11 +4,11 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { moduleForPath, swipeTarget } from '../lib/navigation-model.js'
 import { beginSwipe, moveSwipe, swipeOffset, swipeStep } from '../lib/swipe-gesture.js'
+import { horizontalGestureOwner, isSwipeEditingTarget } from '../lib/swipe-owner.js'
 import { motionSnapshot } from '../lib/motion-snapshot.js'
 import { t } from '../lib/i18n.js'
 import './SwipeNavigation.css'
 
-const interactive='input,textarea,select,button,a,label,summary,video,audio,iframe,[contenteditable]:not([contenteditable="false"]),[role=button],[role=checkbox],[role=switch],[role=radio],[role=tab],[role=combobox],[role=spinbutton],[role=slider],[draggable=true],dialog,[role=dialog],[aria-modal=true],[data-nodrag],.chart-i,.bodymap.tappable,.bodyweight-picker,.zoomcal,.stats-view-control,.swipe-content,[data-swipe-ignore]'
 const motionQuery='(prefers-reduced-motion: reduce)'
 const systemMotion=()=>!!window.matchMedia?.(motionQuery).matches
 const subscribeMotion=callback=>{
@@ -26,6 +26,7 @@ export default function SwipeNavigation({children}) {
   const surfaceFrame=useRef(0)
   const generation=useRef(0)
   const pointers=useRef(new Set()),ignoreClick=useRef(false),mode=useRef('idle')
+  const suppressedPointer=useRef(null)
   const [direction,setDirection]=useState(0),[phase,setPhase]=useState('idle')
   const covered=useUI(s=>s.sheets.length>0||!!s.appTourWorkoutPreview||!!s.appTourRequest)
   const appReduced=useStore(s=>!!s.S.reduceMotion),systemReduced=useSyncExternalStore(subscribeMotion,systemMotion,()=>false)
@@ -85,6 +86,7 @@ export default function SwipeNavigation({children}) {
   }
   const release=()=>{
     const g=gesture.current;gesture.current=null
+    if(g&&(g.claimed||g.state==='horizontal')){suppressedPointer.current=g.id;suppressCompatClick()}
     if(g)try{region.current?.releasePointerCapture(g.id)}catch{}
   }
   const reset=()=>{clearScheduled();release();transition.current=null;paint();clearMotion();setMode('idle')}
@@ -147,12 +149,16 @@ export default function SwipeNavigation({children}) {
   useEffect(()=>{if(covered||appReduced||systemReduced)reset()},[covered,appReduced,systemReduced])
   useEffect(()=>{
     const down=event=>{
+      if(event.isPrimary!==false)suppressedPointer.current=null
       pointers.current.add(event.pointerId)
       if(pointers.current.size>1){if(gesture.current?.state==='horizontal')suppressCompatClick();settle();return}
       if((gesture.current||mode.current!=='idle')&&!region.current?.contains(event.target))reset()
     }
     const up=event=>{
       pointers.current.delete(event.pointerId)
+      // Interruptions may release capture long before the finger lifts. The
+      // compatibility-click window starts again at that actual release.
+      if(suppressedPointer.current===event.pointerId){suppressedPointer.current=null;suppressCompatClick()}
       if(gesture.current?.id===event.pointerId&&!region.current?.contains(event.target))settle()
     }
     const key=event=>{if(!region.current?.contains(event.target))reset()}
@@ -197,18 +203,15 @@ export default function SwipeNavigation({children}) {
     if(event.button!==0||event.isPrimary===false||pointers.current.size>1)return
     ignoreClick.current=false;clearTimeout(clickTimer.current)
     if(mode.current!=='idle')reset()
-    if(blocked()||gesture.current||event.defaultPrevented)return
-    if(event.target.closest?.(interactive)||event.target.closest?.('[inert],[hidden],[data-app-pane][aria-hidden="true"]'))return
-    if(document.activeElement?.matches?.('input,textarea,select,[contenteditable="true"]'))return
+    if(blocked()||gesture.current)return
+    if(horizontalGestureOwner(event.target,region.current))return
+    if(isSwipeEditingTarget(document.activeElement))return
     const selection=window.getSelection?.()
     if(selection&&!selection.isCollapsed&&selection.toString()){
       for(let index=0;index<selection.rangeCount;index++){
         const boxes=selection.getRangeAt(index).getClientRects?.()||[]
         if([...boxes].some(box=>event.clientX>=box.left&&event.clientX<=box.right&&event.clientY>=box.top&&event.clientY<=box.bottom))return
       }
-    }
-    for(let node=event.target;node&&node!==region.current;node=node.parentElement){
-      if(node.clientWidth>0&&node.scrollWidth>node.clientWidth+2&&/(auto|scroll)/.test(getComputedStyle(node).overflowX))return
     }
     if(event.clientX<24||event.clientX>window.innerWidth-24)return
     if(!swipeTarget(useStore.getState().S,current.current.location,1))return
@@ -221,6 +224,7 @@ export default function SwipeNavigation({children}) {
     const previous=g.state,state=moveSwipe(g,event.clientX,event.clientY,performance.now())
     if(state==='rejected'){if(previous==='horizontal')suppressCompatClick();settle();return}
     if(state!=='horizontal')return
+    g.claimed=true
     if(previous!=='horizontal'){
       setMode('dragging')
       const selection=window.getSelection?.()
@@ -255,7 +259,12 @@ export default function SwipeNavigation({children}) {
     role="region" aria-label={t('Main navigation')} aria-busy={['preparing','entering'].includes(phase)||undefined} tabIndex={-1}
     onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={cancel}
     onContextMenu={()=>{if(gesture.current)settle()}}
-    onDragStart={event=>{if(gesture.current?.state==='horizontal')event.preventDefault()}}
+    onDragStart={event=>{
+      // Browsers can start dragging an image/link before delivering enough
+      // pointer movement to lock intent. Keep that incidental drag from
+      // swallowing navigation; explicitly draggable widgets never start here.
+      if(gesture.current&&(gesture.current.state==='horizontal'||event.target.closest?.('img,a')))event.preventDefault()
+    }}
     onLostPointerCapture={event=>{if(event.target===event.currentTarget)cancel(event)}}
     onClickCapture={event=>{if(ignoreClick.current&&event.detail!==0){ignoreClick.current=false;clearTimeout(clickTimer.current);event.preventDefault();event.stopPropagation()}}}
     onKeyDown={event=>{if(event.target!==event.currentTarget||!['ArrowLeft','ArrowRight'].includes(event.key)||blocked())return;reset();event.preventDefault();start(event.key==='ArrowRight'?1:-1)}}>

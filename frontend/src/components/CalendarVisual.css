@@ -47,7 +47,6 @@
 .zoomcal.compact-navigation .zoomcal-period-heading { justify-content:center; gap:8px; }
 .zoomcal.compact-navigation .zoomcal-period-picker { flex:0 1 auto; padding:6px 0; }
 .zoomcal.compact-navigation .zoomcal-period-picker>b { min-width:0; font-size:22px; overflow-wrap:anywhere; }
-.zoomcal.compact-navigation .zoomcal-period-picker small { display:block; margin-top:3px; color:var(--label-2); font-size:12px; font-weight:500; letter-spacing:normal; }
 .zoomcal.compact-navigation .zoomcal-period-active { flex:none; padding:0; margin:0; }
 .zoomcal.compact-navigation .zoomcal-period-active>strong { color:var(--acc); font-size:28px; }
 .zoomcal.compact-navigation[data-level="months"] .zoomcal-period-picker>b { font-size:32px; }
