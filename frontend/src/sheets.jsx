@@ -15,7 +15,7 @@ import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf, smOf, exerciseSearchScore, exOr } from './lib/exercises.js'
 import { activeProfile, exAvailable, ALL_EQUIPMENT, newProfile } from './lib/equipment.js'
-import { fmtDate, fmtNum, fmtWeight, fmtVol, fmtDur, durPart, todayISO, isoOf, localTZ, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
+import { fmtDate, fmtNum, fmtWeight, fmtVol, fmtDur, durPart, todayISO, isoOf, localTZ, uid, exCount, DAYN, MONTHS, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, displayReps, storedReps, displayRepConfig, workSetsDone, applyIntensifierPlan, MAX_PLANNED_WARMUPS, NOTE_MAX } from './lib/history.js'
 import { playAppSound, vibrate } from './lib/sound.js'
 import { t, instrFor, exerciseNameFor, originalExerciseNameFor, getLang, INSTR_LANGS, dateLocale } from './lib/i18n.js'
@@ -1295,14 +1295,12 @@ function StreakDetail() {
       <StreakFlame value={streak.current} />
       <div className="streak-number">{streak.current}</div>
     </div>
-    {st.streakCalendarShowProfile && <div className="streak-profile-identity">
-      <button type="button" className="streak-profile" {...profileToggle}><StreakProfileAvatar name={profileName} photo={st.profile?.photo}/></button>
-      {profileName && <button type="button" className="streak-profile-name" {...profileToggle} aria-label={`${profileName}, ${t('Profile visibility')}`} title={profileName}>{profileName}</button>}
-    </div>}
+    {st.streakCalendarShowProfile && profileName && <div className="streak-profile-identity"><button type="button" className="streak-profile-name" {...profileToggle} aria-label={`${profileName}, ${t('Profile visibility')}`} title={profileName}>{profileName}</button></div>}
   </div>
+  const avatar = st.streakCalendarShowProfile && <button type="button" className="streak-profile" {...profileToggle}><StreakProfileAvatar name={profileName} photo={st.profile?.photo}/></button>
   return <>
     {(!st.streakCalendarShowProfile || profileControlsOpen) && <div className="streak-profile-tools" id={profileControlsId}><button type="button" className="iconbtn" aria-pressed={!!st.streakCalendarShowProfile} aria-label={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} title={t(st.streakCalendarShowProfile ? 'Hide profile' : 'Show profile')} onClick={()=>{change(s=>{s.streakCalendarShowProfile=!s.streakCalendarShowProfile});setProfileControlsOpen(false)}}><Icon name="person"/></button></div>}
-    <ZoomCalendar S={st} streakView streakHeading={heading} levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
+    <ZoomCalendar S={st} streakView streakHeading={heading} periodAvatar={avatar} levels={['week','month','months']} onDay={iso => { const rows = recent.filter(w => w.d === iso); if (rows.length) workoutDetailSheet(rows[0]) }} />
     <StreakStatus streak={streak} className="small muted" />
     <p className="small muted">{t('Completed training days, counted once per day. Scheduled rest days preserve the streak.')}</p>
     <div className="tiles" style={{ margin: '14px 0' }}>
@@ -1584,7 +1582,7 @@ export function ZoomCalendar({ S: st, onDay, initialLevel = 'week', initialAncho
   return <div className={'zoomcal' + (streakView ? ' streak-calendar' : '') + (datePicker ? ' date-picker' : '')} data-level={level} data-tour={streakView ? 'streak-calendar' : undefined}>
     {streakView&&streakHeading}
     {!streakView&&<div className="zoomcal-toolbar">{!exporting&&<Segmented value={level==='years'?'months':level} onChange={setLevel} options={viewOptions}/>}<div className="zoomcal-scale"><button className="iconbtn" aria-label={t('Zoom out')} title={t('Zoom out')} disabled={zi>=levels.length-1} onClick={()=>setLevel(levels[zi+1])}><Icon name="minus"/></button><button className="iconbtn" aria-label={t('Zoom in')} title={t('Zoom in')} disabled={zi<=0} onClick={()=>setLevel(levels[zi-1])}><Icon name="plus"/></button></div></div>}
-    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView ? <div className="zoomcal-period-heading">{periodAvatar}<button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{visiblePeriod}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
+    <div className="zoomcal-nav"><button className="iconbtn" aria-label={t('Prev')} onClick={()=>shift(-1)}><Icon name="chevronLeft"/></button>{streakView ? <div className="zoomcal-period-heading">{periodAvatar}<button type="button" className="zoomcal-period-picker" aria-label={`${t('Calendar view')}: ${viewOptions.find(option=>option.value===level)?.label || t('Year')}, ${title}`} aria-haspopup="dialog" onClick={openView}><b>{level==='month'&&periodAvatar ? <><span className="zoomcal-period-full">{visiblePeriod}</span><span className="zoomcal-period-compact">{t(MONTHS[anchor.getMonth()])}</span></> : visiblePeriod}</b><Icon name="chevronDown"/></button>{periodCount}</div> : <div className="zoomcal-title"><b>{title}</b></div>}<button className="iconbtn" aria-label={t('Next')} onClick={()=>shift(1)}><Icon name="chevronRight"/></button></div>
     {!streakView&&periodCount}
     {!streakView&&trackingVisible&&<div className="zoomcal-tracking-start" data-tracking-start={trackedSince} style={{'--tracking-fill':TRACKING_START_MARKER.fill,'--tracking-border':TRACKING_START_MARKER.border}}><i aria-hidden="true"/><span>{t('Tracking since {0}',fmtDate(trackedSince,true,true))}</span></div>}
     {body}

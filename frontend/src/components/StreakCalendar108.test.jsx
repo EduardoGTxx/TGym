@@ -60,7 +60,7 @@ it.each([{streakView:false},{streakView:true,exporting:true}])('keeps noninterac
   expect(host.querySelector('.zoomcal-legend')).not.toBeNull()
 })
 
-it('places the streak on the left and visible identity on the right, above a period/count row',()=>{
+it('keeps the enlarged photo in its original position beside the period, with streak left and name right above',()=>{
   const S=fixture();S.streakCalendarShowProfile=true;renderDetail(S)
   const calendar=host.querySelector('.streak-calendar'),heading=calendar.querySelector('.streak-calendar-heading')
   const nav=calendar.querySelector('.zoomcal-nav'),period=nav.querySelector('.zoomcal-period-heading')
@@ -69,11 +69,13 @@ it('places the streak on the left and visible identity on the right, above a per
   expect(heading.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(heading.firstElementChild.classList.contains('streak-main')).toBe(true)
   expect(heading.lastElementChild.classList.contains('streak-profile-identity')).toBe(true)
-  expect(heading.querySelector('.streak-profile-identity .streak-profile')).not.toBeNull()
+  expect(heading.querySelector('.streak-profile')).toBeNull()
   expect(heading.querySelector('.streak-profile-identity .streak-profile-name')).not.toBeNull()
   expect(heading.textContent).not.toContain('Training days in this streak')
   expect(heading.querySelector('.streak-main').getAttribute('aria-label')).toBe('Training streak: 1')
-  expect(period.querySelector('.streak-profile')).toBeNull()
+  expect(period.firstElementChild.classList.contains('streak-profile')).toBe(true)
+  expect(period.children[1].classList.contains('zoomcal-period-picker')).toBe(true)
+  expect(period.children[2].classList.contains('zoomcal-period-active')).toBe(true)
   expect(period.querySelector('.zoomcal-period-picker')).not.toBeNull()
   expect(period.querySelector('.zoomcal-period-active').textContent).toBe('3')
   expect(calendar.textContent).not.toMatch(/Cloud identity|private@example/)
