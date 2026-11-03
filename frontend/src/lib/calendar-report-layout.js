@@ -94,7 +94,7 @@ export function calendarReportLayout({ kind, days, start, end, metrics, context 
       svg += `<g data-month="${monthDays[0].iso.slice(0, 7)}">`
       svg += calendarGrid({ days: monthDays, title, period: week ? 'week' : 'month', x, y, width: columnWidth, kind, t,
         geometry: annual
-          ? { cell: 36, gap: 4, daySize: 26, titleSize: 22, weekdaySize: 16, weekdayOffset: 30, daysOffset: 44, titleFill: NAVY }
+          ? { cell: 36, gap: 4, daySize: 26, titleSize: 22, weekdaySize: 20, weekdayOffset: 30, daysOffset: 44, titleFill: NAVY }
           : { cell: compact ? 48 : 92, gap: compact ? 7 : 10, daySize: compact ? 30 : 34, titleSize: compact ? 26 : 30, weekdaySize: compact ? 21 : 23, weekdayOffset: 36, daysOffset: 54, titleFill: NAVY } }) + '</g>'
     })
     svg += `<line x1="48" y1="${legendY - 36}" x2="952" y2="${legendY - 36}" stroke="#dce3ec"/>` + calendarSvgLegend({ y: legendY, kind, t })

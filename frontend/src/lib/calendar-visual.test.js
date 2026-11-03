@@ -170,7 +170,9 @@ describe('shared calendar state presentation', () => {
         // Every PDF legend stays above 8pt after the actual A4 fit in report-file.js.
         if (format === 'pdf') {
           const scale = Math.min(190 / page.width, 277 / page.height)
-          expect(18 * scale * 72 / 25.4).toBeGreaterThanOrEqual(8)
+          const labels = [...doc.querySelectorAll('[data-legend] text')]
+          expect(labels.length).toBeGreaterThan(0)
+          for (const label of labels) expect(+label.getAttribute('font-size') * scale * 72 / 25.4).toBeGreaterThanOrEqual(8)
         }
       }
     }

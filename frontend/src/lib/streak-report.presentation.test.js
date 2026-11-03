@@ -30,6 +30,11 @@ it.each(['png', 'pdf'])('lays out the complete annual %s as three columns and fo
   expect(+name.getAttribute('font-size')).toBeGreaterThanOrEqual(38)
   expect(+doc.querySelector('[data-summary] > rect').getAttribute('y')).toBeGreaterThan(+image.getAttribute('y') + +image.getAttribute('height') + 12)
   const pdfScale = Math.min(190 / page.width, 277 / page.height)
+  for (const month of months) {
+    const weekdays = [...month.querySelectorAll('[data-period] > text')].slice(1)
+    expect(weekdays).toHaveLength(7)
+    for (const label of weekdays) expect(+label.getAttribute('font-size') * pdfScale * 72 / 25.4).toBeGreaterThanOrEqual(8)
+  }
   for (const cell of doc.querySelectorAll('[data-date]')) {
     const box = cell.querySelector('rect'), number = cell.querySelector('text')
     expect(+number.getAttribute('font-size') * pdfScale * 72 / 25.4).toBeGreaterThanOrEqual(10)
