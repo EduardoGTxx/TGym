@@ -1,5 +1,6 @@
 import { STATS_SECTIONS } from './stats-sections.js'
 import { statisticsState, historySummary } from './training-history.js'
+import { statsWeightView } from './stats-weight-view.js'
 import { trainingStreak } from './training-plan.js'
 import { hybridSummary } from './activities.js'
 import { routineConsistency, routineDurationSummary, bmiFor, bmiBand } from './stats-insights.js'
@@ -36,7 +37,7 @@ export function statsReportPages(rawState, {
   if (!Number.isFinite(nowMs)) throw new Error('Choose a valid date range.')
   const enabled = new Set(STATS_SECTIONS.map(([id]) => id).filter(id => sections?.includes(id)))
   if (!enabled.size) throw new Error('Select at least one section.')
-  const S = statisticsState(rawState, today)
+  const S = statsWeightView(statisticsState(rawState, today))
   const unit = S.unit || 'kg', measurementUnit = S.measurementUnit || 'cm'
   const accent = ACCENTS[S.accent] || ACCENTS.red
   const pages = [], titles = Object.fromEntries(STATS_SECTIONS)

@@ -7,6 +7,7 @@ import ExerciseSessions from '../components/ExerciseSessions.jsx'
 import TrainingHistory from '../components/TrainingHistory.jsx'
 import StatsHeader from '../components/StatsHeader.jsx'
 import { statisticsState } from '../lib/training-history.js'
+import { statsWeightView } from '../lib/stats-weight-view.js'
 import { createStatsSnapshotSelector } from '../lib/stats-snapshot.js'
 import ConsistencyCard from '../components/ConsistencyCard.jsx'
 import CalendarExport from '../components/CalendarExport.jsx'
@@ -328,7 +329,7 @@ function Stats({ focus = null, standaloneControl = true, hideHeader = false, hea
   const location = useLocation()
   const snapshot = useMemo(createStatsSnapshotSelector, [])
   const rawState = useStore(s => snapshot(s.S))
-  const S = useMemo(() => statisticsState(rawState), [rawState])
+  const S = useMemo(() => statsWeightView(statisticsState(rawState)), [rawState])
   const update = useStore(s => s.update)
   const selectedSections = body ? BODY_SECTIONS : statsSelectionOrder(rawState.statsSections, rawState.statsSectionOrder)
   const activeSection = body ? 'bodyweight' : activeStatsPage(rawState,location)

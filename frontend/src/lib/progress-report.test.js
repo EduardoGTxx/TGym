@@ -30,6 +30,12 @@ describe('progress report: real history only',()=>{
   expect(r.body.find(m=>m.key==='neck').delta).toBeCloseTo(1.97,2)
   expect(r.exercises[0].metrics.find(m=>m.key==='w').percent).toBeCloseTo(25,1)
  })
+ it('retains the authoritative bodyweight sample units when flattening a mixed historical row',()=>{
+  const s=base();s.bodyweight=[{d:'2026-09-01',unit:'lb',w:154,samples:[{unit:'kg',w:70,t:date('2026-09-01')},{unit:'lb',w:154,t:date('2026-09-01')+1000},{w:154,t:date('2026-09-01')+2000}]}]
+  const before=structuredClone(s),metric=report(s).body.find(m=>m.key==='weight')
+  expect(metric.points.map(p=>p.y)).toEqual([70,154/LB_PER_KG,154/LB_PER_KG])
+  expect(s).toEqual(before)
+ })
  it.each(['all','1','3','6','12','custom'])('bounds %s by training start and the selected period',period=>{
   const s=base();s.trainingStartDate='2026-09-01';s.measurements=[{d:'2026-08-01',neck:10},{d:'2026-09-02',neck:30},{d:'2026-09-20',neck:35}]
   const r=buildProgressReport(s,{now,period,from:'2026-09-10',to:'2026-09-25'});expect(r.range.start>=s.trainingStartDate).toBe(true);expect(r.body[0].first.y).toBe(period==='custom'?35:30)

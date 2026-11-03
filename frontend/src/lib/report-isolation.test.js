@@ -8,6 +8,7 @@ import { statsReportHTML } from './stats-report.js'
 import { historyCsv, filteredHistory } from '../views/History.jsx'
 import { buildPlanBundle, planPrintHTML } from './plan-share.js'
 import { createBackup, readBackup } from './backup.js'
+import { statsWeightView } from './stats-weight-view.js'
 
 const now = new Date('2026-09-26T12:00:00')
 const workout = (id, d, name = 'WORKOUT_ONLY') => ({ id, d, name, routineId: 'r', start: +new Date(d + 'T12:00:00'), end: +new Date(d + 'T13:00:00'), entries: [{ id: '0025', target: { mode: 'reps' }, sets: [{ done: true, w: 42, r: 8 }] }] })
@@ -16,6 +17,15 @@ const doc = svg => new DOMParser().parseFromString(svg, 'image/svg+xml')
 afterEach(() => vi.useRealTimers())
 
 describe('independent report sources', () => {
+ it('projects raw historical unit stamps consistently in Stats HTML and keeps the source read-only',()=>{
+  vi.useFakeTimers();vi.setSystemTime(now)
+  const s=fixture();s.heightCm=180;s.bodyweight=[{d:'2026-09-20',w:154.12345678,unit:'lb'}]
+  s.workouts=[{...workout('stamped','2026-09-20'),unit:'lb',vol:800,entries:[{id:'0025',target:{mode:'reps'},sets:[{done:true,w:80,r:10}]}]}]
+  const before=structuredClone(s),freeze=value=>{if(value&&typeof value==='object'){Object.freeze(value);Object.values(value).forEach(freeze)}};freeze(s)
+  const html=statsReportHTML(s)
+  expect(html).toContain('70 kg');expect(html).toContain('<b>21.6</b>');expect(html).toContain('36×10')
+  expect(statsReportHTML(statsWeightView(s))).toBe(html);expect(s).toEqual(before)
+ })
  it('presents whole masses in progress and stats while preserving non-mass decimals and snapshots', () => {
   vi.useFakeTimers();vi.setSystemTime(now)
   const s=fixture();s.bodyweight[0].w=83.75;s.inbody[0]={d:'2026-09-20',weight:83.75,skeletalMuscle:32.6,bodyFatPct:14.5,bmi:24.7,bodyWater:40.5}

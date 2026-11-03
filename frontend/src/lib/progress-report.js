@@ -75,7 +75,7 @@ export function buildProgressReport(S, options={}) {
   const unit=S.unit==='lb'?'lb':'kg',measureUnit=S.measurementUnit==='in'?'in':'cm'
   const metric=(key,label,u,pts,opts)=>progressMetric(key,label,u,pts.filter(p=>inside(p.d)),opts)
   const body=[]
-  const bw=(S.bodyweight||[]).flatMap(r=>Array.isArray(r.samples)&&r.samples.length?r.samples.map(s=>({...s,d:r.d,unit:r.unit})):r)
+  const bw=(S.bodyweight||[]).flatMap(r=>Array.isArray(r.samples)&&r.samples.length?r.samples.map(s=>({...s,d:r.d,unit:weightUnit(s.unit,r.unit)})):r)
   body.push(metric('weight','Body Weight',unit,bw.filter(r=>positive(r.w)).map(r=>point(r,load(r.w,r.unit||unit,unit)))))
   for(const [key,label] of MEASURE_FIELDS) body.push(metric(key,label,measureUnit,(S.measurements||[]).map(r=>point(r,measurementInUnit(r,key,measureUnit)))))
   const heights=[...(S.heightHistory||[])]

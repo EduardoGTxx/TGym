@@ -153,3 +153,10 @@ it('falls back through blank or unsupported load-unit stamps without reinterpret
   convertWeightState(S,'lb')
   expect(S.workouts[0]).toMatchObject({unit:'lb',bw:154.32,entries:[{target:{unit:'sec',weight:44.09,inc:5},sets:[{w:44.09,sec:60,done:true}]}]})
 })
+
+it('converts each stamped bodyweight sample once and updates its own unit with the value', () => {
+  const matching={unit:'kg',w:'70.123456789',t:1},S={unit:'lb',bodyweight:[{unit:'lb',w:154,samples:[matching,{unit:'lb',w:154,t:2},{w:154,t:3},{unit:'seconds',w:null,sec:30}]}]}
+  convertWeightState(S,'kg')
+  expect(S.bodyweight[0]).toEqual({unit:'kg',w:69.85,samples:[{unit:'kg',w:'70.123456789',t:1},{unit:'kg',w:69.85,t:2},{w:69.85,t:3},{unit:'seconds',w:null,sec:30}]})
+  const saved=structuredClone(S);convertWeightState(S,'kg');expect(S).toEqual(saved)
+})

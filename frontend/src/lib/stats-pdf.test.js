@@ -9,6 +9,7 @@ import { effortSummary, toScale, displayScale } from './effort.js'
 import { effortLabel } from './history.js'
 import { bmiFor, bmiBand } from './stats-insights.js'
 import { fmtDur } from './format.js'
+import { statsWeightView } from './stats-weight-view.js'
 
 const now = new Date('2026-10-06T12:00:00'), day = 86400000
 const workout = (id, d, exercise = 'test-strength', weight = 60) => ({ id, d, routineId: 'r', name: 'WORKOUT_ONLY_' + id, start: +new Date(d + 'T09:00:00'), end: +new Date(d + 'T10:00:00'), vol: weight * 8 * 3, entries: [{ id: exercise, n: exercise === 'test-strength' ? 'STRENGTH_ONLY' : 'SECOND_ONLY', exercise: { id: exercise, n: exercise === 'test-strength' ? 'STRENGTH_ONLY' : 'SECOND_ONLY', muscleGroups: ['chest'] }, target: { mode: 'reps' }, sets: [{ done: true, w: weight, r: 8, rir: 2 }, { done: true, w: weight, r: 8, rir: 2 }, { done: true, w: weight, r: 8, rir: 1 }] }] })
@@ -23,6 +24,21 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(now) })
 afterEach(() => vi.useRealTimers())
 
 describe('Stats dashboard PDF source isolation', () => {
+  it('projects unit-stamped result and BMI values from raw report inputs without changing records or layouts', () => {
+    const S=fixture();S.targetW=null;S.heightCm=180
+    S.bodyweight=[{d:'2026-10-06',w:154.12345678,unit:'lb',samples:[{w:154.12345678}]}]
+    S.workouts=[{...workout('stamped','2026-10-06'),unit:'lb',vol:800,entries:[{id:'test-strength',n:'Saved strength',target:{mode:'reps'},sets:[{done:true,w:80,r:10}]}]}]
+    const before=structuredClone(S),args=options({sections:['bodyweight','bmi','exercise'],filters:{exId:'test-strength'}})
+    const freeze=value=>{if(value&&typeof value==='object'){Object.freeze(value);Object.values(value).forEach(freeze)}};freeze(S)
+    const pages=statsReportPages(S,args),values=texts(pages)
+    expect(values).toContain('70 kg');expect(values).toContain('21.6')
+    expect(values).toContain('Calculated from 70 kg and 180 cm.')
+    expect(values).toContain('Best set weight per workout · Best: 36 kg')
+    expect(statsReportPages(statsWeightView(S),args)).toEqual(pages)
+    const estimates=texts(statsReportPages(S,options({sections:['exercise'],filters:{exId:'test-strength',exMetric:'e1rm'}})))
+    expect(estimates).toContain('Estimated 1RM per workout · Best: 48 kg');expect(S).toEqual(before)
+    for(const page of pages)expect(doc(page.svg).querySelector('parsererror')).toBeNull()
+  })
   it('keeps whole-weight chart ticks unique over a fractional range without rounding records', () => {
     const S = fixture(); S.bodyweight = [{ d: '2026-10-05', w: 70.1 }, { d: '2026-10-06', w: 70.4 }]; S.targetW = null
     const before = structuredClone(S), pages = statsReportPages(S, options({ sections: ['bodyweight'] }))

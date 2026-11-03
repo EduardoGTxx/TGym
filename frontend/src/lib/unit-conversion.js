@@ -70,7 +70,10 @@ export function convertWeightState(state, nextUnit) {
     const source=row.unit==='lb'||row.unit==='kg'?row.unit:previous
     const rowFactor=source===next?1:next==='lb'?LB_PER_KG:1/LB_PER_KG
     change(row, 'w', rowFactor)
-    if (Array.isArray(row.samples)) row.samples.forEach(sample => change(sample, 'w', rowFactor))
+    if (Array.isArray(row.samples)) row.samples.forEach(sample => {
+      change(sample, 'w', conversionFactor(weightUnit(sample?.unit, source), next))
+      stampUnit(sample, next)
+    })
     if (row.unit) row.unit=next
   })
   Object.values(state.exWeights || {}).forEach(row => change(row, 'w', factor))

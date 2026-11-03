@@ -1,6 +1,7 @@
 import { measurementInUnit } from './body-report.js'
 import { hybridSummary } from './activities.js'
 import { statisticsState, historySummary } from './training-history.js'
+import { statsWeightView } from './stats-weight-view.js'
 import { EXIDX } from './exercises.js'
 import { lastBW, setLabel } from './history.js'
 import { fmtNum, fmtWeight, fmtDate, fmtVol, todayISO } from './format.js'
@@ -11,7 +12,7 @@ import { trainingStreak } from './training-plan.js'
 import { workoutElapsedMs } from './workout-time.js'
 
 export function statsReportHTML(S) {
-  S = statisticsState(S)
+  S = statsWeightView(statisticsState(S))
   const history = historySummary(S)
   const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])
   const td = x => `<td>${esc(x ?? '—')}</td>`
