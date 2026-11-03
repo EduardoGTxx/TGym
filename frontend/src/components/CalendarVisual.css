@@ -16,6 +16,7 @@
 .streak-calendar-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:24px; }
 .streak-calendar-heading .streak-main { display:flex; align-items:center; justify-content:flex-start; gap:7px; white-space:normal; flex:none; margin:0; }
 .streak-calendar-heading .streak-main>.streak-flame { width:46px; height:52px; flex:none; }
+.streak-calendar-heading .streak-main>.streak-flame>svg { transform:scale(1.25); transform-origin:center; }
 .streak-calendar-heading .streak-main .streak-number { font-size:40px; line-height:1; }
 .streak-profile-identity { display:flex; flex-direction:column; align-items:flex-end; gap:12px; flex:1; min-width:0; }
 .streak-profile { display:flex; align-items:center; justify-content:center; flex:none; padding:0; margin:0; border:0; border-radius:50%; background:transparent; }
