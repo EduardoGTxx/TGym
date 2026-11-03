@@ -188,7 +188,7 @@ it('starts scheduled work, navigates away, resumes, cancels early finish, then s
   expect(host.querySelector('#tabbar')).toBeNull()
   expect(host.querySelector('#navigation-dock-toggle')).toBeNull()
   await click('Back')
-  await act(() => host.querySelector('#navigation-dock-toggle').click())
+  expect(host.querySelectorAll('#tabbar>button')).toHaveLength(5)
   await click('Stats'); await click('Resume')
   expect(host.querySelector('#tabbar')).toBeNull()
   expect(host.querySelector('#navigation-dock-toggle')).toBeNull()
@@ -233,7 +233,7 @@ it.each(['active', 'empty', 'training-paused'])('returns home from a cold workou
 it('cancels bulk routine deletion, then deletes and undoes without changing history or schedule', async () => {
   const data = { ...structuredClone(DEF), ...buildDemoState(), lang: 'en', hasCompletedOnboarding: true, hasCompletedAppTour: true }
   mirror.value = structuredClone(data)
-  await mount(); await act(()=>host.querySelector('#navigation-dock-toggle').click()); await click('Routine')
+  await mount(); await click('Routine')
   const before = structuredClone(useStore.getState().S)
   await click('Delete all routines'); await click('Cancel')
   expect(useStore.getState().S.routines).toEqual(before.routines)

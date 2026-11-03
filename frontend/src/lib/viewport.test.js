@@ -46,14 +46,11 @@ it('does not mistake pinch zoom for a keyboard or retain listeners after cleanup
   expect(css('--visual-height')).toBe('');expect(document.documentElement.dataset.keyboard).toBeUndefined()
 })
 
-it('reserves the actual nested Start hex above the dock while ignoring hidden module slots',async()=>{
- const nav=document.getElementById('tabbar');nav.className='navigation-dock'
- nav.innerHTML='<div class="navigation-dock-modules"><div class="navigation-dock-slot" inert aria-hidden="true"><button>Hidden module</button></div><button class="start"><span class="cir">Start</span></button></div><button id="navigation-dock-toggle">Lift</button>'
- bounds(nav.querySelector('.navigation-dock-modules'),760)
- bounds(nav.querySelector('.navigation-dock-slot'),400)
- bounds(nav.querySelector('.navigation-dock-slot button'),400)
+it('reserves the raised Start hex while the four module buttons remain visible in the fixed bar',async()=>{
+ const nav=document.getElementById('tabbar');nav.className='persistent-navigation'
+ nav.innerHTML='<button class="navigation-dock-tab">Today</button><button class="navigation-dock-tab">Routine</button><button class="start"><span class="cir">Start</span></button><button class="navigation-dock-tab">Nutrition</button><button class="navigation-dock-tab">Stats</button>'
+ for(const button of nav.querySelectorAll('.navigation-dock-tab'))bounds(button,760,70,66)
  bounds(nav.querySelector('.start'),738,70,74);bounds(nav.querySelector('.cir'),728,60,52)
- bounds(nav.querySelector('#navigation-dock-toggle'),800,88,44)
  stop=installViewportLayout();expect(css('--nav-clearance')).toBe('116px');expect(css('--bottom-clearance')).toBe('116px')
  nav.querySelector('.cir').style.display='none';window.dispatchEvent(new Event('resize'));await flush()
  expect(css('--nav-clearance')).toBe('106px')

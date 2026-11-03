@@ -2171,7 +2171,7 @@ export default {
   "Close navigation": "Cerrar navegación",
   "Tap a section to open it. Use the arrows to change its order.": "Toca una sección para abrirla. Usa las flechas para cambiar su orden.",
   "Swipe between sections. Open a bottom menu to jump directly; the center button stays fixed.": "Desliza entre secciones. Abre un menú inferior para ir directamente; el botón central permanece fijo.",
-  "Swipe between modules. Lift the bottom navigation to choose one; the center button stays fixed.": "Desliza entre módulos. Levanta la navegación inferior para elegir uno; el botón central permanece fijo.",
+  "Swipe between modules, or tap the bottom buttons to open one directly.": "Desliza entre módulos o toca los botones inferiores para abrir uno directamente.",
   "Swipe through Stats. Use this arrow to open a section or change its order.": "Desliza por Stats. Usa esta flecha para abrir una sección o cambiar su orden.",
   "Training Calendar": "Calendario de entrenamiento",
   "Calories": "Calorías",

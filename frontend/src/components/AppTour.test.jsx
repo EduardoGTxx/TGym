@@ -66,9 +66,9 @@ it('ignores retained inert panes while allowing the tour-blocked app and tab bar
  expect(visibleTourTarget('navigation')).toBe(bar)
 })
 
-it('explains lifting the hidden navigation and opens the visible analytics route for Stats actions',()=>{
+it('explains swiping or using visible bottom buttons and opens the analytics route for Stats actions',()=>{
  expect(TOUR_STEPS[0][1]).toBe('navigation')
- expect(TOUR_STEPS[0][3]).toContain('Lift the bottom navigation')
+ expect(TOUR_STEPS[0][3]).toBe('Swipe between modules, or tap the bottom buttons to open one directly.')
  for(const step of TOUR_STEPS.filter(step=>['stats-view','stats-actions'].includes(step[1])))expect(step[0]).toBe('/stats?section=history')
  expect(TOUR_STEPS.find(step=>step[1]==='stats-view')[3]).toContain('open a section or change its order')
 })
