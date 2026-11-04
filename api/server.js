@@ -52,15 +52,28 @@ try { db = JSON.parse(fs.readFileSync(dbFile, 'utf8')); } catch {}
 db.subs = db.subs || [];
 db.invites = db.invites || [];
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
+let tmpSeq = 0;
 function saveDb() { atomicWrite(dbFile, JSON.stringify(db, null, 2)); }
 function atomicWrite(file, content) {
-  const tmp = file + '.tmp';
+  const tmp = `${file}.${process.pid}.${++tmpSeq}.tmp`;
   fs.writeFileSync(tmp, content);
   fs.renameSync(tmp, file);
 }
 const stateFile = uid => path.join(DATA, 'state-' + uid.replace(/[^a-zA-Z0-9_-]/g, '') + '.json');
+const stateCache = new Map();
 function readState(uid) {
-  try { return JSON.parse(fs.readFileSync(stateFile(uid), 'utf8')); } catch { return null; }
+  const file = stateFile(uid);
+  try {
+    const stat = fs.statSync(file);
+    const cached = stateCache.get(uid);
+    if (cached && cached.mtimeMs === stat.mtimeMs) return cached.state;
+    const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+    stateCache.set(uid, { mtimeMs: stat.mtimeMs, state });
+    return state;
+  } catch {
+    stateCache.delete(uid);
+    return null;
+  }
 }
 
 /* ---------- push notifications (Web Push / VAPID) ---------- */
@@ -718,6 +731,7 @@ const routes = {
     if (!body.state || typeof body.state !== 'object' || Array.isArray(body.state)) return json(res, 400, { error: 'state required' });
     delete body.state.active;              // in-progress workouts stay device-local
     atomicWrite(stateFile(user.id), JSON.stringify(body.state));
+    stateCache.delete(user.id);
     json(res, 200, { ok: true, ts: body.state._ts || null });
   },
 

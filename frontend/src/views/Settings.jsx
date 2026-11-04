@@ -113,7 +113,7 @@ export default function Settings() {
   const [serverSyncBusy, setServerSyncBusy] = useState(false)
   const serverSyncPending = useRef(false)
   const playerLaunchPending = useRef(false)
-  const { update, replaceState, setUser, pullState, pushState, signOut, signOutAll, resetDemo, disconnectServer, setGuest } = useStore()
+  const { update, replaceState, setUser, pullState, pushState, signOut, signOutAll, resetDemo, setGuest } = useStore()
   const toast = useUI(s => s.toast)
   const fileRef = useRef(null)
   const importRef = useRef(null)
@@ -226,8 +226,6 @@ export default function Settings() {
       </> : user ? <>
         <Row icon="personCircle" iconTint="var(--grey)" title={user.name} subtitle={t('Signed in with passkey — data syncs to this profile.')} />
         {user.admin && <Row icon="wrench" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
-        <Row icon="link" iconTint="var(--blue)" title={t('Pair the mobile app')} subtitle={t('Connect the TGym app on your phone to this account.')} accessory="chevron"
-          onClick={() => useUI.getState().openSheet(close => <PairSheet close={close} />)} />
         <Row icon="signOut" iconTint="var(--red)" title={t('Sign out')} danger onClick={() => confirmSheet({ title: t('Sign out?'), message: t('Your saved data is synced first. Active workouts and unsent changes stay on this device.'), confirmText: t('Sign out'), danger: true, onConfirm: async () => { try { const cleared = await signOut(); nav('/home'); if (cleared === false) toast(t('Sign-out completed. Your local data was kept on this device.')) } catch { toast(t('Could not sign out. Your local data was kept. Check your connection and try again.')) } } })} />
         <Row icon="shield" iconTint="var(--red)" title={t('Sign out everywhere')} subtitle={t('Ends this profile’s sessions on all your devices.')} danger onClick={signOutEverywhere} />
       </> : <>
@@ -403,13 +401,6 @@ export default function Settings() {
       <Row icon="folder" iconTint="var(--blue)" title={t('Backup')} accessory="chevron" onClick={() => useUI.getState().openSheet(() => <BackupSheet onExport={doExport} onImport={() => authorize(() => fileRef.current?.click())} />)} />
       <Row icon="cloud" iconTint="var(--blue)" title={t('Restore')} subtitle={t('Back up, synchronize or restore your TGym data.')} accessory="chevron" onClick={() => openRestoreSheet(authorize)} />
       <Row icon="folder" iconTint="var(--acc)" title={t('Load Routine')} subtitle={t('Create, import or export routines from one place.')} accessory="chevron" onClick={openLoadRoutine} />
-      <Row icon="sparkles" iconTint="var(--yellow)" title={t('Reset demo data')} subtitle={t('Puts the example plan, workouts and weigh-ins back the way they started.')} accessory="chevron"
-        onClick={() => confirmSheet({
-          title: t('Reset demo data?'),
-          message: t('Puts the example plan, workouts and weigh-ins back the way they started.'),
-          confirmText: t('Reset'),
-          onConfirm: async () => { await resetDemo(); nav('/home'); toast(t('Demo data reset')) }
-        })} />
       {canUndoImport() && <Row icon="reset" iconTint="var(--orange)" title={t('Undo last import')} subtitle={t('Available until this app session ends.')} accessory="chevron" onClick={() => confirmSheet({ title: t('Undo last import?'), message: t('Restores the data that was present immediately before the import.'), confirmText: t('Restore'), onConfirm: () => {
         try { if (restoreImportUndo(replaceState)) toast(t('Import undone')) }
         catch { toast(t('Could not save. Check available storage and try again.')) }
@@ -587,27 +578,6 @@ function EquipmentCard({ S, update }) {
   </Section>
 }
 
-// Lets the mobile app's "connect to my server" mode (lib/remote.js) authenticate without a
-// WebAuthn ceremony of its own — the code is minted here, from an already signed-in session,
-// and redeemed by the app for a bearer token. See /api/pair/create in api/server.js.
-function PairSheet({ close }) {
-  const [code, setCode] = useState(null)
-  const [err, setErr] = useState(null)
-  useEffect(() => { api('/api/pair/create', { method: 'POST', body: '{}' }).then(r => setCode(r.code)).catch(e => setErr(e.message || t('Could not generate a code'))) }, [])
-  return <>
-    <h3>{t('Pair the mobile app')}</h3>
-    <div className="muted small" style={{ marginBottom: 14 }}>
-      {t('On the TGym app, choose “Connect to my server”, then enter this address and the code below. It expires in 5 minutes.')}
-    </div>
-    {err ? <div className="dim small">{err}</div> : (
-      <div className="card" style={{ textAlign: 'center', fontSize: 30, fontWeight: 700, letterSpacing: '.16em', padding: '18px 0' }}>
-        {code || '········'}
-      </div>
-    )}
-    <div style={{ height: 12 }} />
-    <Button onClick={close}>{t('Done')}</Button>
-  </>
-}
 
 // The same registration as the sign-in screen's, reached from Settings instead. It asks for
 // the invite code on the same terms: an invite-only instance rejects a registration without

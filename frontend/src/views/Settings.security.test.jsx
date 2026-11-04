@@ -78,3 +78,9 @@ it('verifies once while pending and reports a verification storage failure witho
   expect(useUI.getState().sheets.at(-1).locked).toBe(false)
   expect(document.activeElement).toBe(host.querySelector('input[placeholder="4-digit PIN"]'))
 })
+
+
+it('does not render "Reset demo data" in non-DEMO mode', () => {
+  expect(row('Reset demo data')).toBeUndefined()
+  expect(host.textContent).not.toContain('Reset demo data')
+})

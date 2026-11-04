@@ -44,10 +44,21 @@ export default function RestoreSheet({ authorize = action => action() }) {
   })
   const saveMerged = async (next, file) => {
     if (backupChecksum(portableState(useStore.getState().S)) !== backupChecksum(portableState(S))) throw new Error(t('Local data changed. Please synchronize again.'))
-    saveImportUndo(useStore.getState().S)
-    replaceState(next, false)
     const saved = await backupToGoogleDrive(next, { interactive: false, expectedFile: file })
-    update(s => { s.cloudSync = { ...(s.cloudSync || {}), on: true, authorizedOnce: true, lastBackupAt: saved.at, lastAttemptAt: saved.at, lastFileId: saved.fileId, lastModifiedTime: saved.modifiedTime, needsAuth: false, lastError: null } }, false)
+    saveImportUndo(useStore.getState().S)
+    const nextCloudSync = {
+      ...(useStore.getState().S?.cloudSync || {}),
+      ...(next?.cloudSync || {}),
+      on: true,
+      authorizedOnce: true,
+      lastBackupAt: saved.at,
+      lastAttemptAt: saved.at,
+      lastFileId: saved.fileId,
+      lastModifiedTime: saved.modifiedTime,
+      needsAuth: false,
+      lastError: null,
+    }
+    replaceState({ ...next, cloudSync: nextCloudSync }, true)
     toast(t(saved.warning || 'All devices are synchronized'))
   }
   const synchronize = () => run(async () => {

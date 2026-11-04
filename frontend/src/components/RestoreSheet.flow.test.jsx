@@ -49,3 +49,13 @@ it('does not overwrite a local edit made while the conflict dialog was open', as
   expect(useStore.getState().S.routines[0].name).toBe('Edited during review')
   expect(useStore.getState().S.cloudSync.lastError).toBe(t('Local data changed. Please synchronize again.'))
 })
+
+
+it('leaves local state and undo untouched if backupToGoogleDrive fails', async () => {
+  backupToGoogleDrive.mockRejectedValue(new Error('Network failure'))
+  await click('Synchronize all devices')
+  await click('Keep changes from this device')
+  expect(useStore.getState().S.routines[0].name).toBe('Local')
+  expect(consumeImportUndo()).toBeNull()
+  expect(useStore.getState().S.cloudSync.lastError).toBe('Network failure')
+})

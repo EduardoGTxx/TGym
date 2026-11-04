@@ -94,6 +94,14 @@ describe('bestSetOf', () => {
     expect(bestSetOf(null)).toBeNull()
     expect(bestSetOf({ sets: [] })).toBeNull()
   })
+
+  it('converts reps for legacy unilateral per-side entries', () => {
+    const legacy = { id: 'x', target: { side: true }, sets: [{ w: 100, r: 10, done: true }] }
+    expect(bestSetOf(legacy)).toEqual({ est: 116.7, w: 100, r: 5 })
+
+    const modern = { id: 'x', target: { side: true, repsPerSide: true }, sets: [{ w: 100, r: 10, done: true }] }
+    expect(bestSetOf(modern)).toEqual({ est: 133.3, w: 100, r: 10 })
+  })
 })
 
 const S = {

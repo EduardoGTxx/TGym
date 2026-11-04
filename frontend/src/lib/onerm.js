@@ -45,10 +45,13 @@ export function estimate1RM(w, r, formula = DEFAULT_FORMULA) {
 // exercise, with no rep count attached, so it cannot produce an estimate.
 export function bestSetOf(entry, formula = DEFAULT_FORMULA) {
   let best = null
+  const cfg = entry?.target || entry
+  const halve = Boolean(cfg?.side && !cfg?.repsPerSide)
   ;(entry?.sets || []).forEach(s => {
-    if (!s.done || isWarmupRow(s) || modeForSet(s, entry.target || entry) !== 'reps') return
-    const est = estimate1RM(s.w, s.r, formula)
-    if (est !== null && (!best || est > best.est)) best = { est, w: Number(s.w), r: Math.round(Number(s.r)) }
+    if (!s.done || isWarmupRow(s) || modeForSet(s, cfg) !== 'reps') return
+    const r = halve ? Math.max(1, Math.round(Number(s.r) / 2)) : Math.round(Number(s.r))
+    const est = estimate1RM(s.w, r, formula)
+    if (est !== null && (!best || est > best.est)) best = { est, w: Number(s.w), r }
   })
   return best
 }
