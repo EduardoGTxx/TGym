@@ -1,4 +1,3 @@
-import { emitRestStart, emitRestEnd, clearSpotifreeRest } from '../lib/spotifree-sync.js'
 import { create } from 'zustand'
 import { uid } from '../lib/format.js'
 import { playAppSound, vibrate } from '../lib/sound.js'
@@ -82,7 +81,7 @@ export const useUI = create((set, get) => ({
     if (!(sec > 0)) return
     const endsAt = timerNumber(restored?.endsAt ?? Date.now() + sec * 1000)
     const total = timerNumber(restored?.total ?? sec)
-    if (!Number.isFinite(endsAt) || endsAt <= Date.now() || !Number.isFinite(total) || total <= 0) { clearSpotifreeRest(); return }
+    if (!Number.isFinite(endsAt) || endsAt <= Date.now() || !Number.isFinite(total) || total <= 0) return
     const exName = exerciseName || restored?.exerciseName || ''
     const timer = { left: sec, total, endsAt, exerciseName: exName }
     saveRest(timer)
@@ -90,7 +89,6 @@ export const useUI = create((set, get) => ({
     void syncWorkoutNotification(useStore.getState().S.active,timer,{interactive:!restored})
     if (!restored) void requestTimerNotificationPermission()
     pushRestTimer(sec,endsAt)
-    emitRestStart(sec, endsAt, timer.total, exName)
     timerTick = () => {
       const tm = get().timer
       if (!tm) return
@@ -121,22 +119,20 @@ export const useUI = create((set, get) => ({
     saveRest(get().timer)
     void syncWorkoutNotification(useStore.getState().S.active,get().timer)
     pushRestTimer(left,tm.endsAt+sec*1000)
-    emitRestStart(left, tm.endsAt + sec * 1000, tm.total + sec, tm.exerciseName || '')
   },
-  stopRest(announceEnd = true) {
+  stopRest() {
     if (timerInt) clearInterval(timerInt); timerInt = null
     if (timerTick) document.removeEventListener('visibilitychange', timerTick); timerTick = null
     if (get().timer) cancelPushRestTimer()
     saveRest(null)
     set({ timer: null })
     void syncWorkoutNotification(useStore.getState().S.active,null)
-    if (announceEnd) emitRestEnd()
   },
   restoreRest() {
     if (get().timer) return
     const saved=useStore.getState().S.active?.restTimer
-    if (!saved) { clearSpotifreeRest(); return }
-    if (!Number.isFinite(saved.endsAt) || saved.endsAt <= Date.now()) { saveRest(null); clearSpotifreeRest(); return }
+    if (!saved) return
+    if (!Number.isFinite(saved.endsAt) || saved.endsAt <= Date.now()) { saveRest(null); return }
     get().startRest(Math.ceil((saved.endsAt-Date.now())/1000), saved, saved.exerciseName || '')
   },
 

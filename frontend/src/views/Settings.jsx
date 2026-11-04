@@ -1,4 +1,3 @@
-import { launchSpotifree } from '../lib/spotifree-sync.js'
 import { openHealthActivities } from '../components/Activities.jsx'
 import { replayAppTour } from '../components/AppTour.jsx'
 import { openTrainingHistory } from '../components/TrainingHistory.jsx'
@@ -112,7 +111,6 @@ export default function Settings() {
   const serverSyncError = useStore(s => s.serverSyncError)
   const [serverSyncBusy, setServerSyncBusy] = useState(false)
   const serverSyncPending = useRef(false)
-  const playerLaunchPending = useRef(false)
   const { update, replaceState, setUser, pullState, pushState, signOut, signOutAll, resetDemo, setGuest } = useStore()
   const toast = useUI(s => s.toast)
   const fileRef = useRef(null)
@@ -133,17 +131,6 @@ export default function Settings() {
       await enrollDeviceBiometry()
       setBiometricEnabled(true); setBioOn(true); toast(t('Biometric unlock enabled'))
     } catch { toast(t('Biometric authentication was not completed')) }
-  }
-  const changeSpotifree = enabled => {
-    try { update(s => { s.enableSpotifreeSync = enabled }) }
-    catch { toast(t('Could not save. Check available storage and try again.')) }
-  }
-  const openSpotifree = async () => {
-    if (playerLaunchPending.current) return
-    playerLaunchPending.current = true
-    try { if (await launchSpotifree() === false) toast(t('The music player could not be opened.')) }
-    catch { toast(t('The music player could not be opened.')) }
-    finally { playerLaunchPending.current = false }
   }
   const authorize = action => {
     if (!lockOn) return action()
@@ -308,13 +295,6 @@ export default function Settings() {
       </Row>
       <Row icon="bell" iconTint="var(--acc)" title={t('Sound preferences')} subtitle={t('Alert tones and your own short sounds')} accessory="chevron" onClick={openSoundSettings} />
       <Row icon="bolt" iconTint="var(--orange)" title={t('Vibration')}><Switch checked={S.vibration !== false} onChange={v => update(s => { s.vibration = v })} /></Row>
-      <Row icon="music" iconTint="var(--green)" title={t('Spotifree Integration')}
-        subtitle={t('Rest timer sharing is available only to compatible players on this site. External app sync is not available.')}>
-        <Switch checked={S.enableSpotifreeSync !== false} onChange={changeSpotifree} />
-      </Row>
-      <Row icon="music" iconTint="var(--blue)" title={t('Open Spotifree')}
-        subtitle={t('Open Spotifree companion music player')}
-        accessory="chevron" onClick={openSpotifree} />
       <Row icon="sparkles" iconTint="var(--yellow)" title={t('Reduce animations')} subtitle={t('Use simpler movement effects throughout the app.')}><Switch checked={!!S.reduceMotion} onChange={v => update(s => { s.reduceMotion = v })} /></Row>
       <Row icon="target" iconTint="var(--teal)" title={t('Strict reps')} subtitle={t('Keep repetition controls inside each exercise range.')}>
         <Switch checked={!!S.strictReps} onChange={v => update(s => { s.strictReps = v })} />

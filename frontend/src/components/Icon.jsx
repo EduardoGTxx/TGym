@@ -131,7 +131,6 @@ P.exercises = P.magnifier
 P.weight = P.scale
 P.streak = P.flame
 P.done = P.check
-P.spotifree = P.music
 
 export const ICON_NAMES = Object.keys(P)
 

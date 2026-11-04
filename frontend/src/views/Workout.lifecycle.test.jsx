@@ -12,7 +12,6 @@ import { bindUI } from '../components/ui.jsx'
 vi.mock('../lib/sound.js', () => ({ playAppSound: vi.fn(), vibrate: vi.fn() }))
 vi.mock('../lib/api.js', () => ({ api: vi.fn(async () => ({})), setRemoteAuth: vi.fn() }))
 vi.mock('../components/Media.jsx', () => ({ default: () => null }))
-vi.mock('../lib/spotifree-sync.js', () => ({ launchSpotifree: vi.fn(), emitWorkoutFinish: vi.fn(), emitRestStart: vi.fn(), emitRestEnd: vi.fn() }))
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, host
 const current = () => useStore.getState().S

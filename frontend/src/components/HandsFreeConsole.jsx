@@ -1,4 +1,3 @@
-import { launchSpotifree } from '../lib/spotifree-sync.js'
 import { useState, useEffect } from 'react'
 import Icon from './Icon.jsx'
 import { t, getLang } from '../lib/i18n.js'
