@@ -39,6 +39,16 @@ function post(message) {
   finally { closeChannel() }
 }
 
+function broadcastNative(payload) {
+  if (!MOBILE) return
+  try {
+    const plugin = globalThis.Capacitor?.Plugins?.WorkoutNotification
+    if (typeof plugin?.broadcastSpotifree === 'function') {
+      void plugin.broadcastSpotifree(payload)
+    }
+  } catch {}
+}
+
 export function clearSpotifreeRest() {
   restActive = false
   try { globalThis.localStorage?.removeItem(SPOTIFREE_STORAGE_KEY_REST) } catch {}
@@ -50,7 +60,10 @@ export function clearSpotifreeRest() {
 function observePreferences() {
   if (stopObservingPreferences || typeof useStore.subscribe !== 'function') return
   stopObservingPreferences = useStore.subscribe((state, previous) => {
-    if (state.S?.enableSpotifreeSync === false && previous?.S?.enableSpotifreeSync !== false) clearSpotifreeRest()
+    if (state.S?.enableSpotifreeSync === false && previous?.S?.enableSpotifreeSync !== false) {
+      clearSpotifreeRest()
+      broadcastNative({ type: 'REST_END' })
+    }
   })
 }
 
@@ -66,6 +79,7 @@ export function emitRestStart(seconds, endsAt, total, exerciseName = '') {
   const name = typeof exerciseName === 'string' ? exerciseName : ''
   restActive = true
   post({ type: 'REST_START', seconds: sec, endsAt: end, total: tot, exerciseName: name })
+  broadcastNative({ type: 'REST_START', seconds: sec, endsAt: end, total: tot, exerciseName: name })
   try {
     globalThis.localStorage?.setItem(SPOTIFREE_STORAGE_KEY_REST,
       JSON.stringify({ endsAt: end, total: tot, exerciseName: name, startedAt: now }))
@@ -79,7 +93,10 @@ export function emitRestEnd() {
     const rest = JSON.parse(globalThis.localStorage?.getItem(SPOTIFREE_STORAGE_KEY_REST) || 'null')
     stored = Number.isFinite(rest?.endsAt) && rest.endsAt > Date.now() && Number.isFinite(rest.total) && rest.total > 0
   } catch {}
-  if (isSpotifreeSyncEnabled() && (restActive || stored)) post({ type: 'REST_END' })
+  if (isSpotifreeSyncEnabled() && (restActive || stored)) {
+    post({ type: 'REST_END' })
+    broadcastNative({ type: 'REST_END' })
+  }
   clearSpotifreeRest()
 }
 
@@ -95,6 +112,7 @@ export function emitWorkoutFinish(workout) {
   finishedWorkouts.add(key)
   if (finishedWorkouts.size > 100) finishedWorkouts.delete(finishedWorkouts.values().next().value)
   post({ type: 'WORKOUT_FINISH', workout: { id: workout.id, d: workout.d, duration } })
+  broadcastNative({ type: 'WORKOUT_FINISH', date: workout.d, durationMs: duration })
 }
 
 /** Request a launch after a user click; this does not confirm app/playback success. */

@@ -31,4 +31,31 @@ public class WorkoutNotificationPlugin extends Plugin {
             call.reject("Workout notification unavailable",error);
         }
     }
+
+    @PluginMethod public void broadcastSpotifree(PluginCall call) {
+        try {
+            String type = call.getString("type", "");
+            Intent intent = new Intent("com.spotifree.app.action.TGYM_REST");
+            intent.setPackage("com.spotifree.app");
+            intent.putExtra("type", type);
+            if ("REST_START".equals(type)) {
+                intent.putExtra("active", true);
+                intent.putExtra("seconds", call.getInt("seconds", 0));
+                Long endsAt = call.getLong("endsAt");
+                if (endsAt != null) intent.putExtra("endsAt", endsAt);
+                intent.putExtra("total", call.getInt("total", 0));
+                intent.putExtra("exerciseName", call.getString("exerciseName", ""));
+            } else if ("REST_END".equals(type)) {
+                intent.putExtra("active", false);
+            } else if ("WORKOUT_FINISH".equals(type)) {
+                intent.putExtra("date", call.getString("date", ""));
+                Long durationMs = call.getLong("durationMs");
+                if (durationMs != null) intent.putExtra("durationMs", durationMs);
+            }
+            getContext().sendBroadcast(intent);
+            call.resolve();
+        } catch (Exception error) {
+            call.reject("Spotifree broadcast unavailable", error);
+        }
+    }
 }
