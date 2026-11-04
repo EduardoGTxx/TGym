@@ -1679,7 +1679,11 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 @media(max-width:480px){.workout-set-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.workout-set-actions .btn:first-child{grid-column:1/-1;justify-content:center}.workout-set-actions .btn{height:auto;min-height:44px}}
 
 /* Long translated setting labels get their own line before segmented choices. */
-@media(max-width:480px){.lrow:has(>.seg-inline){display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px}.lrow:has(>.seg-inline)>.seg-inline{grid-column:1/-1;width:100%;max-width:100%}.lrow:has(>.seg-inline) .lrow-t{overflow-wrap:normal}}
+.lrow.lrow-theme{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:10px 12px;padding-block:12px}
+.lrow.lrow-theme .lrow-i{grid-column:1;grid-row:1}
+.lrow.lrow-theme .lrow-m{grid-column:2;grid-row:1}
+.lrow.lrow-theme .seg{grid-column:1/-1;grid-row:2;width:100%;min-width:0}
+@media(max-width:480px){.lrow:has(>.seg-inline){display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px}.lrow:has(>.seg-inline)>.seg-inline{grid-column:1/-1;width:100%;max-width:100%}.lrow:has(>.seg-inline) .lrow-t{overflow-wrap:normal}}
 
 .set-console .set-metric .stp button,.sets-card .subrow .stp.mini button{min-height:44px}.set-console .set-metric .stp .num,.sets-card .subrow .stp.mini .num{min-height:44px}
 

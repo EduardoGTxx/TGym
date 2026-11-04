@@ -352,7 +352,7 @@ export default function Settings() {
 
     {/* ---------- appearance ---------- */}
     <Section data-tour="preferences" title={t('Appearance')} footer={DEMO || MOBILE ? undefined : t('synced with your profile')}>
-      <Row icon="moon" iconTint="var(--indigo)" title={t('Theme')}>
+      <Row icon="moon" iconTint="var(--indigo)" title={t('Theme')} className="lrow-theme">
         <Segmented
           className="seg-inline"
           options={[

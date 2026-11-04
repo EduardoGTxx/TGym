@@ -121,6 +121,13 @@ export async function launchSpotifree(playlistId = null) {
   if (playlistId != null && (typeof playlistId !== 'string' || !/^[\w-]{1,128}$/.test(playlistId))) return false
   const uri = playlistId ? 'spotifree://playlist/' + encodeURIComponent(playlistId) : 'spotifree://'
   const webFallbackUrl = 'https://spotifree.app'
+  const plugin = globalThis.Capacitor?.Plugins?.WorkoutNotification
+  if (MOBILE && typeof plugin?.openSpotifree === 'function') {
+    try {
+      const res = await plugin.openSpotifree({ url: uri })
+      if (res?.completed === true) return true
+    } catch {}
+  }
   const launcher = globalThis.Capacitor?.Plugins?.AppLauncher
   if (MOBILE && launcher?.canOpenUrl && launcher?.openUrl) {
     try {

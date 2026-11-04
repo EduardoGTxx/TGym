@@ -34,3 +34,11 @@ it('accepts a confirmed native launch without also opening the fallback website'
   expect(openUrl).toHaveBeenCalledWith({ url: 'spotifree://' })
   expect(browser.open).not.toHaveBeenCalled()
 })
+
+it('launches Spotifree via WorkoutNotification plugin when available without browser fallback', async () => {
+  const openSpotifree = vi.fn(async () => ({ completed: true }))
+  vi.stubGlobal('Capacitor', { Plugins: { WorkoutNotification: { openSpotifree } } })
+  expect(await launchSpotifree('my-playlist')).toBe(true)
+  expect(openSpotifree).toHaveBeenCalledWith({ url: 'spotifree://playlist/my-playlist' })
+  expect(browser.open).not.toHaveBeenCalled()
+})

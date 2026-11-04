@@ -1,6 +1,7 @@
 package app.framegym.mobile;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import androidx.core.app.NotificationManagerCompat;
 import com.getcapacitor.JSObject;
@@ -56,6 +57,35 @@ public class WorkoutNotificationPlugin extends Plugin {
             call.resolve();
         } catch (Exception error) {
             call.reject("Spotifree broadcast unavailable", error);
+        }
+    }
+
+    @PluginMethod public void openSpotifree(PluginCall call) {
+        try {
+            String uriString = call.getString("url", "spotifree://");
+            Uri uri = Uri.parse(uriString);
+            Intent viewIntent = new Intent(Intent.ACTION_VIEW, uri);
+            viewIntent.setPackage("com.spotifree.app");
+            viewIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (viewIntent.resolveActivity(getContext().getPackageManager()) != null) {
+                getContext().startActivity(viewIntent);
+                JSObject ret = new JSObject(); ret.put("completed", true);
+                call.resolve(ret);
+                return;
+            }
+            Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage("com.spotifree.app");
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(launchIntent);
+                JSObject ret = new JSObject(); ret.put("completed", true);
+                call.resolve(ret);
+                return;
+            }
+            JSObject ret = new JSObject(); ret.put("completed", false);
+            call.resolve(ret);
+        } catch (Exception error) {
+            JSObject ret = new JSObject(); ret.put("completed", false);
+            call.resolve(ret);
         }
     }
 }
