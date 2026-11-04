@@ -24,6 +24,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
       - name: Validate Firebase credentials without sending a notification
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' && secrets.FIREBASE_PROJECT_ID != '' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
@@ -31,6 +32,7 @@ jobs:
           export UPDATE_VERSION="$(node -p "require('./frontend/package.json').version")"
           node frontend/scripts/notify-release.mjs --validate
       - name: Configure Firebase
+        if: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
         env:
           CONFIG: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: printf '%s' "$CONFIG" | base64 --decode > frontend/android/app/google-services.json

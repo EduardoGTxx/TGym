@@ -9,8 +9,9 @@
 # module-resolution errors.
 FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci 2>/dev/null || npm install
+RUN npm install -g pnpm@10
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 COPY api/session-activity.js /api/session-activity.js
 RUN npm run build
