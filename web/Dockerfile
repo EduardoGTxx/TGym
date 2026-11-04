@@ -11,10 +11,11 @@ FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
 RUN npm install -g pnpm@10
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/patches ./patches
 RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 COPY api/session-activity.js /api/session-activity.js
-RUN npm run build
+RUN pnpm run build
 
 FROM nginx:alpine
 ARG VERSION=dev
@@ -54,4 +55,3 @@ HEALTHCHECK --interval=5m \
             --timeout=5s \
             --retries=3 \
             CMD wget --spider -q "http://127.0.0.1:${NGINX_PORT}/" || exit 1
-

@@ -24,18 +24,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
       - name: Validate Firebase credentials without sending a notification
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' && secrets.FIREBASE_PROJECT_ID != '' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ] || [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "Skipping Firebase validation (credentials not configured in repository secrets)"
+            exit 0
+          fi
           export UPDATE_VERSION="$(node -p "require('./frontend/package.json').version")"
           node frontend/scripts/notify-release.mjs --validate
       - name: Configure Firebase
-        if: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
         env:
           CONFIG: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
-        run: printf '%s' "$CONFIG" | base64 --decode > frontend/android/app/google-services.json
+        run: |
+          if [ -z "$CONFIG" ]; then
+            echo "Skipping Firebase configuration (GOOGLE_SERVICES_JSON_BASE64 not configured in repository secrets)"
+            exit 0
+          fi
+          printf '%s' "$CONFIG" | base64 --decode > frontend/android/app/google-services.json
       - run: pnpm run build:mobile
         working-directory: frontend
       - run: ./gradlew assembleDebug :app:lintDebug
@@ -50,7 +57,11 @@ jobs:
           export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
           mkdir -p "$ANDROID_AVD_HOME"
           trap 'cat /tmp/tgym-emulator.log 2>/dev/null || true; adb logcat -d -s TGymWorkoutNotification:E AndroidRuntime:E || true' EXIT
-          sdkmanager 'system-images;android-35;google_apis;x86_64' 'emulator' >/dev/null
+          echo "y" | sdkmanager --install 'system-images;android-35;google_apis;x86_64' 'emulator' >/dev/null || {
+            echo "Retrying SDK download once..."
+            sleep 3
+            echo "y" | sdkmanager --install 'system-images;android-35;google_apis;x86_64' 'emulator' >/dev/null
+          }
           echo no | avdmanager create avd --force --name tgym-test --package 'system-images;android-35;google_apis;x86_64'
           "$ANDROID_HOME/emulator/emulator" -avd tgym-test -no-window -no-audio -no-boot-anim -gpu swiftshader -no-snapshot -no-metrics > /tmp/tgym-emulator.log 2>&1 &
           timeout --kill-after=10s 120 adb wait-for-device
