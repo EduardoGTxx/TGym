@@ -29,3 +29,4 @@ node_modules
 
 # Generated real PCM fixtures for Android audio instrumentation
 frontend/android/app/src/androidTest/assets/audio-audit.json
+graphify-out/
