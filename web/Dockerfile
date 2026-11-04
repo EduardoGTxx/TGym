@@ -7,9 +7,9 @@
 # QEMU — and QEMU-emulated npm installs are known to corrupt esbuild/rollup's platform-
 # specific native binaries, which is what breaks `vite build` with unrelated-looking
 # module-resolution errors.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS build
+FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS build
 WORKDIR /app
-RUN npm install -g pnpm@10
+RUN corepack enable && corepack prepare pnpm@10.34.8 --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 COPY frontend/patches ./patches
 RUN pnpm install --frozen-lockfile

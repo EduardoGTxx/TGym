@@ -19,6 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - image: api
@@ -28,7 +29,7 @@ jobs:
             context: .
             file: ./web/Dockerfile
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Lowercase owner (registry names must be lowercase)
         id: repo
