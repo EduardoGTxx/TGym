@@ -101,7 +101,21 @@ jobs:
           test -n "$STORE_PASSWORD" || { echo "Missing secret ANDROID_STORE_PASSWORD. Add it to repository Secrets."; exit 1; }
           test -n "$KEY_ALIAS" || { echo "Missing secret ANDROID_KEY_ALIAS. Add it to repository Secrets."; exit 1; }
           test -n "$KEY_PASSWORD" || { echo "Missing secret ANDROID_KEY_PASSWORD. Add it to repository Secrets."; exit 1; }
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > frontend/android/app/tgym-release.jks
+
+          # Sanitize inputs: strip whitespace, newlines, and surrounding quotes
+          STORE_PASSWORD="$(printf '%s' "$STORE_PASSWORD" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+          KEY_PASSWORD="$(printf '%s' "$KEY_PASSWORD" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+          KEY_ALIAS="$(printf '%s' "$KEY_ALIAS" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+
+          # Decode base64 cleanly ignoring any whitespace or line breaks
+          printf '%s' "$KEYSTORE_B64" | tr -d '\r\n ' | base64 -d > frontend/android/app/tgym-release.jks
+
+          # Pre-validate keystore before starting Gradle build
+          keytool -list -keystore frontend/android/app/tgym-release.jks -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null || {
+            echo "::error::Failed to read key '$KEY_ALIAS' from keystore using the provided password. Please verify ANDROID_STORE_PASSWORD and ANDROID_KEY_ALIAS in repository Secrets."
+            exit 1
+          }
+
           printf 'storeFile=tgym-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > frontend/android/keystore.properties
       - run: ./gradlew assembleRelease bundleRelease
         working-directory: frontend/android
