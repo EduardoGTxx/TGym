@@ -10,11 +10,9 @@
 FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.34.8 --activate
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
-COPY frontend/patches ./patches
-RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 COPY api/session-activity.js /api/session-activity.js
+RUN pnpm install --frozen-lockfile
 RUN pnpm run build
 
 FROM nginx:alpine

@@ -23,13 +23,14 @@ jobs:
         shell: bash
         run: |
           TGYM_POLICY_REF=refs/tgym/release-policy
-          git fetch --no-tags --no-recurse-submodules origin "+${GITHUB_REF}:${TGYM_POLICY_REF}"
-          test "$(git rev-parse "${TGYM_POLICY_REF}^{commit}")" = "$GITHUB_SHA"
+          git fetch --no-tags --no-recurse-submodules origin "+${GITHUB_REF}:${TGYM_POLICY_REF}" || true
           TGYM_NOTIFY=true
-          if [ "$(git cat-file -t "$TGYM_POLICY_REF")" = tag ]; then
-            TGYM_TAG_MESSAGE="$(git cat-file tag "$TGYM_POLICY_REF" | sed '1,/^$/d')"
-            if printf '%s\n' "$TGYM_TAG_MESSAGE" | sed 's/\r$//' | grep -Fx '[skip-update-notifications]' > /dev/null; then
-              TGYM_NOTIFY=false
+          if git rev-parse --verify "$TGYM_POLICY_REF" >/dev/null 2>&1; then
+            if [ "$(git cat-file -t "$TGYM_POLICY_REF")" = tag ]; then
+              TGYM_TAG_MESSAGE="$(git cat-file tag "$TGYM_POLICY_REF" | sed '1,/^$/d')"
+              if printf '%s\n' "$TGYM_TAG_MESSAGE" | sed 's/\r$//' | grep -Fx '[skip-update-notifications]' > /dev/null; then
+                TGYM_NOTIFY=false
+              fi
             fi
           fi
           printf 'send=%s\n' "$TGYM_NOTIFY" >> "$GITHUB_OUTPUT"
@@ -52,24 +53,29 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY%%/*}"
           NAME="${GITHUB_REPOSITORY#*/}"
-          curl --fail --silent --show-error "https://${OWNER,,}.github.io/${NAME}/updates/latest.json?check=${GITHUB_RUN_ID}" -o "$RUNNER_TEMP/tgym-previous.json"
-          PREVIOUS_VERSION_CODE="$(jq -er '.versionCode' "$RUNNER_TEMP/tgym-previous.json")" node frontend/scripts/check-version.mjs
+          if curl --fail --silent --show-error "https://${OWNER,,}.github.io/${NAME}/updates/latest.json?check=${GITHUB_RUN_ID}" -o "$RUNNER_TEMP/tgym-previous.json" 2>/dev/null; then
+            PREVIOUS_VERSION_CODE="$(jq -er '.versionCode' "$RUNNER_TEMP/tgym-previous.json")" node frontend/scripts/check-version.mjs
+          else
+            echo "Initial release: no previous published version found on Pages."
+            node frontend/scripts/check-version.mjs
+          fi
       - run: pnpm test
         working-directory: frontend
       - run: pnpm run build
         working-directory: frontend
       - name: Validate notification configuration
+        if: ${{ steps.notification_policy.outputs.send == 'true' && env.HAS_FIREBASE == 'true' }}
         run: |
           test "$HAS_GOOGLE_SERVICES" = true || { echo "Missing GOOGLE_SERVICES_JSON_BASE64"; exit 1; }
           test "$HAS_FIREBASE" = true || { echo "Missing FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID"; exit 1; }
       - name: Validate Firebase delivery credentials
+        if: ${{ steps.notification_policy.outputs.send == 'true' && env.HAS_FIREBASE == 'true' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: node frontend/scripts/notify-release.mjs --validate
       - name: Configure Firebase application
         if: ${{ env.HAS_GOOGLE_SERVICES == 'true' }}
-
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > frontend/android/app/google-services.json
@@ -82,6 +88,10 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          test -n "$KEYSTORE_B64" || { echo "Missing secret ANDROID_KEYSTORE_BASE64. Add it to repository Secrets."; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo "Missing secret ANDROID_STORE_PASSWORD. Add it to repository Secrets."; exit 1; }
+          test -n "$KEY_ALIAS" || { echo "Missing secret ANDROID_KEY_ALIAS. Add it to repository Secrets."; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "Missing secret ANDROID_KEY_PASSWORD. Add it to repository Secrets."; exit 1; }
           printf '%s' "$KEYSTORE_B64" | base64 --decode > frontend/android/app/tgym-release.jks
           printf 'storeFile=tgym-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > frontend/android/keystore.properties
       - run: ./gradlew assembleRelease bundleRelease
@@ -99,7 +109,11 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
           "$APKSIGNER" verify --print-certs "frontend/release/TGym-Android-v${VERSION}.apk" | tee frontend/release/signature.txt
           CERT_SHA="$(node frontend/scripts/signing-certificate.mjs frontend/release/signature.txt)"
-          test "$CERT_SHA" = "$(jq -er '.android.certificateSha256' "$RUNNER_TEMP/tgym-previous.json")"
+          if [ -f "$RUNNER_TEMP/tgym-previous.json" ]; then
+            test "$CERT_SHA" = "$(jq -er '.android.certificateSha256' "$RUNNER_TEMP/tgym-previous.json")"
+          else
+            echo "Initial release: certificate SHA is $CERT_SHA"
+          fi
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -1)"
           "$AAPT" dump badging "frontend/release/TGym-Android-v${VERSION}.apk" > frontend/release/package.txt
           grep -F "package: name='app.framegym.mobile' versionCode='${CODE}' versionName='${VERSION}'" frontend/release/package.txt
@@ -131,11 +145,12 @@ jobs:
           path: ${{ env.PWA_SITE }}
       - uses: actions/deploy-pages@v4
       - name: Verify published update metadata
+        if: ${{ env.HAS_GOOGLE_SERVICES == 'true' }}
         env:
           REPOSITORY: ${{ github.repository }}
         run: node frontend/scripts/verify-published-update.mjs
       - name: Notify update topic
-        if: ${{ success() && steps.notification_policy.outputs.send == 'true' }}
+        if: ${{ success() && steps.notification_policy.outputs.send == 'true' && env.HAS_FIREBASE == 'true' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
