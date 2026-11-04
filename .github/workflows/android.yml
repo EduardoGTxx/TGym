@@ -9,6 +9,7 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -40,6 +41,7 @@ jobs:
       - name: Test background workout notification on Android emulator
         shell: bash
         run: |
+          set -eo pipefail
           sudo chmod 666 /dev/kvm
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
           export ANDROID_USER_HOME="$RUNNER_TEMP/tgym-android"
@@ -49,8 +51,8 @@ jobs:
           sdkmanager 'system-images;android-35;google_apis;x86_64' 'emulator' >/dev/null
           echo no | avdmanager create avd --force --name tgym-test --package 'system-images;android-35;google_apis;x86_64'
           "$ANDROID_HOME/emulator/emulator" -avd tgym-test -no-window -no-audio -no-boot-anim -gpu swiftshader -no-snapshot -no-metrics > /tmp/tgym-emulator.log 2>&1 &
-          timeout 120 adb wait-for-device
-          timeout 300 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
+          timeout --kill-after=10s 120 adb wait-for-device
+          timeout --kill-after=10s 300 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
           cd frontend/android
           ./gradlew :app:connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
