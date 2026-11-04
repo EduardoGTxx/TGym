@@ -636,6 +636,7 @@ export default {
   "Custom rest": "Custom rest",
   "Cycle start": "Cycle start",
   "Dark": "Dark",
+  "AMOLED": "AMOLED",
   "Data": "Data",
   "Data is stored locally by default. Cloud copies are sent only when you enable cloud backup.": "Data is stored locally by default. Cloud copies are sent only when you enable cloud backup.",
   "Date": "Date",

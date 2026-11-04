@@ -149,6 +149,28 @@
   --on-acc:#ffffff;
 }
 
+:root[data-theme="amoled"] {
+  color-scheme: dark;
+  --bg:        #000000;
+  --bg-el:     #080808;
+  --surface:   #0f0f0e;
+  --surface-2: #181816;
+  --surface-3: #242422;
+
+  --label:     #fbfaf7;
+  --label-2:   rgba(251, 250, 247, 0.74);
+  --label-3:   rgba(251, 250, 247, 0.52);
+  --label-4:   rgba(251, 250, 247, 0.18);
+
+  --sep:       rgba(255, 255, 255, 0.10);
+  --sep-op:    rgba(255, 255, 255, 0.06);
+  --panel-edge:rgba(255, 255, 255, 0.08);
+  --control-edge:color-mix(in srgb, var(--label) 20%, transparent);
+
+  --panel-shadow: none;
+  --shadow-float: 0 18px 44px -8px rgba(0, 0, 0, 0.95);
+}
+
 /* accents — the user's choice, painted with the plate palette above */
 :root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#248a3d; --on-acc:#000 }
 :root[data-accent="sky"]   { --acc:var(--blue);   --acc-2:#0060df; --on-acc:#fff }
@@ -233,6 +255,15 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 /* when RestTimer is running, guarantee extra clearance so no element is occluded */
 body.resting{
   --bottom-clearance:calc(var(--nav-clearance) + 78px);
+}
+body:not(:has(#tabbar)) #timer {
+  bottom: max(14px, var(--sab));
+}
+body:not(:has(#tabbar)).resting {
+  --bottom-clearance: calc(88px + max(14px, var(--sab)));
+}
+body:not(:has(#tabbar)):not(.resting) {
+  --bottom-clearance: max(14px, var(--sab));
 }
 .narrow{
   width:100%;max-width:680px;margin-left:auto;margin-right:auto;min-width:0;
@@ -469,7 +500,7 @@ h4.sec{
   color:var(--label-3);font-size:11px;font-weight:550;letter-spacing:.01em;padding:4px 0;
   transition:color var(--fast),transform var(--fast);
 }
-#tabbar button span:not(.cir){max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tabbar button span:not(.cir){max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(10px, 2.8vw, 11px)}
 #tabbar button:active{transform:scale(.92)}
 #tabbar button .icn{font-size:24px;--icon-stroke:1.75;color:var(--label);transition:transform var(--fast)}
 #tabbar button.on{color:var(--acc)}
@@ -958,7 +989,7 @@ h4.sec{
 .sheet{
   position:absolute;left:0;right:0;bottom:0;background:var(--bg-el);
   border-radius:var(--r-xl) var(--r-xl) 0 0;
-  padding:8px max(18px,var(--sar)) max(20px,var(--sab)) max(18px,var(--sal));
+  padding:8px max(18px,var(--sar)) max(24px, calc(var(--sab) + 16px)) max(18px,var(--sal));
   max-height:min(90dvh,calc(var(--visual-height,100dvh) - var(--sat) - 12px));overflow-y:auto;-webkit-overflow-scrolling:touch;
   animation:sheetup .34s var(--ease);
   overscroll-behavior:contain;touch-action:pan-y;will-change:transform;
@@ -1703,7 +1734,7 @@ button:focus-visible,[role="button"]:focus-visible,summary:focus-visible,a:focus
 
 /* Shared phase labels and compact clock action preserve existing workout timing. */
 .set-phase{display:flex;align-items:center;min-height:28px;margin:9px 0 4px;padding:4px 8px;border-radius:var(--r-sm);background:var(--surface-2);font-size:11px;font-weight:650;line-height:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--label-2)}
-.workout-clock-control{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}.workout-clock-control .iconbtn{width:44px;height:44px;color:var(--acc);flex-shrink:0}
+.workout-clock-control{display:flex;align-items:center;justify-content:center;gap:6px}.workout-clock-control .iconbtn{width:36px;height:36px;min-height:36px;color:var(--acc);flex-shrink:0;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .zoomcal-mini-month i{display:block;min-width:0;min-height:4px}.zoomcal-legend i.untracked{background:var(--surface-3);box-shadow:inset 0 0 0 1px var(--sep)}
 
 .routine-list.reordering{cursor:grabbing}.routine-list .dragging{outline:2px solid var(--acc);box-shadow:0 4px 16px color-mix(in srgb,var(--acc) 25%,transparent)}.routine-list .dragging .swipe-content{background:var(--surface-2)}.routine-list .drop-target{outline:2px dashed var(--acc);outline-offset:2px}.routine-list .swipe-content{-webkit-touch-callout:none}.routine-list .tt{overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}

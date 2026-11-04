@@ -45,6 +45,23 @@
 :root[data-theme="light"]{--glow:color-mix(in srgb,var(--acc) 10%,transparent)}
 /* a soft wash of the accent behind the header, gone by the first card */
 #root{background:radial-gradient(120% 340px at 50% -120px,var(--glow),transparent 70%) no-repeat,var(--bg)}
+/* ------------------------------------------------------------- amoled -- */
+:root[data-theme="amoled"] #root {
+  background: #000000;
+}
+:root[data-theme="amoled"] #tabbar {
+  background: rgba(8, 8, 8, 0.92);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.9);
+}
+:root[data-theme="amoled"] .card {
+  background: var(--surface);
+  border-color: var(--panel-edge);
+}
+:root[data-theme="amoled"] .sheet {
+  background: #060606;
+  border-color: rgba(255, 255, 255, 0.12);
+}
 ::selection{background:var(--acc);color:var(--on-acc)}
 
 /* ----------------------------------------------------------------- type -- */
@@ -207,6 +224,7 @@
 #tabbar button.start:active{transform:none}
 #tabbar button.start:active .cir{transform:translateY(3px)}
 #tabbar button.start span:not(.cir){color:var(--label);font-weight:700}
+#tabbar button span:not(.cir){font-size:clamp(10px, 2.8vw, 11px)}
 #tabbar button.start.rec .cir{background:var(--acc);color:var(--on-acc)}
 #tabbar button.start.rec::before{background:var(--acc-deep);animation:hex-ping 1.9s var(--ease) infinite}
 #tabbar button.start.rec span:not(.cir){color:var(--acc)}
@@ -314,10 +332,14 @@
 .set-console .set-metric .stp .num{font-size:26px;min-height:46px;line-height:46px}
 .set-console .set-metric .stp.disabled{min-height:48px}
 .set-phase{border-radius:var(--r-pill);font-size:11px;background:var(--surface-2);border:0;padding:5px 12px;color:var(--label-2);display:inline-flex}
+.workout-clock-control{display:flex;align-items:center;justify-content:center;gap:6px}
+.workout-clock-control .iconbtn{width:36px;height:36px;min-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+
 .set-sides button,.sets-card .subrow,.workout-notes{border-radius:var(--r-md)}
 .exercise-history-context{border-left:3px solid var(--acc-line);border-radius:2px}
 @media(max-width:480px){
   .sets-card .set-console,.sets-card .set-console.eff3{gap:8px;padding:10px}
+  .set-console.eff3 .set-metric.eff{grid-column:1/-1}
   .set-console .set-metric .stp:not(.weight-field){grid-template-columns:38px minmax(0,1fr) 38px}
   .set-console.eff3 .set-metric.eff .stp{grid-template-columns:44px minmax(0,1fr) 44px}
   .set-console .set-metric .stp .num{font-size:24px}

@@ -357,6 +357,7 @@ export default function Settings() {
           className="seg-inline"
           options={[
             { value: 'dark', icon: 'moon', label: t('Dark') },
+            { value: 'amoled', icon: 'sparkles', label: t('AMOLED') },
             { value: 'light', icon: 'sun', label: t('Light') },
             { value: 'system', icon: 'gear', label: t('System') },
           ]}

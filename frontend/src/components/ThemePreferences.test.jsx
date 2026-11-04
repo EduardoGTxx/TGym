@@ -16,5 +16,7 @@ it('applies saved preferences without mounting the locked application shell',asy
   await act(()=>useStore.setState({S:{...before,theme:'light',accent:'teal'}}))
   expect(document.documentElement.dataset.accent).toBe('teal')
   expect(document.documentElement.dataset.theme).toBe('light')
+  await act(()=>useStore.setState({S:{...before,theme:'amoled',accent:'lime'}}))
+  expect(document.documentElement.dataset.theme).toBe('amoled')
  } finally { await act(()=>root.unmount());useStore.setState({S:before}) }
 })
