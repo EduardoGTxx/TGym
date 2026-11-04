@@ -89,9 +89,11 @@ public class AppInstallerPlugin extends Plugin {
             try {
                 URL url = new URL(address);
                 String path = url.getPath();
+                String lowerPath = path.toLowerCase();
+                String host = url.getHost().toLowerCase();
                 boolean trusted = "https".equals(url.getProtocol()) && (
-                    (url.getHost().equalsIgnoreCase("github.com") && path.startsWith("/Truesilverking/TGym/releases/download/")) ||
-                    (url.getHost().equalsIgnoreCase("truesilverking.github.io") && path.startsWith("/TGym/downloads/")));
+                    (host.equals("github.com") && (lowerPath.startsWith("/eduardogtxx/tgym/releases/download/") || lowerPath.startsWith("/truesilverking/tgym/releases/download/"))) ||
+                    ((host.equals("eduardogtxx.github.io") || host.equals("truesilverking.github.io")) && lowerPath.startsWith("/tgym/downloads/")));
                 if (!trusted || !sha.matches("[a-fA-F0-9]{64}") || expectedCode <= 0) throw new IOException("Invalid update metadata");
                 HttpURLConnection connection = null;
                 for (int redirects = 0; redirects < 6; redirects++) {

@@ -13,16 +13,21 @@ export function compareVersions(a, b) {
   if (!bv.pre) return -1
   return av.pre.localeCompare(bv.pre, undefined, { numeric: true })
 }
+const isAllowedRepo = (url, repoUrl) => {
+  if (!repoUrl) return false
+  const repo = new URL(repoUrl)
+  const githubRelease = url.hostname === 'github.com' && url.pathname.toLowerCase().startsWith(repo.pathname.toLowerCase() + '/releases/download/')
+  const parts = repo.pathname.split('/').filter(Boolean)
+  const githubPages = parts.length === 2 && url.hostname.toLowerCase() === `${parts[0].toLowerCase()}.github.io` && url.pathname.toLowerCase().startsWith(`/${parts[1].toLowerCase()}/downloads/`)
+  return Boolean(githubRelease || githubPages)
+}
 const trustedUrl = (value, repository = APP_REPOSITORY) => {
   if (!value) return null
   const url = new URL(value)
   if (url.protocol !== 'https:') throw new Error('untrusted_update_url')
-  const repo = repository && new URL(repository)
-  const githubRelease = repo && url.hostname === 'github.com' && url.pathname.startsWith(repo.pathname + '/releases/download/')
-  const parts = repo?.pathname.split('/').filter(Boolean) || []
-  const githubPages = parts.length === 2 && url.hostname === `${parts[0].toLowerCase()}.github.io` && url.pathname.startsWith(`/${parts[1]}/downloads/`)
+  const allowed = isAllowedRepo(url, repository) || isAllowedRepo(url, 'https://github.com/Truesilverking/TGym')
   const store = ['play.google.com', 'apps.apple.com', 'testflight.apple.com'].includes(url.hostname)
-  if (!githubRelease && !githubPages && !store) throw new Error('untrusted_update_url')
+  if (!allowed && !store) throw new Error('untrusted_update_url')
   return url.href
 }
 export function parseUpdateManifest(raw, { repository = APP_REPOSITORY } = {}) {
