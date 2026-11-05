@@ -13,9 +13,6 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url || steps.retry_deployment.outputs.page_url }}
     env:
       HAS_GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
       HAS_FIREBASE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' && secrets.FIREBASE_PROJECT_ID != '' }}
@@ -180,6 +177,7 @@ jobs:
         id: retry_deployment
         if: steps.deployment.outcome != 'success'
         uses: actions/deploy-pages@v4
+        continue-on-error: true
         with:
           timeout: 300000
       - name: Verify published update metadata
