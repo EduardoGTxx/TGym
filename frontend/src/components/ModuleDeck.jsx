@@ -29,7 +29,7 @@ function RetainedPages({ active, pages }) {
 function StatsHub() {
   const location=useLocation(),S=useStore(s=>s.S)
   const active=activeStatsPage(S,location),pages=statsPages(S,active)
-  const kind=active==='records'?'records':active==='workout-history'?'history':active==='report'?'report':'analytics'
+  const kind=active==='records'?'records':active==='workout-history'?'history':'analytics'
   const filters=useRef(null)
   return <div className="stats-hub">
     <div className="stats-hub-fixed"><StatsHeader filters={()=>filters.current?.()||{}}/>
@@ -37,7 +37,7 @@ function StatsHub() {
     </div>
     <div className="stats-hub-content" data-stats-motion>
     <RetainedPages active={kind} pages={[
-      ['analytics',<Stats standaloneControl={false} hideHeader headerExportRef={filters}/>],['records',<Records />],['history',<History />],['report',<ProgressReport />],
+      ['analytics',<Stats standaloneControl={false} hideHeader headerExportRef={filters}/>],['records',<Records />],['history',<History />],
     ]}/>
     </div>
   </div>
@@ -45,7 +45,7 @@ function StatsHub() {
 export default function ModuleDeck() {
   const location=useLocation(),path=location.pathname
   const S=useStore(s=>s.S)
-  const active=path==='/home'?'home':path==='/plan'?'plan':path==='/library'?'library':path==='/nutrition'?'nutrition':['/stats','/body','/records','/history','/progress'].includes(path)?'stats':null
+  const active=path==='/home'?'home':path==='/plan'?'plan':path==='/library'?'library':path==='/nutrition'?'nutrition':['/stats','/body','/records','/history'].includes(path)?'stats':null
   useEffect(()=>{
     if(!location.hash)return
     let frame=requestAnimationFrame(()=>{frame=requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start',behavior:'auto'}))})

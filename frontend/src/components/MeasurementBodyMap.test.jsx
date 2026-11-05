@@ -27,7 +27,7 @@ it('gives every measurement a unique exterior slot and hides arrows for zero or 
 it('shows last values with inline deltas, keeping zone names and units accessible instead of visible',async()=>{
  const select=vi.fn(),before=structuredClone(metrics)
  await act(async()=>{root.render(<MeasurementBodyMap metrics={metrics} selected="neck" onSelect={select}/>);await Promise.resolve()})
- expect(host.querySelectorAll('[data-callout]')).toHaveLength(13)
+ expect(host.querySelectorAll('[data-callout]')).toHaveLength(MEASURE_FIELDS.length)
  expect(host.querySelectorAll('circle')).toHaveLength(0)
  expect(host.querySelector('[data-callout="neck"] b').textContent).toBe('40')
  expect(host.querySelector('[data-callout="neck"] .measurement-callout-delta').textContent).toBe('=')
@@ -91,7 +91,7 @@ it('keeps an empty comparison empty without dates or a redundant measurement sel
  expect(host.querySelector('select,[data-callout]')).toBeNull()
  expect(onSelection).not.toHaveBeenCalled()
 })
-it('retains single-record dates and direct access to all thirteen zones without a measurement dropdown',async()=>{
+it('retains single-record dates and direct access to all fifteen zones without a measurement dropdown',async()=>{
  const records=[{id:'only',d:'2026-10-22',unit:'cm',values:Object.fromEntries(MEASURE_FIELDS.map(([key],i)=>[key,40+i]))}],onSelection=vi.fn(),before=structuredClone(records)
  await act(async()=>{root.render(<ProgressBody records={records} selection={{}} onSelection={onSelection} disabled/>);await Promise.resolve()})
  expect(host.querySelector('.body-zone-select')).toBeNull()
@@ -100,7 +100,7 @@ it('retains single-record dates and direct access to all thirteen zones without 
  expect(dates.map(node=>node.value)).toEqual(['only','only'])
  expect(dates.every(node=>node.disabled)).toBe(true)
  const buttons=[...host.querySelectorAll('[data-callout]')]
- expect(buttons).toHaveLength(13)
+ expect(buttons).toHaveLength(MEASURE_FIELDS.length)
  for(const button of buttons){
   button.focus();expect(document.activeElement).toBe(button)
   await act(()=>button.click())
@@ -127,7 +127,7 @@ it('defers geometry reads until the existing body enters the near viewport',asyn
  const matrix=vi.fn(()=>({a:1,b:0,c:0,d:1,e:0,f:0}));host.querySelector('.bm-v').getScreenCTM=matrix
  expect(frames).toHaveLength(0);expect(matrix).not.toHaveBeenCalled()
  await act(()=>intersect([{isIntersecting:true}]));expect(frames).toHaveLength(1)
- await act(()=>frames.shift()());expect(matrix).toHaveBeenCalledOnce();expect(host.querySelectorAll('[data-measurement-line]')).toHaveLength(13)
+ await act(()=>frames.shift()());expect(matrix).toHaveBeenCalledOnce();expect(host.querySelectorAll('[data-measurement-line]')).toHaveLength(MEASURE_FIELDS.length)
  await act(()=>{intersect([{isIntersecting:false}]);window.dispatchEvent(new Event('resize'))})
  expect(matrix).toHaveBeenCalledOnce();expect(frames).toHaveLength(0)
 })

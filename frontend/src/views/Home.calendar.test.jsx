@@ -15,21 +15,13 @@ afterEach(()=>{act(()=>root.unmount());host.remove();vi.clearAllTimers();vi.useR
 const mount=()=>act(()=>root.render(<MemoryRouter><Home/></MemoryRouter>))
 // Consistency lives in Progress; Today keeps the streak and a glance tile.
 const mountWithProgress=()=>act(()=>root.render(<MemoryRouter><Home/><Stats/></MemoryRouter>))
-it('opens the explicit consistency report from its own section without a global export shortcut',()=>{
- mountWithProgress();const before=JSON.stringify(useStore.getState().S)
+it('does not offer reporting buttons in consistency or home',()=>{
+ mountWithProgress()
  const section=host.querySelector('.consistency-card')
  const buttons=[...section.querySelectorAll('button')].filter(b=>b.getAttribute('aria-label')==='Consistency Report')
- expect(buttons).toHaveLength(1);expect(host.textContent).not.toContain('Export Reports')
- expect(section.textContent).not.toContain('Consistency Report')
- expect(buttons[0].closest('.consistency-heading')).not.toBeNull()
- act(()=>buttons[0].click());expect(useUI.getState().sheets).toHaveLength(1)
- const dialog=useUI.getState().sheets[0].render(()=>{})
- expect(dialog.props.reportType).toBe('consistency');expect(dialog.props.S).toBe(S)
- expect(dialog.props.anchor).toEqual(new Date('2026-09-28T12:00:00'))
- const sheet=document.createElement('div'),sheetRoot=createRoot(sheet)
- act(()=>sheetRoot.render(dialog));expect(sheet.querySelector('h3').textContent).toBe('Consistency Report')
- expect(JSON.stringify(useStore.getState().S)).toBe(before)
- act(()=>sheetRoot.unmount());useUI.getState().closeAll()
+ expect(buttons).toHaveLength(0)
+ expect(host.textContent).not.toContain('Export Reports')
+ expect(host.textContent).not.toContain('Consistency Report')
 })
 it('reflects today activity and the daily streak without marking added exercises as extras',()=>{
  S.trainingStartDate='2026-09-28';S.workouts=[{id:'planned',d:'2026-09-28',routineId:'upper',sessionOrigin:{type:'planned',routineId:'upper'},entries:['replaced','added1','added2','added3'].map(id=>({id,sets:[{done:true,r:8,w:50}]}))}];useStore.setState({S});mountWithProgress()

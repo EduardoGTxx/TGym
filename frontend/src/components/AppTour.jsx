@@ -17,7 +17,7 @@ export const TOUR_STEPS = [
   ['/home','streak','Explore your streak calendar','Week opens first. Switch to Month or Year, export, or expand recent workouts.','Tracking'],
   ['/home','consistency','Review consistency and session times','Times shows three recent sessions; Show more reveals the rest.','Tracking'],
   ['/stats?section=history','stats-view','Choose your Stats view','Swipe through Stats. Use this arrow to open a section or change its order.','Tracking'],
-  ['/stats?section=history','stats-actions','Review and export your records','Open History, InBody or reports; compare weight, measurements, muscles and routine duration.','Tracking'],
+  ['/stats?section=history','stats-actions','Review and export your records','Open History, InBody or analytics; compare weight, measurements, muscles and routine duration.','Tracking'],
   ['/progress','report','Explore your progress','Compare periods, routines and exercises; export chosen sections as PDF.','Tracking'],
   ['/library','exercises','Find and personalize exercises','Search names, muscles or equipment; inspect instructions and GIFs, edit aliases or create exercises.','Exercises'],
   ['/settings','profile','Your local profile','Edit name, photo and personal measurements; everything stays available locally.','Settings / Profile'],

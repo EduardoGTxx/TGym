@@ -90,7 +90,7 @@ it('keeps touch when implicit capture transfers from a child to the navigation r
  await point('pointerdown',250,100,{target});await point('pointermove',180,100,{target});await point('lostpointercapture',180,100,{target});await point('pointermove',80);await point('pointerup',80)
  expect(current()).toBe('/plan');await settle();expect(phase()).toBe('idle')
 })
-it.each([['/stats?section=history',100,260,'/nutrition'],['/progress',250,100,'/home']])('continues between Stats and its neighboring module from %s',async(path,from,to,target)=>{
+it.each([['/stats?section=history',100,260,'/nutrition'],['/history',250,100,'/home']])('continues between Stats and its neighboring module from %s',async(path,from,to,target)=>{
  await mount(path);await swipe(from,to);expect(current()).toBe(target);await settle()
 })
 const excluded=['input:not([type])','textarea','select','[data-native-range]','[data-editable]','[data-native-drag]',...['combobox','spinbutton','slider'].map(role=>`[data-role="${role}"] span`),'[data-chart-child]','.stats-sections-trigger','.bodyweight-picker-ruler','.swipe-content','[data-swipe-ignore]','[data-own-horizontal]','[data-native-media]']
@@ -241,7 +241,7 @@ it('allows navigation from blank space while text in another part of the page re
 it('does not swallow a later deliberate click after the compatibility guard expires',async()=>{
  await mount('/home');await swipe();await settle();await tick(401);await click(host.querySelector('[data-control]'));expect(clicked).toHaveBeenCalledOnce()
 })
-it.each([[250,100,'next',1,'/plan'],[100,260,'previous',-1,'/progress']])('covers the outgoing page from the correct full-width side (%s to %s)',async(from,to,direction,sign,target)=>{
+it.each([[250,100,'next',1,'/plan'],[100,260,'previous',-1,'/history']])('covers the outgoing page from the correct full-width side (%s to %s)',async(from,to,direction,sign,target)=>{
  await mount('/home');vi.spyOn(region(),'getBoundingClientRect').mockReturnValue({width:390})
  await point('pointerdown',from);await point('pointermove',to);expect(phase()).toBe('dragging');expect(content().style.transform).toBe('');expect(frames.size).toBe(1)
  await frame();const dragged=Number(content().style.transform.match(/\((-?[\d.]+)px/)[1]);expect(Math.sign(dragged)).toBe(-sign);expect(Math.abs(dragged)).toBeLessThan(Math.abs(to-from))

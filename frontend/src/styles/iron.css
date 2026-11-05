@@ -508,3 +508,66 @@ a.metric{text-decoration:none}
 .nutri-food-group{padding:10px 14px 6px;font-family:var(--font-label);text-transform:uppercase;letter-spacing:.07em;font-size:11px;font-weight:600;color:var(--label-3);border-bottom:1px solid var(--sep)}
 .nutri-copy{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin:0 0 14px;border-radius:var(--r-pill);background:var(--acc-soft);color:var(--acc);font-weight:650;font-size:14px}
 .nutri-copy:active{transform:scale(.98)}
+
+
+/* ============================================================================
+   Dribbble Workout App UI/UX Design System
+   ========================================================================== */
+
+/* Curved dark floating navigation dock */
+#tabbar, :root[data-theme="light"] #tabbar {
+  background: #0F172A;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.4);
+}
+#tabbar button, #tabbar button:not(.start) {
+  color: #94A3B8;
+}
+#tabbar button.on {
+  color: #FFFFFF;
+}
+#tabbar button.on .icn {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.16);
+}
+#tabbar button.start .cir {
+  background: linear-gradient(135deg, #00A6FB 0%, #0077B6 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(0, 166, 251, 0.4);
+}
+#tabbar button.start span:not(.cir) {
+  color: #CBD5E1;
+}
+
+/* Dribbble Colored Square Badges for Exercises & Routines */
+.routine-list .swipe-routine:nth-child(4n+1) .lrow-i,
+.week-schedule .item:nth-child(4n+1) .lrow-i {
+  background: linear-gradient(135deg, #00B4D8 0%, #0096C7 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+}
+.routine-list .swipe-routine:nth-child(4n+2) .lrow-i,
+.week-schedule .item:nth-child(4n+2) .lrow-i {
+  background: linear-gradient(135deg, #5B42F3 0%, #7653FC 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+}
+.routine-list .swipe-routine:nth-child(4n+3) .lrow-i,
+.week-schedule .item:nth-child(4n+3) .lrow-i {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+}
+.routine-list .swipe-routine:nth-child(4n+4) .lrow-i,
+.week-schedule .item:nth-child(4n+4) .lrow-i {
+  background: linear-gradient(135deg, #FF6536 0%, #E04818 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+}
+
+/* Dribbble Card Shadows & Radii */
+.card {
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}

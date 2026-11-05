@@ -20,9 +20,9 @@ export function ActivityMetrics({workout}) {
   const pace=activityPace({...a,minutes:workoutElapsedMs(workout)/60000})
   return <div className="activity-metrics">{fields.filter(([k])=>a[k]!=null).map(([k,label])=><span key={k}><small>{t(label)}</small><b>{fmtNum(a[k])}</b></span>)}{pace && <span><small>{t('Speed (km/h)')}</small><b>{fmtNum(60/pace)}</b></span>}{pace && <span><small>{t('Pace (min/km)')}</small><b>{Math.floor(Math.round(pace*60)/60)}:{String(Math.round(pace*60)%60).padStart(2,'0')}</b></span>}<span><small>{t('Source')}</small><b>{a.source==='manual'?t('Manual'): 'Health Connect'}</b></span></div>
 }
-export function ActivityEditor({close, existing, routineId: initialRoutine, planning=false}) {
+export function ActivityEditor({close, existing, routineId: initialRoutine, planning=false, defaultType}) {
   const S=useStore(s=>s.S), [mode,setMode]=useState(planning || initialRoutine ? 'plan':'log')
-  const [type,setType]=useState(existing?.activity?.type || 'running'), [minutes,setMinutes]=useState(existing ? workoutElapsedMs(existing)/60000 : 30)
+  const [type,setType]=useState(existing?.activity?.type || defaultType || 'running'), [minutes,setMinutes]=useState(existing ? workoutElapsedMs(existing)/60000 : 30)
   const [start,setStart]=useState(localTime(existing?.start || Date.now()-30*60000)), [date,setDate]=useState(isoOf(new Date())), [repeat,setRepeat]=useState(false), [days,setDays]=useState([])
   const [routineId,setRoutineId]=useState(initialRoutine || ''), [values,setValues]=useState(existing?.activity || {}), [note,setNote]=useState(existing?.note || ''), [error,setError]=useState(''),[busy,setBusy]=useState(false),[committed,setCommitted]=useState(false)
   const kind=activityType(type)

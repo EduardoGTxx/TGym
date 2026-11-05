@@ -308,7 +308,7 @@ function Shell() {
               <Route path="/plan/r/:id" element={<RoutineEdit />} />
               <Route path="/workout" element={<Workout />} />
               <Route path="/stats" element={<></>} />
-              <Route path="/progress" element={<></>} />
+              <Route path="/progress" element={<Navigate to="/stats" replace />} />
               <Route path="/body" element={<></>} />
               <Route path="/records" element={<></>} />
               <Route path="/history" element={<></>} />

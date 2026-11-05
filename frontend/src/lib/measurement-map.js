@@ -1,6 +1,6 @@
 import { MUSCLES, INERT } from './muscles.js'
 // Positions are fractions of the existing front-view artwork, not new anatomy.
-export const MEASUREMENT_ZONES={neck:[.5,.145],shoulders:[.68,.21],chest:[.5,.255],waist:[.5,.39],hips:[.5,.45],armLeft:[.76,.31],armRight:[.24,.31],forearmLeft:[.84,.435],forearmRight:[.16,.435],thighLeft:[.605,.59],thighRight:[.395,.59],calfLeft:[.61,.79],calfRight:[.39,.79]}
+export const MEASUREMENT_ZONES={neck:[.5,.145],shoulders:[.68,.21],chest:[.5,.255],waist:[.5,.39],hips:[.5,.45],armLeft:[.76,.31],armRight:[.24,.31],forearmLeft:[.84,.435],forearmRight:[.16,.435],thighLeft:[.605,.59],thighRight:[.395,.59],calfLeft:[.61,.79],calfRight:[.39,.79],footLeft:[.61,.94],footRight:[.39,.94]}
 export const CHANGE_STYLES={increase:{symbol:'↑',label:'Increasing',color:'#bb5712'},decrease:{symbol:'↓',label:'Decreasing',color:'#2878d0'},stable:{symbol:'=',label:'Stable',color:'#687587'},unknown:{symbol:'·',label:'Insufficient Data',color:'#687587'}}
 export function measurementChange(metric) {
   if(metric.delta==null)return 'unknown'

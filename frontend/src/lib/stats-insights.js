@@ -7,8 +7,9 @@ export const MEASURE_FIELDS = [
   ['neck', 'Neck'], ['shoulders', 'Shoulders'], ['chest', 'Chest'], ['waist', 'Waist'], ['hips', 'Hips'],
   ['armLeft', 'Left upper arm'], ['armRight', 'Right upper arm'], ['forearmLeft', 'Left forearm'], ['forearmRight', 'Right forearm'],
   ['thighLeft', 'Left thigh'], ['thighRight', 'Right thigh'], ['calfLeft', 'Left calf'], ['calfRight', 'Right calf'],
+  ['footLeft', 'Left foot'], ['footRight', 'Right foot'],
 ]
-const LEGACY_MEASURE = { armLeft: 'arm', armRight: 'arm', thighLeft: 'thigh', thighRight: 'thigh', calfLeft: 'calf', calfRight: 'calf' }
+const LEGACY_MEASURE = { armLeft: 'arm', armRight: 'arm', thighLeft: 'thigh', thighRight: 'thigh', calfLeft: 'calf', calfRight: 'calf' , footLeft: 'foot', footRight: 'foot' }
 export const measurementValue = (row, key) => Number(row?.[key] ?? row?.[LEGACY_MEASURE[key]]) || 0
 
 export function bmiFor(weight, unit, height, measurementUnit = 'cm') {

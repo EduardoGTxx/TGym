@@ -375,7 +375,7 @@ describe('configurable Stats sections', () => {
     expect(button(sectionsMenu(), 'Edit order')).toBeUndefined()
     expect(button(sectionsMenu(), 'Save')).toBeUndefined()
     expect(button(sectionsMenu(), 'Cancel')).toBeUndefined()
-    expect(sectionsMenu().querySelectorAll('.stats-order-actions')).toHaveLength(STATS_SECTIONS.length + 3)
+    expect(sectionsMenu().querySelectorAll('.stats-order-actions')).toHaveLength(STATS_SECTIONS.length + 2)
     expect(sectionsMenu().querySelector('button[aria-label="Move Training history up"]')).not.toBeNull()
     expect([...sectionsMenu().querySelectorAll('[data-stats-option]')]
       .filter(node => node.querySelector('[role="checkbox"][aria-checked="true"]'))

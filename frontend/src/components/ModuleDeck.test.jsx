@@ -86,13 +86,12 @@ it('shows only the Stats position above the section while preserving its accessi
  await mount('/stats?section=history')
  const fixedHeader=host.querySelector('.stats-hub-fixed .stats-header')
  const positions=[
-  ['/stats?section=history','Training history','1 / 5','analytics'],
-  ['/stats?section=bodyweight','Body Weight','2 / 5','analytics'],
-  ['/records','Personal records','3 / 5','records'],
-  ['/history','History','4 / 5','history'],
-  ['/progress','Progress Report','5 / 5','report'],
- ]
- for(const [route,label,position,id] of positions){
+   ['/stats?section=history','Training history','1 / 4','analytics'],
+   ['/stats?section=bodyweight','Body Weight','2 / 4','analytics'],
+   ['/records','Personal records','3 / 4','records'],
+   ['/history','History','4 / 4','history'],
+  ]
+  for(const [route,label,position,id] of positions){
   await go(route)
   const heading=host.querySelector('.stats-slide-heading')
   expect(heading.textContent).toBe(position)

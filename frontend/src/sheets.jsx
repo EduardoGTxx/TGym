@@ -254,7 +254,8 @@ function MeasurementsSheet({ existing, close, focusMetric, initialDate }) {
     <MetricFields prefix="measure" values={values} onChange={setValues} groups={[
       ['Torso',MEASURE_FIELDS.slice(0,5).map(([k,l])=>[k,l,unit])],
       ['Arms',MEASURE_FIELDS.slice(5,9).map(([k,l])=>[k,l,unit])],
-      ['Legs',MEASURE_FIELDS.slice(9).map(([k,l])=>[k,l,unit])],
+      ['Legs',MEASURE_FIELDS.slice(9,13).map(([k,l])=>[k,l,unit])],
+      ['Feet',MEASURE_FIELDS.slice(13).map(([k,l])=>[k,l,unit])],
     ]} />
     <div style={{ height: 14 }} /><Button variant="primary" disabled={saving} onClick={save}>{t('Save')}</Button></>
 }

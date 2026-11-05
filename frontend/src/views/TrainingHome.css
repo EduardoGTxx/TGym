@@ -34,3 +34,260 @@
 .home-bodyweight-last{display:block;color:var(--label-2);font-size:16px;line-height:1.35}
 .home-bodyweight-footer{display:flex;justify-content:flex-end;margin-top:14px;text-align:right}
 .home-bodyweight-empty{margin-top:14px}
+
+
+/* Dribbble UI/UX Layout Styles */
+.dribbble-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 4px 0;
+}
+.dribbble-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.dribbble-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+  overflow: hidden;
+}
+.dribbble-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dribbble-greeting {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dribbble-greeting-title {
+  font-size: clamp(20px, 5.2vw, 24px);
+  font-weight: 750;
+  color: var(--label);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dribbble-greeting-sub {
+  font-size: 13px;
+  color: var(--label-2);
+  font-weight: 500;
+  margin-top: 2px;
+}
+.dribbble-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dribbble-bell-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  display: grid;
+  place-items: center;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform var(--fast);
+}
+.dribbble-bell-btn:active {
+  transform: scale(0.92);
+}
+.dribbble-bell-dot {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EF4444;
+  border: 1.5px solid var(--surface);
+}
+
+/* 2x2 Activity Grid */
+.dribbble-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 14px 0 20px 0;
+}
+.dribbble-card {
+  border-radius: 22px;
+  padding: 16px;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 168px;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform var(--fast), box-shadow var(--fast);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.14);
+}
+.dribbble-card:active {
+  transform: scale(0.96);
+}
+.dribbble-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.dribbble-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 650;
+  color: #FFFFFF;
+}
+.dribbble-badge .icn {
+  font-size: 15px;
+}
+
+/* Card 1: Walk (Coral / Orange) */
+.dribbble-card-walk {
+  background: linear-gradient(135deg, #FF6536 0%, #FF8A5B 100%);
+}
+.dribbble-walk-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: relative;
+  margin: 4px 0;
+}
+.dribbble-radial-wrap {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+}
+.dribbble-radial-copy {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.dribbble-radial-copy b {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.dribbble-radial-copy small {
+  font-size: 10px;
+  opacity: 0.85;
+  text-transform: lowercase;
+}
+
+/* Card 2: Cycling (Vibrant Purple) */
+.dribbble-card-cycling {
+  background: linear-gradient(135deg, #5B42F3 0%, #7B61FF 100%);
+}
+.dribbble-card-stat {
+  margin-top: 2px;
+}
+.dribbble-card-stat b {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.dribbble-card-stat small {
+  font-size: 13px;
+  margin-left: 4px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+.dribbble-barchart {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 48px;
+  margin-top: 14px;
+}
+.dribbble-barchart-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  transition: height var(--fast);
+}
+.dribbble-barchart-bar.highlight {
+  background: #FFFFFF;
+}
+
+/* Card 3: Gym (Sky Blue / Cyan) */
+.dribbble-card-gym {
+  background: linear-gradient(135deg, #00A6FB 0%, #0582CA 100%);
+}
+.dribbble-splits {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  width: 100%;
+}
+.dribbble-split-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.dribbble-split-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+.dribbble-split-fill {
+  height: 100%;
+  background: #FFFFFF;
+  border-radius: 3px;
+}
+
+/* Card 4: Climbing / Hiking (Amber / Ochre) */
+.dribbble-card-climbing {
+  background: linear-gradient(135deg, #F59E0B 0%, #EAB308 100%);
+}
+.dribbble-wave-chart {
+  width: 100%;
+  height: 48px;
+  margin-top: 10px;
+}

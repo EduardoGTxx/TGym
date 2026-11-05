@@ -10,6 +10,7 @@ export const ACTIVITY_TYPES = [
   { id:'walking', label:'Walking', distance:true, steps:true, elevation:true },
   { id:'cycling', label:'Cycling', distance:true, elevation:true },
   { id:'hiking', label:'Hiking', distance:true, steps:true, elevation:true },
+  { id:'climbing', label:'Climbing', elevation:true },
   { id:'cardio', label:'Cardio', distance:true },
   { id:'strength', label:'Strength activity' }, { id:'mobility', label:'Mobility' }, { id:'recovery', label:'Recovery' }, { id:'other', label:'Other activity' },
 ]
