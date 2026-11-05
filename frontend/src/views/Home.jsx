@@ -134,6 +134,26 @@ export default function Home() {
       </div>
     </div>
 
+    {S.deload?.on && (deload.active || (deload.daysUntil != null && deload.daysUntil <= 7)) && <div className="card" style={{ border: '1px solid color-mix(in srgb,var(--orange) 55%,transparent)' }}><div className="row" style={{ gap: 9 }}><Icon name="arrowDown" style={{ color: 'var(--orange)' }} /><div><b>{deload.active ? t('Deload week') : t('Deload week starts soon')}</b><div className="small dim">{deload.active ? t('Load {0}% · Working sets {1}% · RIR {2}', deload.config.loadPct, deload.config.setPct, effortValue('rir', deload.config.targetRir)) : t('Starts in {0} days.', deload.daysUntil) + ' · ' + deload.start + ' – ' + deload.end}</div></div></div></div>}
+
+    <TodayWeekCalendar data-tour="calendar" id="training-calendar" today={today} weekOffset={weekOffset} onWeekOffsetChange={setWeekOffset}
+      onExpand={homeCalendarSheet} onDay={dayOverrideSheet} getDayState={weekDayState}>
+      <div className="today-row home-next-workout">
+        {routine ? <button type="button" className="lrow-i today-row-icon highlighted" style={{ background: S.active ? 'var(--orange)' : 'var(--acc)' }} aria-label={t('Muscles trained')} title={t('Muscles trained')} onClick={() => routineMuscleSheet(routine.id)}><Icon name="info" /></button>
+          : <span className={'lrow-i today-row-icon' + (S.active ? ' highlighted' : '')} style={{ background: S.active ? 'var(--orange)' : 'var(--surface-3)' }}><Icon name={S.active ? 'timer' : 'moon'} /></span>}
+        <button type="button" className="today-row-main" onClick={onToday}>
+            <div className="today-row-copy" style={{ minWidth: 0 }}>
+              <div className="lbl2">{nextLabel}</div>
+              <div className="ttl">{S.active ? t('{0} — in progress', S.active.name)
+                : routine ? routine.name : paused ? t('Training paused') : t('No upcoming workout')}{todayOvr && routine ? ' · ' + t('rescheduled') : ''}</div>
+            </div>
+          {S.active ? <span className="tag" style={{ color: 'var(--orange)', background: 'color-mix(in srgb,var(--orange) 16%,transparent)' }}>{t('Resume')}</span>
+            : routine ? <span className="tag acc">{t(nextDate === todayIso ? 'Start' : 'Scheduled')}</span>
+            : <Icon name="plus" className="chev" />}
+        </button>
+      </div>
+    </TodayWeekCalendar>
+
     {/* Dribbble 2x2 Activity Grid */}
     <div className="dribbble-activity-grid">
       <div className="dribbble-card dribbble-card-walk" role="button" tabIndex={0} onClick={walkSheet} aria-label={t('Walk')}>
@@ -210,26 +230,6 @@ export default function Home() {
         </svg>
       </div>
     </div>
-
-    {S.deload?.on && (deload.active || (deload.daysUntil != null && deload.daysUntil <= 7)) && <div className="card" style={{ border: '1px solid color-mix(in srgb,var(--orange) 55%,transparent)' }}><div className="row" style={{ gap: 9 }}><Icon name="arrowDown" style={{ color: 'var(--orange)' }} /><div><b>{deload.active ? t('Deload week') : t('Deload week starts soon')}</b><div className="small dim">{deload.active ? t('Load {0}% · Working sets {1}% · RIR {2}', deload.config.loadPct, deload.config.setPct, effortValue('rir', deload.config.targetRir)) : t('Starts in {0} days.', deload.daysUntil) + ' · ' + deload.start + ' – ' + deload.end}</div></div></div></div>}
-
-    <TodayWeekCalendar data-tour="calendar" id="training-calendar" today={today} weekOffset={weekOffset} onWeekOffsetChange={setWeekOffset}
-      onExpand={homeCalendarSheet} onDay={dayOverrideSheet} getDayState={weekDayState}>
-      <div className="today-row home-next-workout">
-        {routine ? <button type="button" className="lrow-i today-row-icon highlighted" style={{ background: S.active ? 'var(--orange)' : 'var(--acc)' }} aria-label={t('Muscles trained')} title={t('Muscles trained')} onClick={() => routineMuscleSheet(routine.id)}><Icon name="info" /></button>
-          : <span className={'lrow-i today-row-icon' + (S.active ? ' highlighted' : '')} style={{ background: S.active ? 'var(--orange)' : 'var(--surface-3)' }}><Icon name={S.active ? 'timer' : 'moon'} /></span>}
-        <button type="button" className="today-row-main" onClick={onToday}>
-            <div className="today-row-copy" style={{ minWidth: 0 }}>
-              <div className="lbl2">{nextLabel}</div>
-              <div className="ttl">{S.active ? t('{0} — in progress', S.active.name)
-                : routine ? routine.name : paused ? t('Training paused') : t('No upcoming workout')}{todayOvr && routine ? ' · ' + t('rescheduled') : ''}</div>
-            </div>
-          {S.active ? <span className="tag" style={{ color: 'var(--orange)', background: 'color-mix(in srgb,var(--orange) 16%,transparent)' }}>{t('Resume')}</span>
-            : routine ? <span className="tag acc">{t(nextDate === todayIso ? 'Start' : 'Scheduled')}</span>
-            : <Icon name="plus" className="chev" />}
-        </button>
-      </div>
-    </TodayWeekCalendar>
 
     <section className="card home-bodyweight-card" id="training-bodyweight" aria-labelledby="home-bodyweight-title">
       <div className="home-bodyweight-heading">
