@@ -1,0 +1,145 @@
+/* Plan Goals Manager Styles */
+.plan-goals-card {
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.plan-goals-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--label);
+}
+
+.plan-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.plan-goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: 12px;
+  gap: 10px;
+}
+
+.plan-goal-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.plan-goal-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.plan-goal-name {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-goal-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.plan-goal-step-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  font-size: 15px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.plan-goal-step-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.plan-goal-step-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.plan-goal-target-val {
+  min-width: 44px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--label);
+}
+
+.plan-goal-target-val b {
+  font-size: 14px;
+}
+
+.plan-goals-empty {
+  padding: 16px 12px;
+  text-align: center;
+  background: var(--surface-2);
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.plan-goals-empty p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label);
+}
+
+.plan-add-muscle-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+
+.plan-toggle-btn {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface-2);
+  border: 1px solid var(--panel-edge);
+  color: var(--label-2);
+  cursor: pointer;
+  transition: all var(--fast);
+}
+
+.plan-toggle-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+.plan-step-goal-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sep);
+}

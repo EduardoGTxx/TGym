@@ -1,11 +1,13 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { t, dateLocale, exerciseNameFor } from '../lib/i18n.js'
 import { exOr } from '../lib/exercises.js'
-import { startFlow, workoutRemindersSheet, workoutDetailSheet, exerciseDetailSheet } from '../sheets.jsx'
+import { startFlow, workoutRemindersSheet, workoutDetailSheet, exerciseDetailSheet, muscleWorkoutSheet } from '../sheets.jsx'
 import { Button } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import { loggedWorkouts } from '../lib/daily-plan.js'
+import { reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS } from '../lib/activity-engine.js'
 import './Gym.css'
 
 function formatMonthHeader(dateStr) {
@@ -15,33 +17,53 @@ function formatMonthHeader(dateStr) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-// Sample items matching Dribbble reference when user has not yet logged gym entries
-const SAMPLE_MONTHS = [
-  {
-    month: new Date().toISOString().slice(0, 7),
-    items: [
-      { name: 'Incline Inner-Biceps Curl', doneReps: 12, targetReps: 36, pct: 33, colorIdx: 0, exId: '0025' },
-      { name: 'Regular-Grip Barbell Curl', doneReps: 8, targetReps: 24, pct: 33, colorIdx: 1, exId: '0030' },
-      { name: 'Goblet Squat', doneReps: 32, targetReps: 48, pct: 67, colorIdx: 2, exId: '0040' },
-    ]
-  },
-  {
-    month: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 7),
-    items: [
-      { name: 'Deadlifts', doneReps: 10, targetReps: 62, pct: 16, colorIdx: 3, exId: '0050' },
-    ]
-  }
-]
-
 export default function Gym() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
+  const update = useStore(s => s.update)
   const history = loggedWorkouts(S)
   const activeWorkout = S.active
 
+  // Reconcile weekly/monthly muscle goal rollover on load
+  useEffect(() => {
+    let rolledOver = false
+    update(s => {
+      rolledOver = reconcileMuscleGoals(s)
+    })
+    if (rolledOver) {
+      useStore.getState().flushPersistence()
+    }
+  }, [update])
+
   const currentMonthTitle = formatMonthHeader(new Date().toISOString().slice(0, 7))
 
-  // Build grouped exercise cards from real history if available
+  // Muscle goals
+  const muscleGoalsObj = S.muscleGoals?.goals || {}
+  const muscleCountsObj = S.muscleGoals?.counts || {}
+  const musclePeriod = S.muscleGoals?.period || 'weekly'
+  const muscleKeys = Object.keys(muscleGoalsObj)
+
+  const adjustCount = (muscleKey, delta) => {
+    update(s => {
+      s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
+      s.muscleGoals.counts ||= {}
+      const cur = Number(s.muscleGoals.counts[muscleKey]) || 0
+      s.muscleGoals.counts[muscleKey] = Math.max(0, cur + delta)
+    })
+    useStore.getState().flushPersistence()
+  }
+
+  const adjustGoal = (muscleKey, delta) => {
+    update(s => {
+      s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
+      s.muscleGoals.goals ||= {}
+      const cur = Number(s.muscleGoals.goals[muscleKey]) || 10
+      s.muscleGoals.goals[muscleKey] = Math.max(1, cur + delta)
+    })
+    useStore.getState().flushPersistence()
+  }
+
+  // Build grouped exercise cards from real history
   const monthGroups = []
   if (history.length > 0) {
     const byMonth = {}
@@ -57,8 +79,8 @@ export default function Gym() {
       const items = []
       workoutsInMonth.forEach(w => {
         (w.entries || []).forEach(entry => {
-          const ex = exOr(entry.id)
-          const name = exerciseNameFor(ex, { entry, routineId: w.routineId })
+          const ex = entry.id ? exOr(entry.id) : null
+          const name = entry.n || (ex ? exerciseNameFor(ex, { entry, routineId: w.routineId }) : t('Exercise'))
           const doneReps = (entry.sets || []).filter(s => s.done).reduce((acc, s) => acc + (Number(s.r) || 0), 0)
           const targetReps = (entry.target?.reps ? entry.target.reps * (entry.target.sets || entry.sets?.length || 3) : 0) || Math.max(doneReps, 24)
           const pct = Math.min(100, Math.max(10, Math.round((doneReps / targetReps) * 100)))
@@ -80,8 +102,6 @@ export default function Gym() {
       }
     })
   }
-
-  const displayGroups = monthGroups.length > 0 ? monthGroups : SAMPLE_MONTHS
 
   return (
     <div className="dribbble-gym-view">
@@ -133,50 +153,171 @@ export default function Gym() {
           >
             {t('Start workout')}
           </Button>
+          <Button
+            variant="tinted"
+            className="dribbble-gym-muscle-btn"
+            icon="dumbbell"
+            onClick={muscleWorkoutSheet}
+          >
+            {t('Log exercise')}
+          </Button>
         </div>
       )}
 
-      {displayGroups.map(group => (
-        <section key={group.month}>
-          <h2 className="dribbble-gym-month">{formatMonthHeader(group.month)}</h2>
-          <div className="dribbble-gym-list">
-            {group.items.map((item, idx) => (
-              <div
-                key={idx}
-                className="dribbble-gym-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  if (item.workout) {
-                    workoutDetailSheet(item.workout)
-                  } else if (item.ex) {
-                    exerciseDetailSheet(item.ex)
-                  } else {
-                    startFlow()
-                  }
-                }}
-              >
-                <div className={`dribbble-gym-badge badge-${item.colorIdx}`}>
-                  <Icon name="dumbbell" />
-                </div>
-                <div className="dribbble-gym-card-body">
-                  <div className="dribbble-gym-card-title">{item.name}</div>
-                  <div className="dribbble-gym-reps-row">
-                    <span>{item.doneReps}{t('reps')}</span>
+      {/* Muscle Goals Section */}
+      <section className="dribbble-gym-section">
+        <div className="dribbble-gym-section-header">
+          <h2 className="dribbble-gym-section-title">
+            {t('Muscle goals')} <small>({musclePeriod === 'monthly' ? t('Monthly') : t('Weekly')})</small>
+          </h2>
+          <Button size="sm" variant="ghost" icon="pencil" onClick={() => nav('/plan')}>
+            {t('Configure')}
+          </Button>
+        </div>
+
+        {muscleKeys.length > 0 ? (
+          <div className="dribbble-muscle-goals-list">
+            {muscleKeys.map((key, idx) => {
+              const labelDef = DEFAULT_MUSCLE_GROUPS.find(g => g.id === key)
+              const name = labelDef ? t(labelDef.label) : key.charAt(0).toUpperCase() + key.slice(1)
+              const count = Number(muscleCountsObj[key]) || 0
+              const goal = Number(muscleGoalsObj[key]) || 1
+              const pct = Math.min(100, Math.round((count / goal) * 100))
+              const colorIdx = idx % 4
+
+              return (
+                <div key={key} className="dribbble-muscle-card">
+                  <div className={`dribbble-gym-badge badge-${colorIdx}`}>
+                    <Icon name="dumbbell" />
+                  </div>
+                  <div className="dribbble-muscle-card-body">
+                    <div className="dribbble-muscle-header-row">
+                      <span className="dribbble-muscle-name">{name}</span>
+                      <span className="dribbble-muscle-stat">
+                        <b>{count}</b> / {goal} {t('exercises')}
+                      </span>
+                    </div>
+
                     <div className="dribbble-gym-track">
                       <div
-                        className={`dribbble-gym-fill color-${item.colorIdx}`}
-                        style={{ width: `${item.pct}%` }}
+                        className={`dribbble-gym-fill color-${colorIdx}`}
+                        style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span>{item.targetReps}{t('reps')}</span>
+
+                    <div className="dribbble-muscle-controls">
+                      <div className="dribbble-control-group">
+                        <span className="dim xsmall">{t('Done')}:</span>
+                        <button
+                          type="button"
+                          className="dribbble-step-btn"
+                          onClick={() => adjustCount(key, -1)}
+                          disabled={count <= 0}
+                          aria-label={t('Decrease count')}
+                        >
+                          -
+                        </button>
+                        <span className="dribbble-step-val">{count}</span>
+                        <button
+                          type="button"
+                          className="dribbble-step-btn"
+                          onClick={() => adjustCount(key, 1)}
+                          aria-label={t('Increase count')}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div className="dribbble-control-group">
+                        <span className="dim xsmall">{t('Goal')}:</span>
+                        <button
+                          type="button"
+                          className="dribbble-step-btn"
+                          onClick={() => adjustGoal(key, -1)}
+                          disabled={goal <= 1}
+                          aria-label={t('Decrease goal')}
+                        >
+                          -
+                        </button>
+                        <span className="dribbble-step-val">{goal}</span>
+                        <button
+                          type="button"
+                          className="dribbble-step-btn"
+                          onClick={() => adjustGoal(key, 1)}
+                          aria-label={t('Increase goal')}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
+          </div>
+        ) : (
+          <div className="dribbble-muscle-empty-card" onClick={() => nav('/plan')}>
+            <Icon name="plus" />
+            <div>
+              <b>{t('No muscle goals configured')}</b>
+              <div className="dim small">{t('Tap to set weekly or monthly targets by muscle group in Routine')}</div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Workout History Section */}
+      {monthGroups.length > 0 ? (
+        monthGroups.map(group => (
+          <section key={group.month}>
+            <h2 className="dribbble-gym-month">{formatMonthHeader(group.month)}</h2>
+            <div className="dribbble-gym-list">
+              {group.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="dribbble-gym-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    if (item.workout) {
+                      workoutDetailSheet(item.workout)
+                    } else if (item.ex) {
+                      exerciseDetailSheet(item.ex)
+                    }
+                  }}
+                >
+                  <div className={`dribbble-gym-badge badge-${item.colorIdx}`}>
+                    <Icon name="dumbbell" />
+                  </div>
+                  <div className="dribbble-gym-card-body">
+                    <div className="dribbble-gym-card-title">{item.name}</div>
+                    <div className="dribbble-gym-reps-row">
+                      <span>{item.doneReps}{t('reps')}</span>
+                      <div className="dribbble-gym-track">
+                        <div
+                          className={`dribbble-gym-fill color-${item.colorIdx}`}
+                          style={{ width: `${item.pct}%` }}
+                        />
+                      </div>
+                      <span>{item.targetReps}{t('reps')}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <section className="dribbble-gym-empty-section">
+          <div className="dribbble-gym-empty">
+            <div className="dribbble-gym-empty-icon">
+              <Icon name="dumbbell" />
+            </div>
+            <p className="dribbble-gym-empty-title">{t('No workouts logged yet')}</p>
+            <span className="dribbble-gym-empty-sub">{t('Start a workout or log an exercise above to see your monthly exercise history.')}</span>
           </div>
         </section>
-      ))}
+      )}
     </div>
   )
 }

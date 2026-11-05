@@ -1,3 +1,4 @@
+import { WalkModal, ClimbingModal, CyclingModal, MuscleWorkoutModal } from './components/ActivityModals.jsx'
 import { clearWorkoutNotification } from './lib/workout-notification.js'
 import DailyPlan, { ScheduleEditor } from './components/DailyPlan.jsx'
 import { dailyPlan, nextDailyRoutine, routineIds, loggedWorkouts } from './lib/daily-plan.js'
@@ -1800,6 +1801,10 @@ export function WorkoutRemindersModal({ close }) {
   </div>
 }
 export const workoutRemindersSheet = () => ui().openSheet(close => <WorkoutRemindersModal close={close} />)
+export const walkSheet = () => ui().openSheet(close => <WalkModal close={close} />)
+export const climbingSheet = () => ui().openSheet(close => <ClimbingModal close={close} />)
+export const cyclingSheet = () => ui().openSheet(close => <CyclingModal close={close} />)
+export const muscleWorkoutSheet = () => ui().openSheet(close => <MuscleWorkoutModal close={close} />)
 
 /* shared small workout row (used in lists) */
 export function WorkoutRow({ w, onClick }) {

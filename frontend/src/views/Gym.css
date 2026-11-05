@@ -106,13 +106,176 @@
 }
 
 .dribbble-gym-start-btn {
-  flex: 1;
+  flex: 1.2;
   border-radius: 16px !important;
   font-size: 15px !important;
   font-weight: 650 !important;
   height: 48px !important;
 }
 
+.dribbble-gym-muscle-btn {
+  flex: 1;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  height: 48px !important;
+}
+
+/* Muscle Goals Section */
+.dribbble-gym-section {
+  margin-bottom: 24px;
+}
+
+.dribbble-gym-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dribbble-gym-section-title {
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--label);
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.dribbble-gym-section-title small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.dribbble-muscle-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dribbble-muscle-card {
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+.dribbble-muscle-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dribbble-muscle-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dribbble-muscle-name {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--label);
+}
+
+.dribbble-muscle-stat {
+  font-size: 12px;
+  color: var(--label-2);
+}
+
+.dribbble-muscle-stat b {
+  font-size: 14px;
+  color: var(--label);
+}
+
+.dribbble-muscle-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--sep);
+  gap: 12px;
+}
+
+.dribbble-control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dribbble-step-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  font-size: 16px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  line-height: 1;
+  transition: transform var(--fast), background var(--fast);
+}
+
+.dribbble-step-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.dribbble-step-btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.dribbble-step-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dribbble-step-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--label);
+  min-width: 20px;
+  text-align: center;
+}
+
+.dribbble-muscle-empty-card {
+  background: var(--surface);
+  border: 1px dashed var(--panel-edge);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: var(--accent);
+  transition: background var(--fast);
+}
+
+.dribbble-muscle-empty-card:hover {
+  background: var(--surface-2);
+}
+
+.dribbble-muscle-empty-card b {
+  display: block;
+  font-size: 14px;
+  color: var(--label);
+  margin-bottom: 2px;
+}
+
+/* Monthly Workouts List */
 .dribbble-gym-month {
   font-size: 15px;
   font-weight: 600;
@@ -216,3 +379,46 @@
 .dribbble-gym-fill.color-1 { background: #5B42F3; }
 .dribbble-gym-fill.color-2 { background: #F59E0B; }
 .dribbble-gym-fill.color-3 { background: #FF6536; }
+
+/* Empty state */
+.dribbble-gym-empty-section {
+  margin-top: 20px;
+}
+
+.dribbble-gym-empty {
+  background: var(--surface);
+  border: 1px dashed var(--panel-edge);
+  border-radius: 20px;
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dribbble-gym-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--surface-2);
+  color: var(--label-2);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.dribbble-gym-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--label);
+  margin: 0;
+}
+
+.dribbble-gym-empty-sub {
+  font-size: 13px;
+  color: var(--label-2);
+  max-width: 320px;
+  line-height: 1.4;
+}

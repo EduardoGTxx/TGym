@@ -1,0 +1,209 @@
+/* Cardio and Calorie Balance Card Styles */
+.calorie-balance-card {
+  padding: 18px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.calorie-balance-title {
+  font-size: 17px;
+  font-weight: 750;
+  color: var(--label);
+  margin: 0;
+}
+
+.calorie-blocks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.calorie-block {
+  padding: 14px 12px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.calorie-block.block-burned {
+  background: rgba(255, 101, 54, 0.08);
+  border: 1px solid rgba(255, 101, 54, 0.2);
+}
+
+.calorie-block.block-consumed {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.calorie-block-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.block-burned .calorie-block-icon {
+  background: #FF6536;
+  color: #FFFFFF;
+}
+
+.block-consumed .calorie-block-icon {
+  background: #10B981;
+  color: #FFFFFF;
+}
+
+.calorie-block-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.calorie-block-label {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calorie-block-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--label);
+  line-height: 1.2;
+}
+
+.calorie-block-value small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.calorie-comparison-section {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.calorie-comparison-header {
+  margin-bottom: 10px;
+}
+
+.calorie-comparison-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--label);
+}
+
+.calorie-balance-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.calorie-balance-badge.surplus {
+  background: rgba(245, 158, 11, 0.15);
+  color: #D97706;
+}
+
+.calorie-balance-badge.deficit {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+}
+
+.calorie-balance-badge.even {
+  background: var(--surface-3);
+  color: var(--label-2);
+}
+
+.calorie-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calorie-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.calorie-bar-label {
+  width: 24px;
+  font-weight: 700;
+  color: var(--label-2);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.calorie-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.calorie-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.calorie-bar-fill.fill-in {
+  background: #10B981;
+}
+
+.calorie-bar-fill.fill-out {
+  background: #FF6536;
+}
+
+.calorie-bar-fill.fill-steps {
+  background: linear-gradient(90deg, #F59E0B 0%, #FF6536 100%);
+}
+
+.calorie-bar-num {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--label-2);
+  min-width: 60px;
+  text-align: right;
+}
+
+.calorie-steps-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--sep);
+}
+
+.steps-section-badge {
+  color: #F59E0B;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+}
+
+.steps-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--label);
+}
+
+.steps-section-count {
+  font-size: 12px;
+  color: var(--label-2);
+}
+
+.steps-section-count b {
+  font-size: 14px;
+  color: var(--label);
+}

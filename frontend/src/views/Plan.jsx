@@ -14,6 +14,7 @@ import { Button } from '../components/ui.jsx'
 import { useEffect, useState } from 'react'
 import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
+import { MuscleGoalsManager, StepGoalManager } from '../components/PlanGoals.jsx'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -76,35 +77,43 @@ export default function Plan() {
       <button className="iconbtn" data-tour="routine-transfer" onClick={() => planToolsSheet({ mode: 'export' })} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
     </div>
     <ModuleSwitch current="/plan" />
-    <div className="cols"><div>
-      <div className="week-schedule-header">
-        <h4 className="sec week-schedule-title">{t('Week schedule')}</h4>
-        <Button size="sm" onClick={()=>openActivityEditor({planning:true})}>{t('Plan activity')}</Button>
+    <div className="cols">
+      <div>
+        <div className="week-schedule-header">
+          <h4 className="sec week-schedule-title">{t('Week schedule')}</h4>
+          <Button size="sm" onClick={()=>openActivityEditor({planning:true})}>{t('Plan activity')}</Button>
+        </div>
+        <div className="list week-schedule" data-tour="schedule" style={{ display: 'flex', flexDirection: 'column' }}>
+          {[1, 2, 3, 4, 5, 6, 0].map(d => {
+            const routines = routineIds(S.week[d]).map(id=>S.routines.find(x=>x.id===id)).filter(Boolean)
+            const r = routines[0]
+            return <div key={d} className="item" onClick={() => dayAssignSheet(d)}>
+              <button type="button" className="week-schedule-open" onClick={e => { e.stopPropagation(); dayAssignSheet(d) }}>
+              <div className="grow"><div className="tt">{t(DAYN[d])}</div>{routines.length>1 && <div className="ss schedule-names">{routines.map(r=>r.name).join(' · ')}</div>}</div>
+              {r ? <span className="tag acc schedule-routine-label"><Icon name={glyphOf(r.emoji)} />{routines.length>1 ? t('{0} activities',routines.length) : r.name}</span> : <span className="tag">{t('Rest')}</span>}
+              </button>
+              {r && <button className="iconbtn" aria-label={t('Muscles trained')} onClick={e=>{e.stopPropagation();routineMuscleSheet(r.id)}}><Icon name="info" /></button>}
+              <Icon name="chevronRight" className="chev" /></div>
+          })}
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <MuscleGoalsManager />
+          <StepGoalManager />
+        </div>
       </div>
-      <div className="list week-schedule" data-tour="schedule" style={{ display: 'flex', flexDirection: 'column' }}>
-        {[1, 2, 3, 4, 5, 6, 0].map(d => {
-          const routines = routineIds(S.week[d]).map(id=>S.routines.find(x=>x.id===id)).filter(Boolean)
-          const r = routines[0]
-          return <div key={d} className="item" onClick={() => dayAssignSheet(d)}>
-            <button type="button" className="week-schedule-open" onClick={e => { e.stopPropagation(); dayAssignSheet(d) }}>
-            <div className="grow"><div className="tt">{t(DAYN[d])}</div>{routines.length>1 && <div className="ss schedule-names">{routines.map(r=>r.name).join(' · ')}</div>}</div>
-            {r ? <span className="tag acc schedule-routine-label"><Icon name={glyphOf(r.emoji)} />{routines.length>1 ? t('{0} activities',routines.length) : r.name}</span> : <span className="tag">{t('Rest')}</span>}
-            </button>
-            {r && <button className="iconbtn" aria-label={t('Muscles trained')} onClick={e=>{e.stopPropagation();routineMuscleSheet(r.id)}}><Icon name="info" /></button>}
-            <Icon name="chevronRight" className="chev" /></div>
-        })}
+      <div>
+        <div className="row between" data-tour="routine" style={{ marginTop: 0, marginBottom: 10 }}>
+          <h4 className="sec" style={{ margin: 0 }}>{t('Routines')}</h4>
+          <div className="row" style={{ gap: 6 }}><Button size="sm" variant="tinted" icon="sparkles" onClick={guidedPlansSheet}>{t('Guided')}</Button><Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('New')}</Button></div>
+        </div>
+        {S.routines.length ? <RoutineList S={S} onOpen={id=>nav('/plan/r/'+id)} onDelete={deleteOne} onInfo={routineMuscleSheet} onReorder={(id,target)=>update(s=>reorderRoutine(s,id,target))}/> : <>
+          <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
+          <Button icon="sparkles" onClick={guidedPlansSheet}>{t('Choose a guided plan')}</Button>
+        </>}
+        {S.routines.length > 0 && <><div style={{ height: 12 }} /><Button variant="danger" icon="trash" onClick={deleteAll}>{t('Delete all routines')}</Button></>}
       </div>
-    </div><div>
-      <div className="row between" data-tour="routine" style={{ marginTop: 22, marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Routines')}</h4>
-        <div className="row" style={{ gap: 6 }}><Button size="sm" variant="tinted" icon="sparkles" onClick={guidedPlansSheet}>{t('Guided')}</Button><Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('New')}</Button></div>
-      </div>
-      {S.routines.length ? <RoutineList S={S} onOpen={id=>nav('/plan/r/'+id)} onDelete={deleteOne} onInfo={routineMuscleSheet} onReorder={(id,target)=>update(s=>reorderRoutine(s,id,target))}/> : <>
-        <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
-        <Button icon="sparkles" onClick={guidedPlansSheet}>{t('Choose a guided plan')}</Button>
-      </>}
-      {S.routines.length > 0 && <><div style={{ height: 12 }} /><Button variant="danger" icon="trash" onClick={deleteAll}>{t('Delete all routines')}</Button></>}
-    </div></div>
+    </div>
     {undoVisible && <div className="routine-undo"><span>{t('Routine deleted')}</span><button onClick={restoreDeleted}>{t('Undo')}</button></div>}
   </>
 }

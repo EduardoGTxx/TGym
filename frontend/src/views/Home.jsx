@@ -1,7 +1,6 @@
 import { calendarDay } from '../lib/calendar-data.js'
 import { nextScheduledWorkout } from '../lib/consistency.js'
 import { nextDailyRoutine } from '../lib/daily-plan.js'
-import { openActivityEditor } from '../components/Activities.jsx'
 import { statisticsState, isUntracked } from '../lib/training-history.js'
 import { TrainingPauseAction } from '../components/TrainingPauseCard.jsx'
 import { isTrainingPaused } from '../lib/training-pause.js'
@@ -13,7 +12,8 @@ import { effectiveRoutineId, effortValue } from '../lib/history.js'
 import { fmtWeight, fmtDate, isoOf } from '../lib/format.js'
 import { useLocalNow } from '../lib/use-local-now.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet, walkSheet, cyclingSheet, climbingSheet } from '../sheets.jsx'
+import { getCompletedSteps, reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS } from '../lib/activity-engine.js'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -63,25 +63,37 @@ export default function Home() {
   const greetingTitle = (S.lang === 'es' ? 'Hola ' : 'Hi ') + firstName
   const greetingSub = S.lang === 'es' ? 'Bienvenido de nuevo' : 'Welcome back'
 
-  const walkWorkouts = (S.workouts || []).filter(w => w.activity?.type === 'walking')
-  const stepsLogged = walkWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + Number(w.activity?.steps || 0), 0)
-  const displaySteps = stepsLogged > 0 ? stepsLogged : 8128
-  const stepsGoal = 10000
-  const stepsPct = Math.min(100, Math.round((displaySteps / stepsGoal) * 100))
+  // Activity engine data without sample / mock numbers
+  const stepsToday = getCompletedSteps(S, [todayIso])
+  const displaySteps = stepsToday
+  const stepsGoal = Number(S.stepGoal?.steps) || 10000
+  const stepsPct = stepsGoal > 0 ? Math.min(100, Math.round((displaySteps / stepsGoal) * 100)) : 0
   const strokeDashoffset = Math.round(226.2 * (1 - stepsPct / 100))
 
   const cyclingWorkouts = (S.workouts || []).filter(w => w.activity?.type === 'cycling')
-  const cyclingDistance = cyclingWorkouts.reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
-  const cyclingKmStr = cyclingDistance > 0 ? Number(cyclingDistance.toFixed(1)).toLocaleString(dateLocale()) : '42,8'
-  const cyclingBars = [40, 65, 30, 85, 45, 95, 60]
+  const cyclingDistance = cyclingWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
+  const cyclingKmStr = Number(cyclingDistance.toFixed(1)).toLocaleString(dateLocale())
 
-  const strengthWorkouts = (S.workouts || []).filter(w => !w.activity || w.activity?.type === 'strength')
-  const strengthMinutes = Math.round(strengthWorkouts.slice(-7).reduce((acc, w) => acc + (w.end && w.start ? (w.end - w.start) / 60000 : 45), 0))
-  const gymMinStr = strengthMinutes > 0 ? String(strengthMinutes) : '84'
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() - (6 - i))
+    return isoOf(d)
+  })
+  const dailyCyclingKms = last7Days.map(iso =>
+    cyclingWorkouts.filter(w => w.d === iso).reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
+  )
+  const maxCyclingKm = Math.max(5, ...dailyCyclingKms)
+  const cyclingBars = dailyCyclingKms.map(km => Math.max(6, Math.round((km / maxCyclingKm) * 100)))
+
+  const strengthWorkouts = (S.workouts || []).filter(w => !w.activity || w.activity?.type === 'strength' || w.activity?.type === 'gym')
+  const strengthMinutes = Math.round(strengthWorkouts.slice(-7).reduce((acc, w) => acc + (w.end && w.start ? (w.end - w.start) / 60000 : (w.activity?.minutes || 0)), 0))
+  const gymMinStr = String(strengthMinutes)
 
   const climbWorkouts = (S.workouts || []).filter(w => w.activity?.type === 'climbing' || w.activity?.type === 'hiking')
-  const climbDistance = climbWorkouts.reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
-  const climbStr = climbDistance > 0 ? Number(climbDistance.toFixed(1)).toLocaleString(dateLocale()) : '42,8'
+  const climbDistance = climbWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
+  const climbStr = Number(climbDistance.toFixed(1)).toLocaleString(dateLocale())
+
+  const muscleGoalsEntries = Object.entries(S.muscleGoals?.goals || {}).filter(([, g]) => Number(g) > 0)
 
   return <div className="narrow">
     <div className="hdr dribbble-top-header" id="training-top">
@@ -108,7 +120,7 @@ export default function Home() {
 
     {/* Dribbble 2x2 Activity Grid */}
     <div className="dribbble-activity-grid">
-      <div className="dribbble-card dribbble-card-walk" role="button" tabIndex={0} onClick={() => openActivityEditor({ defaultType: 'walking' })} aria-label={t('Walk')}>
+      <div className="dribbble-card dribbble-card-walk" role="button" tabIndex={0} onClick={walkSheet} aria-label={t('Walk')}>
         <div className="dribbble-card-header">
           <span className="dribbble-badge"><Icon name="figureWalk" />{t('Walk')}</span>
         </div>
@@ -126,7 +138,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="dribbble-card dribbble-card-cycling" role="button" tabIndex={0} onClick={() => openActivityEditor({ defaultType: 'cycling' })} aria-label={t('Cycling')}>
+      <div className="dribbble-card dribbble-card-cycling" role="button" tabIndex={0} onClick={cyclingSheet} aria-label={t('Cycling')}>
         <div className="dribbble-card-header">
           <span className="dribbble-badge"><Icon name="bicycle" />{t('Cycling')}</span>
         </div>
@@ -135,7 +147,7 @@ export default function Home() {
           <small>{t('km')}</small>
         </div>
         <div className="dribbble-barchart" aria-hidden="true">
-          {cyclingBars.map((h, i) => <div key={i} className={'dribbble-barchart-bar' + (i === 5 ? ' highlight' : '')} style={{ height: `${h}%` }} />)}
+          {cyclingBars.map((h, i) => <div key={i} className={'dribbble-barchart-bar' + (i === 6 ? ' highlight' : '')} style={{ height: `${h}%` }} />)}
         </div>
       </div>
 
@@ -148,16 +160,27 @@ export default function Home() {
           <small>{t('min')}</small>
         </div>
         <div className="dribbble-splits" aria-hidden="true">
-          <div className="dribbble-split-row"><span>{t('Biceps')}</span><span>5/20</span></div>
-          <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '25%' }} /></div>
-          <div className="dribbble-split-row"><span>{t('Chest')}</span><span>12/20</span></div>
-          <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '60%' }} /></div>
-          <div className="dribbble-split-row"><span>{t('Legs')}</span><span>4/20</span></div>
-          <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '20%' }} /></div>
+          {muscleGoalsEntries.length > 0 ? (
+            muscleGoalsEntries.slice(0, 3).map(([key, goal]) => {
+              const count = S.muscleGoals.counts?.[key] || 0
+              const pct = Math.min(100, Math.round((count / (goal || 1)) * 100))
+              const label = DEFAULT_MUSCLE_GROUPS.find(g => g.id === key)?.label || key
+              return (
+                <div key={key}>
+                  <div className="dribbble-split-row"><span>{t(label)}</span><span>{count}/{goal}</span></div>
+                  <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: `${pct}%` }} /></div>
+                </div>
+              )
+            })
+          ) : (
+            <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>
+              {t('+ Set muscle goals in Routine')}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="dribbble-card dribbble-card-climbing" role="button" tabIndex={0} onClick={() => openActivityEditor({ defaultType: 'climbing' })} aria-label={t('Climbing')}>
+      <div className="dribbble-card dribbble-card-climbing" role="button" tabIndex={0} onClick={climbingSheet} aria-label={t('Climbing')}>
         <div className="dribbble-card-header">
           <span className="dribbble-badge"><Icon name="mountain" />{t('Climbing')}</span>
         </div>

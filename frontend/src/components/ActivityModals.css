@@ -1,0 +1,165 @@
+/* Activity Modals Styling */
+.activity-custom-modal {
+  padding: 8px 4px;
+}
+
+.activity-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.activity-modal-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.activity-modal-badge.badge-walk {
+  background: linear-gradient(135deg, #FF6536 0%, #E04818 100%);
+}
+
+.activity-modal-badge.badge-climbing {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+}
+
+.activity-modal-badge.badge-cycling {
+  background: linear-gradient(135deg, #5B42F3 0%, #7653FC 100%);
+}
+
+.activity-modal-badge.badge-gym {
+  background: linear-gradient(135deg, #00B4D8 0%, #0096C7 100%);
+}
+
+.activity-calc-card {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
+  border: 1px solid var(--panel-edge);
+}
+
+.activity-foot-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--label-2);
+  margin-top: 8px;
+}
+
+.activity-foot-note .icn {
+  font-size: 14px;
+  flex-shrink: 0;
+  color: var(--acc);
+}
+
+.activity-result-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--panel-edge);
+}
+
+.activity-result-pill b {
+  color: var(--acc);
+  font-size: 15px;
+}
+
+.activity-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.activity-metric-box {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--panel-edge);
+}
+
+.activity-metric-box small {
+  color: var(--label-2);
+  font-size: 11px;
+}
+
+.activity-metric-box b {
+  font-size: 16px;
+  color: var(--label);
+}
+
+.activity-speed-hero {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  margin-top: 14px;
+  border: 1px solid var(--panel-edge);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-speed-hero b {
+  font-size: 28px;
+  color: #7653FC;
+}
+
+.activity-calories-banner {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--orange) 12%, transparent);
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--orange) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--label);
+}
+
+.activity-calories-banner b {
+  color: var(--orange);
+  font-size: 15px;
+}
+
+.muscle-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.muscle-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--fast);
+}
+
+.muscle-chip.active {
+  background: var(--acc);
+  color: var(--on-acc);
+  border-color: var(--acc);
+  font-weight: 600;
+}

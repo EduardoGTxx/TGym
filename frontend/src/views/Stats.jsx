@@ -1,3 +1,4 @@
+import CardioAndCalorieBalanceCard from '../components/CardioAndCalorieBalanceCard.jsx'
 import ProgressBody from '../components/ProgressBody.jsx'
 import StatsSections from '../components/StatsSections.jsx'
 import { bodyRecords,measurementInUnit } from '../lib/body-report.js'
@@ -507,6 +508,8 @@ function Stats({ focus = null, standaloneControl = true, hideHeader = false, hea
     <div {...sectionProps('duration')}><RoutineDuration S={S} exportFilters={exportFilters} /></div>
     {workouts.length > 0 && <div {...sectionProps('muscles')}><MuscleBalance S={S} exportFilters={exportFilters} onExercise={showExercise} /></div>}
     {hasEffort(S) && <div {...sectionProps('effort')}><EffortCard S={S} exportFilters={exportFilters} /></div>}
+
+    <CardioAndCalorieBalanceCard />
 
     <div className="cols">
       <div className="card" {...sectionProps('bodyweight')}>
