@@ -48,7 +48,16 @@ const SECRET = fs.readFileSync(secretFile, 'utf8').trim();
 
 const dbFile = path.join(DATA, 'db.json');
 let db = { users: [], creds: [], subs: [], invites: [] };
-try { db = JSON.parse(fs.readFileSync(dbFile, 'utf8')); } catch {}
+if (fs.existsSync(dbFile)) {
+  try {
+    db = JSON.parse(fs.readFileSync(dbFile, 'utf8'));
+  } catch (err) {
+    const backup = `${dbFile}.corrupt.${Date.now()}`;
+    try { fs.copyFileSync(dbFile, backup); } catch {}
+    console.error(`Failed to parse ${dbFile}, backed up to ${backup}:`, err);
+    throw new Error(`Database corrupted in ${dbFile}; backed up to ${backup}. Refusing to start.`);
+  }
+}
 db.subs = db.subs || [];
 db.invites = db.invites || [];
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));

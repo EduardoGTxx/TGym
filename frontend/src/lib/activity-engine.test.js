@@ -10,7 +10,8 @@ import {
   getCompletedSteps,
   getTodayMuscleGroups,
   setDayMuscleGroups,
-  getMuscleLabel
+  getMuscleLabel,
+  getLatestWeightKg
 } from './activity-engine.js'
 
 describe('activity-engine', () => {
@@ -123,5 +124,27 @@ describe('activity-engine', () => {
 
     expect(getMuscleLabel('biceps')).toBe('Biceps')
     expect(getMuscleLabel('custom_glute')).toBe('Custom_glute')
+  })
+
+  it('retrieves latest weight from bodyweight logs in kg or lb with proper fallback', () => {
+    const stateKg = {
+      unit: 'kg',
+      bodyweight: [
+        { d: '2026-11-01', w: 80 },
+        { d: '2026-11-05', w: 82.5 }
+      ]
+    }
+    expect(getLatestWeightKg(stateKg)).toBe(82.5)
+
+    const stateLb = {
+      unit: 'lb',
+      bodyweight: [
+        { d: '2026-11-01', w: 180, unit: 'lb' }
+      ]
+    }
+    expect(Math.round(getLatestWeightKg(stateLb) * 10) / 10).toBe(81.6)
+
+    expect(getLatestWeightKg({})).toBe(75)
+    expect(Math.round(getLatestWeightKg({ unit: 'lb' }))).toBe(75)
   })
 })

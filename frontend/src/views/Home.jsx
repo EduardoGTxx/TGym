@@ -5,7 +5,7 @@ import { statisticsState, isUntracked } from '../lib/training-history.js'
 import { TrainingPauseAction } from '../components/TrainingPauseCard.jsx'
 import { isTrainingPaused } from '../lib/training-pause.js'
 import { routineConsistency } from '../lib/stats-insights.js'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutineId, effortValue } from '../lib/history.js'
@@ -13,7 +13,7 @@ import { fmtWeight, fmtDate, isoOf } from '../lib/format.js'
 import { useLocalNow } from '../lib/use-local-now.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet, walkSheet, cyclingSheet, climbingSheet, dailyMuscleWorkoutSheet } from '../sheets.jsx'
-import { getCompletedSteps, reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS, getTodayMuscleGroups, getMuscleLabel } from '../lib/activity-engine.js'
+import { getCompletedSteps, reconcileMuscleGoals, getCurrentPeriodKey, DEFAULT_MUSCLE_GROUPS, getTodayMuscleGroups, getMuscleLabel } from '../lib/activity-engine.js'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -27,6 +27,17 @@ import './TrainingHome.css'
 export default function Home() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
+  const update = useStore(s => s.update)
+
+  useEffect(() => {
+    const currentKey = getCurrentPeriodKey(S.muscleGoals?.period || 'weekly')
+    if (S.muscleGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
+      update(s => {
+        reconcileMuscleGoals(s)
+      })
+    }
+  }, [S.muscleGoals, update])
+
   const today = useLocalNow(), todayIso = isoOf(today)
   const statsState = statisticsState(S,todayIso)
   const [weekOffset, setWeekOffset] = useState(0)

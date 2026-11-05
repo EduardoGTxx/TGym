@@ -134,27 +134,26 @@ export function WalkModal({ close }) {
         </div>
       )}
 
-      <div className="row" style={{ gap: 10, marginTop: 14 }}>
-        <div style={{ flex: 1 }}>
-          <label className="field-label">{t('Duration (min)')}</label>
-          <NumberField
-            value={durationMin}
-            onChange={v => setDurationMin(Math.max(1, Math.round(v || 1)))}
-            aria-label={t('Duration (min)')}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label className="field-label">{t('Intensity')}</label>
-          <select
-            className="field"
-            value={intensity}
-            onChange={e => setIntensity(e.target.value)}
-          >
-            <option value="light">{t('Light')}</option>
-            <option value="moderate">{t('Moderate')}</option>
-            <option value="vigorous">{t('Vigorous')}</option>
-          </select>
-        </div>
+      <div style={{ marginTop: 14 }}>
+        <label className="field-label">{t('Duration (min)')}</label>
+        <NumberField
+          value={durationMin}
+          onChange={v => setDurationMin(Math.max(1, Math.round(v || 1)))}
+          aria-label={t('Duration (min)')}
+        />
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <label className="field-label">{t('Intensity')}</label>
+        <Segmented
+          options={[
+            { value: 'light', label: t('Light') },
+            { value: 'moderate', label: t('Moderate') },
+            { value: 'vigorous', label: t('Vigorous') }
+          ]}
+          value={intensity}
+          onChange={setIntensity}
+        />
       </div>
 
       <div className="activity-calories-banner">
@@ -279,16 +278,18 @@ export function ClimbingModal({ close }) {
         </div>
       </div>
 
-      <label className="field-label" style={{ marginTop: 14 }}>{t('Intensity')}</label>
-      <select
-        className="field"
-        value={intensity}
-        onChange={e => setIntensity(e.target.value)}
-      >
-        <option value="light">{t('Light')}</option>
-        <option value="moderate">{t('Moderate')}</option>
-        <option value="vigorous">{t('Vigorous')}</option>
-      </select>
+      <div style={{ marginTop: 14 }}>
+        <label className="field-label">{t('Intensity')}</label>
+        <Segmented
+          options={[
+            { value: 'light', label: t('Light') },
+            { value: 'moderate', label: t('Moderate') },
+            { value: 'vigorous', label: t('Vigorous') }
+          ]}
+          value={intensity}
+          onChange={setIntensity}
+        />
+      </div>
 
       <div className="activity-calories-banner">
         <span>{t('Estimated calories burned')}:</span>
@@ -392,16 +393,18 @@ export function CyclingModal({ close }) {
         <b>{speedKmh} <small>km/h</small></b>
       </div>
 
-      <label className="field-label" style={{ marginTop: 14 }}>{t('Intensity')}</label>
-      <select
-        className="field"
-        value={intensity}
-        onChange={e => setIntensity(e.target.value)}
-      >
-        <option value="light">{t('Light')}</option>
-        <option value="moderate">{t('Moderate')}</option>
-        <option value="vigorous">{t('Vigorous')}</option>
-      </select>
+      <div style={{ marginTop: 14 }}>
+        <label className="field-label">{t('Intensity')}</label>
+        <Segmented
+          options={[
+            { value: 'light', label: t('Light') },
+            { value: 'moderate', label: t('Moderate') },
+            { value: 'vigorous', label: t('Vigorous') }
+          ]}
+          value={intensity}
+          onChange={setIntensity}
+        />
+      </div>
 
       <div className="activity-calories-banner">
         <span>{t('Estimated calories burned')}:</span>
@@ -550,16 +553,18 @@ export function MuscleWorkoutModal({ close }) {
         </div>
       </div>
 
-      <label className="field-label" style={{ marginTop: 14 }}>{t('Intensity')}</label>
-      <select
-        className="field"
-        value={intensity}
-        onChange={e => setIntensity(e.target.value)}
-      >
-        <option value="light">{t('Light')}</option>
-        <option value="moderate">{t('Moderate')}</option>
-        <option value="vigorous">{t('Vigorous')}</option>
-      </select>
+      <div style={{ marginTop: 14 }}>
+        <label className="field-label">{t('Intensity')}</label>
+        <Segmented
+          options={[
+            { value: 'light', label: t('Light') },
+            { value: 'moderate', label: t('Moderate') },
+            { value: 'vigorous', label: t('Vigorous') }
+          ]}
+          value={intensity}
+          onChange={setIntensity}
+        />
+      </div>
 
       <div className="activity-calories-banner">
         <span>{t('Estimated calories burned')}:</span>

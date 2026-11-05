@@ -4,12 +4,13 @@ import { useUI } from '../store/useUI.js'
 import { t } from '../lib/i18n.js'
 import { todayISO, uid } from '../lib/format.js'
 import Icon from './Icon.jsx'
-import { Button, NumberField } from './ui.jsx'
+import { Button, NumberField, Segmented } from './ui.jsx'
 import {
   DEFAULT_MUSCLE_GROUPS,
   getTodayMuscleGroups,
   getMuscleLabel,
-  estimateCaloriesBurned
+  estimateCaloriesBurned,
+  getLatestWeightKg
 } from '../lib/activity-engine.js'
 import './DailyMuscleWorkoutModal.css'
 
@@ -51,7 +52,7 @@ export default function DailyMuscleWorkoutModal({ close }) {
 
   const addExercise = () => {
     const finalName = exerciseName.trim() || t('{0} exercise', t(getMuscleLabel(formMuscle)))
-    const cal = estimateCaloriesBurned('gym', sets * 4, intensity, S.weightKg)
+    const cal = estimateCaloriesBurned('gym', sets * 4, intensity, getLatestWeightKg(S))
 
     const newEx = {
       id: uid(),
@@ -65,25 +66,12 @@ export default function DailyMuscleWorkoutModal({ close }) {
     }
 
     setSessionExercises(prev => [...prev, newEx])
-
-    // Increment muscle goal count in store right away
-    update(s => {
-      s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
-      s.muscleGoals.counts ||= {}
-      s.muscleGoals.counts[formMuscle] = (Number(s.muscleGoals.counts[formMuscle]) || 0) + 1
-    })
-
     setExerciseName('')
-    useUI.getState().toast(t('{0} logged! (+1 to {1})', finalName, t(getMuscleLabel(formMuscle))))
+    useUI.getState().toast(t('{0} logged!', finalName))
   }
 
-  const removeExercise = (id, muscleGroup) => {
+  const removeExercise = (id) => {
     setSessionExercises(prev => prev.filter(e => e.id !== id))
-    update(s => {
-      if (s.muscleGoals?.counts?.[muscleGroup]) {
-        s.muscleGoals.counts[muscleGroup] = Math.max(0, s.muscleGoals.counts[muscleGroup] - 1)
-      }
-    })
   }
 
   const finishWorkout = async () => {
@@ -123,6 +111,13 @@ export default function DailyMuscleWorkoutModal({ close }) {
     update(s => {
       s.workouts ||= []
       s.workouts.push(workout)
+      s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
+      s.muscleGoals.counts ||= {}
+      for (const ex of sessionExercises) {
+        if (ex.muscleGroup) {
+          s.muscleGoals.counts[ex.muscleGroup] = (Number(s.muscleGoals.counts[ex.muscleGroup]) || 0) + 1
+        }
+      }
     })
 
     await useStore.getState().flushPersistence()
@@ -269,30 +264,28 @@ export default function DailyMuscleWorkoutModal({ close }) {
           </div>
         </div>
 
-        <div className="row between" style={{ alignItems: 'center', marginTop: 10 }}>
-          <div style={{ flex: 1, maxWidth: 160 }}>
-            <label className="field-label">{t('Intensity')}</label>
-            <select
-              className="field"
-              value={intensity}
-              onChange={e => setIntensity(e.target.value)}
-            >
-              <option value="light">{t('Light')}</option>
-              <option value="moderate">{t('Moderate')}</option>
-              <option value="vigorous">{t('Vigorous')}</option>
-            </select>
-          </div>
-
-          <Button
-            size="sm"
-            variant="tinted"
-            icon="plus"
-            style={{ marginTop: 16 }}
-            onClick={addExercise}
-          >
-            {t('Log exercise')}
-          </Button>
+        <div style={{ marginTop: 12 }}>
+          <label className="field-label">{t('Intensity')}</label>
+          <Segmented
+            options={[
+              { value: 'light', label: t('Light') },
+              { value: 'moderate', label: t('Moderate') },
+              { value: 'vigorous', label: t('Vigorous') }
+            ]}
+            value={intensity}
+            onChange={setIntensity}
+          />
         </div>
+
+        <Button
+          size="sm"
+          variant="tinted"
+          icon="plus"
+          style={{ marginTop: 14, width: '100%' }}
+          onClick={addExercise}
+        >
+          {t('Log exercise')}
+        </Button>
       </div>
 
       {/* Big Conclude Workout Button */}

@@ -2,7 +2,7 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
@@ -135,4 +135,21 @@ test('HTTP admin invite, disable and audit operations persist while non-admin ac
   const audit = await request('/api/admin/audit?cat=admin&limit=2', { identity: 'audit-admin' });
   assert.equal(audit.status, 200); assert.ok(audit.data.events.length <= 2);
   assert.ok(audit.data.events.every(event => event.ev.startsWith('admin.')));
+});
+
+test('server refuses to overwrite corrupted db.json and creates a backup', async () => {
+  const badDir = await mkdtemp(path.join(tmpdir(), 'tgym-bad-db-'));
+  await writeFile(path.join(badDir, 'secret'), '0'.repeat(64));
+  await writeFile(path.join(badDir, 'db.json'), '{ invalid json');
+  const proc = spawn(process.execPath, ['server.js'], {
+    cwd: root,
+    windowsHide: true,
+    env: { ...process.env, DATA_DIR: badDir, PORT: '0', RP_ID: 'localhost', ORIGIN: 'http://localhost' },
+    stdio: 'ignore'
+  });
+  const [code] = await once(proc, 'exit');
+  assert.notEqual(code, 0);
+  const files = await readdir(badDir);
+  assert.ok(files.some(f => f.startsWith('db.json.corrupt.')));
+  await rm(badDir, { recursive: true, force: true });
 });

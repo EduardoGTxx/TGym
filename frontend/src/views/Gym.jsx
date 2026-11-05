@@ -7,7 +7,7 @@ import { startFlow, workoutRemindersSheet, workoutDetailSheet, exerciseDetailShe
 import { Button } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import { loggedWorkouts } from '../lib/daily-plan.js'
-import { reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS } from '../lib/activity-engine.js'
+import { reconcileMuscleGoals, getCurrentPeriodKey, DEFAULT_MUSCLE_GROUPS } from '../lib/activity-engine.js'
 import './Gym.css'
 
 function formatMonthHeader(dateStr) {
@@ -26,14 +26,14 @@ export default function Gym() {
 
   // Reconcile weekly/monthly muscle goal rollover on load
   useEffect(() => {
-    let rolledOver = false
-    update(s => {
-      rolledOver = reconcileMuscleGoals(s)
-    })
-    if (rolledOver) {
+    const currentKey = getCurrentPeriodKey(S.muscleGoals?.period || 'weekly')
+    if (S.muscleGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
+      update(s => {
+        reconcileMuscleGoals(s)
+      })
       useStore.getState().flushPersistence()
     }
-  }, [update])
+  }, [S.muscleGoals, update])
 
   const currentMonthTitle = formatMonthHeader(new Date().toISOString().slice(0, 7))
 

@@ -41,6 +41,19 @@ export function getDateListForPeriod(period = 'day', anchor = new Date()) {
  * Estimates or retrieves user's foot size in cm and step length in meters.
  * Checks real measurements first; if absent, estimates using height, sex, and weight.
  */
+export function getLatestWeightKg(state) {
+  if (Number(state?.weightKg) > 0) return Number(state.weightKg)
+  const rows = (state?.bodyweight || []).filter(b => Number(b?.w) > 0)
+  if (rows.length > 0) {
+    const sorted = [...rows].sort((a, b) => String(a.d || '').localeCompare(String(b.d || '')) || (Number(a.t) || 0) - (Number(b.t) || 0))
+    const latest = sorted[sorted.length - 1]
+    const unit = latest.unit || state?.unit || 'kg'
+    const val = Number(latest.w)
+    return unit === 'lb' ? val * 0.45359237 : val
+  }
+  return state?.unit === 'lb' ? 165 * 0.45359237 : 75
+}
+
 export function getFootSizeAndStride(state) {
   const measurements = state?.measurements || []
   let measuredFootCm = null
@@ -55,7 +68,7 @@ export function getFootSizeAndStride(state) {
 
   const heightCm = Number(state?.heightCm) > 0 ? Number(state.heightCm) : 175
   const isFemale = state?.profile?.gender === 'female' || state?.gender === 'female' || state?.sex === 'female'
-  const weightKg = Number(state?.weightKg) > 0 ? Number(state.weightKg) : (state?.unit === 'lb' ? 165 * 0.453592 : 75)
+  const weightKg = getLatestWeightKg(state)
 
   let footSizeCm = measuredFootCm
   let isEstimated = false
@@ -140,7 +153,7 @@ export function getConsumedCalories(state, dateList) {
  */
 export function getBurnedCalories(state, dateList) {
   let total = 0
-  const weightKg = Number(state?.weightKg) > 0 ? Number(state.weightKg) : 75
+  const weightKg = getLatestWeightKg(state)
   const dates = new Set(dateList)
   for (const w of state?.workouts || []) {
     if (dates.has(w.d)) {

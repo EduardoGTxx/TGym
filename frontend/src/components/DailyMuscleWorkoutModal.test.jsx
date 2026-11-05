@@ -89,7 +89,7 @@ describe('DayMuscleScheduleModal and DailyMuscleWorkoutModal', () => {
     })
 
     // Expect chest count incremented
-    expect(useStore.getState().S.muscleGoals.counts.chest).toBe(3)
+    expect(useStore.getState().S.muscleGoals.counts.chest).toBe(2)
     expect(host.textContent).toContain('Bench Press')
 
     // Finish workout
@@ -100,6 +100,7 @@ describe('DayMuscleScheduleModal and DailyMuscleWorkoutModal', () => {
     })
 
     expect(useStore.getState().S.workouts.length).toBe(1)
+    expect(useStore.getState().S.muscleGoals.counts.chest).toBe(3)
     expect(useStore.getState().S.workouts[0].entries[0].n).toBe('Bench Press')
     expect(close).toHaveBeenCalled()
   })
