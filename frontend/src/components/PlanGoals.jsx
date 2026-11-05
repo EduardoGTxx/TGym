@@ -70,6 +70,9 @@ export function MuscleGoalsManager() {
       s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
       s.muscleGoals.period = newPeriod
       s.muscleGoals.lastResetPeriod = getCurrentPeriodKey(newPeriod)
+      s.muscleGoals.counts = Object.fromEntries(
+        Object.keys(s.muscleGoals.goals || {}).map(k => [k, 0])
+      )
     })
     useStore.getState().flushPersistence()
   }

@@ -8,6 +8,7 @@ export function buildCompletedWorkout(active, { end = Date.now(), prs = [], reas
   const entries = (active?.entries || []).map(entry => {
     const completed = {
       id: entry.id,
+      ...(entry.muscleGroup ? { muscleGroup: entry.muscleGroup } : {}),
       sets: entry.sets,
       topW: entry.topW || null,
       target: entry.target || null,

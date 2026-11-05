@@ -77,9 +77,12 @@ export default function Home() {
   const greetingSub = S.lang === 'es' ? 'Bienvenido de nuevo' : 'Welcome back'
 
   // Activity engine data without sample / mock numbers
+  const stepGoalObj = S.stepGoal || { enabled: false, period: 'daily', target: 10000 }
+  const goalTarget = Number(stepGoalObj.target ?? stepGoalObj.steps) || 10000
+  const normalizedStepGoal = stepGoalObj.period === 'weekly' ? Math.round(goalTarget / 7) : stepGoalObj.period === 'monthly' ? Math.round(goalTarget / 30) : goalTarget
   const stepsToday = getCompletedSteps(S, [todayIso])
   const displaySteps = stepsToday
-  const stepsGoal = Number(S.stepGoal?.steps) || 10000
+  const stepsGoal = normalizedStepGoal || 10000
   const stepsPct = stepsGoal > 0 ? Math.min(100, Math.round((displaySteps / stepsGoal) * 100)) : 0
   const strokeDashoffset = Math.round(226.2 * (1 - stepsPct / 100))
 

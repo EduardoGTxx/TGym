@@ -9,7 +9,8 @@ import {
   getFootSizeAndStride,
   stepsFromDistance,
   estimateCaloriesBurned,
-  DEFAULT_MUSCLE_GROUPS
+  DEFAULT_MUSCLE_GROUPS,
+  getLatestWeightKg
 } from '../lib/activity-engine.js'
 import './ActivityModals.css'
 
@@ -32,7 +33,7 @@ export function WalkModal({ close }) {
   const calculatedSteps = useMemo(() => stepsFromDistance(distanceKm, S), [distanceKm, S])
   const effectiveSteps = inputMode === 'distance' ? calculatedSteps : (Number(steps) || 0)
 
-  const weightKg = Number(S.weightKg) > 0 ? Number(S.weightKg) : (S.unit === 'lb' ? 165 * 0.453592 : 75)
+  const weightKg = getLatestWeightKg(S)
   const caloriesBurned = useMemo(
     () => estimateCaloriesBurned('walking', durationMin, intensity, weightKg),
     [durationMin, intensity, weightKg]
@@ -191,7 +192,7 @@ export function ClimbingModal({ close }) {
   }, [distanceKm, durationMin])
 
   const calculatedSteps = useMemo(() => stepsFromDistance(distanceKm, S), [distanceKm, S])
-  const weightKg = Number(S.weightKg) > 0 ? Number(S.weightKg) : (S.unit === 'lb' ? 165 * 0.453592 : 75)
+  const weightKg = getLatestWeightKg(S)
   const caloriesBurned = useMemo(
     () => estimateCaloriesBurned('climbing', durationMin, intensity, weightKg),
     [durationMin, intensity, weightKg]
@@ -322,7 +323,7 @@ export function CyclingModal({ close }) {
     return Math.round((d / hours) * 10) / 10
   }, [distanceKm, durationMin])
 
-  const weightKg = Number(S.weightKg) > 0 ? Number(S.weightKg) : (S.unit === 'lb' ? 165 * 0.453592 : 75)
+  const weightKg = getLatestWeightKg(S)
   const caloriesBurned = useMemo(
     () => estimateCaloriesBurned('cycling', durationMin, intensity, weightKg),
     [durationMin, intensity, weightKg]
@@ -440,8 +441,8 @@ export function MuscleWorkoutModal({ close }) {
   const [intensity, setIntensity] = useState('moderate')
 
   const caloriesBurned = useMemo(() => {
-    return estimateCaloriesBurned('gym', sets * 4, intensity, S.weightKg)
-  }, [sets, intensity, S.weightKg])
+    return estimateCaloriesBurned('gym', sets * 4, intensity, getLatestWeightKg(S))
+  }, [sets, intensity, S])
 
   const save = async () => {
     const finalName = exerciseName.trim() || t('{0} exercise', selectedMuscle)

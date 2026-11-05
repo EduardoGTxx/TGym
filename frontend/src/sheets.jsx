@@ -2166,20 +2166,15 @@ export function doFinishWorkout(options = {}) {
     s.workouts.push(w)
     s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
     s.muscleGoals.counts ||= {}
-    const completedMuscles = new Set()
+    const muscleExerciseCounts = {}
     for (const e of w.entries || []) {
       const m = e.muscleGroup || e.muscle || EXIDX[e.id]?.tg || EXIDX[e.id]?.mg
-      if (m && e.sets?.some(x => x.done)) completedMuscles.add(m)
-    }
-    if (A.targetMuscles) {
-      for (const m of A.targetMuscles) {
-        if (w.entries?.some(e => (e.muscleGroup === m || EXIDX[e.id]?.tg === m || EXIDX[e.id]?.mg === m) && e.sets?.some(x => x.done))) {
-          completedMuscles.add(m)
-        }
+      if (m && e.sets?.some(x => x.done)) {
+        muscleExerciseCounts[m] = (muscleExerciseCounts[m] || 0) + 1
       }
     }
-    for (const m of completedMuscles) {
-      s.muscleGoals.counts[m] = (Number(s.muscleGoals.counts[m]) || 0) + 1
+    for (const [m, count] of Object.entries(muscleExerciseCounts)) {
+      s.muscleGoals.counts[m] = (Number(s.muscleGoals.counts[m]) || 0) + count
     }
     s.active = null
     // Claim in the same persisted transaction as Finish: a failed save cannot
