@@ -123,11 +123,11 @@
 :root[data-theme="light"] {
   color-scheme:light;
   /* "chalk": warm off-white canvas, white cards, ink-black type */
-  --bg:        #f3f2ee;
+  --bg:        #ffffff;
   --bg-el:     #ffffff;
   --surface:   #ffffff;
-  --surface-2: #f0eee8;
-  --surface-3: #e4e1d9;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
 
   --label:     #161512;
   --label-2:   rgba(22, 21, 18, 0.74);

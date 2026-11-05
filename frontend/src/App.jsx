@@ -52,7 +52,7 @@ function applyPrefs(theme, accent, reduceMotion = false) {
   de.dataset.accent = ACCENTS[accent] ? accent : 'lime'
   de.dataset.reduceMotion = reduceMotion ? 'true' : 'false'
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.content = resolved === 'light' ? '#f3f2ee' : (resolved === 'amoled' ? '#000000' : '#0d0d0c')
+  if (meta) meta.content = resolved === 'light' ? '#ffffff' : (resolved === 'amoled' ? '#000000' : '#0d0d0c')
   syncSystemAppearance(de.dataset.theme)
 }
 

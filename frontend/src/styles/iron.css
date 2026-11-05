@@ -42,7 +42,8 @@
   --tally:repeating-linear-gradient(90deg,var(--meter,var(--acc)) 0 9px,transparent 9px 12px);
   --tally-track:repeating-linear-gradient(90deg,var(--surface-3) 0 9px,transparent 9px 12px);
 }
-:root[data-theme="light"]{--glow:color-mix(in srgb,var(--acc) 10%,transparent)}
+:root[data-theme="light"]{--glow:transparent}
+:root[data-theme="light"] #root{background:#ffffff}
 /* a soft wash of the accent behind the header, gone by the first card */
 #root{background:radial-gradient(120% 340px at 50% -120px,var(--glow),transparent 70%) no-repeat,var(--bg)}
 /* ------------------------------------------------------------- amoled -- */
