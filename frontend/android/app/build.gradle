@@ -13,8 +13,8 @@ android {
         applicationId "app.framegym.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 165
-        versionName "2.0.7"
+        versionCode 166
+        versionName "2.0.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

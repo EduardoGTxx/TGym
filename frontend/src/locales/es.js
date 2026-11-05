@@ -1,6 +1,14 @@
 import english from '../lib/english-fallback.js'
 // Spanish UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Today's muscle groups": "Grupos musculares de hoy",
+  "Muscle groups": "Grupos musculares",
+  "Select a muscle group to start logging exercises:": "Selecciona un grupo muscular para comenzar a registrar ejercicios:",
+  "Choose an additional muscle to train:": "Elige un músculo adicional para entrenar:",
+  "{0} — add your first exercise.": "{0} — añade tu primer ejercicio.",
+  "Add muscle": "Añadir músculo",
+  "Add muscle group to session": "Añadir grupo muscular a la sesión",
+  "Start training {0}": "Entrenar {0}",
   ...english,
   "Allow mobile data": "Permitir datos móviles",
   "Allow internet connection over mobile data when Wi-Fi is unavailable.": "Permite la conexión a internet usando datos móviles cuando no haya Wi-Fi disponible.",

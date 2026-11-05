@@ -2164,6 +2164,23 @@ export function doFinishWorkout(options = {}) {
       if (mx > 0) { const cur = s.exWeights[e.id]; if (!cur || mx > cur.w) s.exWeights[e.id] = { w: mx, d: w.d } }
     })
     s.workouts.push(w)
+    s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
+    s.muscleGoals.counts ||= {}
+    const completedMuscles = new Set()
+    for (const e of w.entries || []) {
+      const m = e.muscleGroup || e.muscle || EXIDX[e.id]?.tg || EXIDX[e.id]?.mg
+      if (m && e.sets?.some(x => x.done)) completedMuscles.add(m)
+    }
+    if (A.targetMuscles) {
+      for (const m of A.targetMuscles) {
+        if (w.entries?.some(e => (e.muscleGroup === m || EXIDX[e.id]?.tg === m || EXIDX[e.id]?.mg === m) && e.sets?.some(x => x.done))) {
+          completedMuscles.add(m)
+        }
+      }
+    }
+    for (const m of completedMuscles) {
+      s.muscleGoals.counts[m] = (Number(s.muscleGoals.counts[m]) || 0) + 1
+    }
     s.active = null
     // Claim in the same persisted transaction as Finish: a failed save cannot
     // consume a celebration, and the native/server mirrors receive the ledger.

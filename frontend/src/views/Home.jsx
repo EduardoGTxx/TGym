@@ -67,7 +67,7 @@ export default function Home() {
   // today's session shown right under the week strip
   const todayMuscles = getTodayMuscleGroups(S, today)
   const todayMusclesNames = todayMuscles.map(m => t(getMuscleLabel(m))).join(' · ')
-  const onToday = () => { if (S.active) nav('/workout'); else if (todayMuscles.length > 0) dailyMuscleWorkoutSheet(); else if (routine && nextDate === todayIso) startFlow(routine.id); else if (routine) dayOverrideSheet(nextDate); else dailyMuscleWorkoutSheet() }
+  const onToday = () => { if (S.active) nav('/workout'); else if (todayMuscles.length > 0) nav('/workout'); else if (routine && nextDate === todayIso) startFlow(routine.id); else if (routine) dayOverrideSheet(nextDate); else nav('/workout') }
 
   const user = useStore(s => s.user)
   const userName = user?.name || S.profile?.name || (S.lang === 'es' ? 'Atleta' : 'Athlete')

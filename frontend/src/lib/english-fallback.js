@@ -1,5 +1,13 @@
 // Explicit source-language fallback. Entries in language packs override these values.
 export default {
+  "Today's muscle groups": "Today's muscle groups",
+  "Muscle groups": "Muscle groups",
+  "Select a muscle group to start logging exercises:": "Select a muscle group to start logging exercises:",
+  "Choose an additional muscle to train:": "Choose an additional muscle to train:",
+  "{0} — add your first exercise.": "{0} — add your first exercise.",
+  "Add muscle": "Add muscle",
+  "Add muscle group to session": "Add muscle group to session",
+  "Start training {0}": "Start training {0}",
   "Calendar key": "Calendar key",
   "Total training days": "Total training days",
   "Kilograms": "Kilograms",

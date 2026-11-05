@@ -10,7 +10,8 @@ import { useUI } from '../store/useUI.js'
 import { exOr, isCardio } from '../lib/exercises.js'
 import { ACTIVITY_TYPES } from '../lib/activities.js'
 import { lastEntryFor, bestWeightFor, buildSets, freestyleConfig, defaultConfig, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, displayReps, storedReps, repStep, fmtSec, EFFORT, effortOf, stepEffort, cascadeWeight, cascadeTopBackWeight, cascadeTopBackReps, insertWarmupRow, removeRowAt, pairAdjacent, unpairSuperset, cleanupSg, applyIntensifierPlan, pinnedNoteFor, exNoteFor, rerampWarmups } from '../lib/history.js'
-import { fmtNum, fmtWeight, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
+import { fmtNum, fmtWeight, fmtDate, todayISO, exCount, DAYN, uid } from '../lib/format.js'
+import { getTodayMuscleGroups, DEFAULT_MUSCLE_GROUPS, getMuscleLabel } from '../lib/activity-engine.js'
 import { playAppSound, vibrate } from '../lib/sound.js'
 import { t, exerciseNameFor, dateLocale } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
@@ -33,30 +34,205 @@ import { effortValue, rirRangeLabel } from '../lib/history.js'
 function StartChooser() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
-  const todayR = nextDailyRoutine(S, todayISO())
-  const todayOvr = S.dayPlan[todayISO()] !== undefined
+  const update = useStore(s => s.update)
+  const today = todayISO()
+  const todayR = nextDailyRoutine(S, today)
+  const todayOvr = S.dayPlan[today] !== undefined
   const others = S.routines.filter(r => r !== todayR)
-  if(isTrainingPaused(S,todayISO())) return <div className="narrow"><TrainingPauseCard /></div>
-  return <div className="narrow">
-    <div className="hdr"><div><h1>{t('Start workout')}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t('today is {0}', todayR.name) : t('rest day, but no one’s stopping you')}</div></div></div>
-    {todayR && <div className="card" style={{ borderColor: 'color-mix(in srgb,var(--acc) 45%,transparent)', background: 'linear-gradient(160deg, color-mix(in srgb,var(--acc) 10%,var(--surface)), var(--surface))' }}>
-      <h2 className="accent">{t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}</h2>
-      <div className="row between" style={{ marginBottom: 16 }}>
-        <div><div className="big">{todayR.name}</div><div className="muted small" style={{ marginTop: 4 }}>{exCount(todayR.ex.length)}</div></div>
-        <span className="lrow-i" style={{ width: 44, height: 44, borderRadius: 12, fontSize: 24, background: 'color-mix(in srgb,var(--acc) 20%,var(--surface))' }}><Icon name={glyphOf(todayR.emoji)} /></span>
+  const todayMuscles = getTodayMuscleGroups(S)
+  const allMuscleGoals = Object.keys(S.muscleGoals?.goals || {})
+  const displayMuscles = todayMuscles.length > 0 ? todayMuscles : allMuscleGoals
+
+  const [pickingExtraMuscle, setPickingExtraMuscle] = useState(false)
+
+  const startMuscleWorkout = (m, allMuscles = []) => {
+    const muscleLabel = t(getMuscleLabel(m))
+    const targetMuscles = allMuscles.length ? allMuscles : [m]
+    update(s => {
+      s.active = {
+        id: uid(),
+        d: today,
+        start: Date.now(),
+        name: muscleLabel,
+        activeMuscle: m,
+        targetMuscles,
+        routineId: null,
+        bw: null,
+        unit: s.unit || 'kg',
+        bwUnit: s.unit || 'kg',
+        cur: 0,
+        deload: false,
+        entries: []
+      }
+    })
+    useUI.getState().stopRest()
+  }
+
+  if (isTrainingPaused(S, today)) return <div className="narrow"><TrainingPauseCard /></div>
+
+  const subtitle = todayMuscles.length > 0
+    ? `${t(DAYN[new Date().getDay()])} — ${todayMuscles.map(m => t(getMuscleLabel(m))).join(' · ')}`
+    : todayR
+      ? `${t(DAYN[new Date().getDay()])} — ${t('today is {0}', todayR.name)}`
+      : `${t(DAYN[new Date().getDay()])} — ${t('rest day, but no one’s stopping you')}`
+
+  return (
+    <div className="narrow">
+      <div className="hdr">
+        <div>
+          <h1>{t('Start workout')}</h1>
+          <div className="sub">{subtitle}</div>
+        </div>
       </div>
-      <Button variant="primary" icon="play" onClick={() => startFlow(todayR.id)}>{t('Start {0}', todayR.name)}</Button>
-    </div>}
-    <DailyPlan compact onStart={startFlow}/>
-    {others.length > 0 && <><h4 className="sec">{t('Other routines')}</h4>
-      <div className="list">{others.map(r => <div key={r.id} className="item" onClick={() => startFlow(r.id)}>
-        <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
-        <span className="tag acc">{t('Start')}</span></div>)}</div></>}
-    <div style={{ height: 14 }} />
-    <Button icon="shuffle" onClick={() => startFlow(null)}>{t('Freestyle workout (pick as you go)')}</Button>
-    {!S.routines.length && <><div style={{ height: 10 }} /><Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button></>}
-  </div>
+
+      {/* Today's scheduled muscle groups */}
+      {displayMuscles.length > 0 && (
+        <div
+          className="card"
+          style={{
+            borderColor: 'color-mix(in srgb,var(--acc) 45%,transparent)',
+            background: 'linear-gradient(160deg, color-mix(in srgb,var(--acc) 10%,var(--surface)), var(--surface))',
+            marginBottom: 16
+          }}
+        >
+          <div className="row between" style={{ alignItems: 'center', marginBottom: 12 }}>
+            <h2 className="accent" style={{ margin: 0 }}>
+              {todayMuscles.length > 0 ? t("Today's muscle groups") : t("Muscle groups")}
+            </h2>
+            <Button
+              size="xs"
+              variant="tinted"
+              icon="plus"
+              onClick={() => setPickingExtraMuscle(v => !v)}
+            >
+              {t('Add muscle')}
+            </Button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {displayMuscles.map(m => (
+              <div
+                key={m}
+                className="item"
+                style={{
+                  cursor: 'pointer',
+                  background: 'var(--surface-2)',
+                  padding: '12px 14px',
+                  borderRadius: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12
+                }}
+                onClick={() => startMuscleWorkout(m, displayMuscles)}
+              >
+                <span
+                  className="lrow-i"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: 'color-mix(in srgb,var(--acc) 20%,transparent)',
+                    color: 'var(--acc)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    flex: 'none'
+                  }}
+                >
+                  <Icon name="dumbbell" />
+                </span>
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="tt" style={{ fontSize: 16, fontWeight: 650 }}>
+                    {t(getMuscleLabel(m))}
+                  </div>
+                  <div className="ss small dim">
+                    {t('Target: {0} exercises', S.muscleGoals?.goals?.[m] || 8)}
+                  </div>
+                </div>
+                <span className="tag acc">{t('Start')}</span>
+              </div>
+            ))}
+          </div>
+
+          {pickingExtraMuscle && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--sep)' }}>
+              <div className="small dim" style={{ marginBottom: 8 }}>
+                {t('Choose an additional muscle to train:')}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {DEFAULT_MUSCLE_GROUPS.filter(g => !displayMuscles.includes(g.id)).map(g => (
+                  <Button
+                    key={g.id}
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => {
+                      setPickingExtraMuscle(false)
+                      startMuscleWorkout(g.id, [...displayMuscles, g.id])
+                    }}
+                  >
+                    + {t(g.label)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {todayR && (
+        <div
+          className="card"
+          style={{
+            borderColor: 'color-mix(in srgb,var(--acc) 45%,transparent)',
+            background: 'linear-gradient(160deg, color-mix(in srgb,var(--acc) 10%,var(--surface)), var(--surface))'
+          }}
+        >
+          <h2 className="accent">{t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}</h2>
+          <div className="row between" style={{ marginBottom: 16 }}>
+            <div>
+              <div className="big">{todayR.name}</div>
+              <div className="muted small" style={{ marginTop: 4 }}>{exCount(todayR.ex.length)}</div>
+            </div>
+            <span className="lrow-i" style={{ width: 44, height: 44, borderRadius: 12, fontSize: 24, background: 'color-mix(in srgb,var(--acc) 20%,var(--surface))' }}>
+              <Icon name={glyphOf(todayR.emoji)} />
+            </span>
+          </div>
+          <Button variant="primary" icon="play" onClick={() => startFlow(todayR.id)}>
+            {t('Start {0}', todayR.name)}
+          </Button>
+        </div>
+      )}
+
+      {S.routines.length > 0 && <DailyPlan compact onStart={startFlow}/>}
+
+      {others.length > 0 && (
+        <>
+          <h4 className="sec">{t('Other routines')}</h4>
+          <div className="list">
+            {others.map(r => (
+              <div key={r.id} className="item" onClick={() => startFlow(r.id)}>
+                <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
+                <div className="grow">
+                  <div className="tt">{r.name}</div>
+                  <div className="ss">{exCount(r.ex.length)}</div>
+                </div>
+                <span className="tag acc">{t('Start')}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div style={{ height: 14 }} />
+      <Button icon="shuffle" onClick={() => startFlow(null)}>{t('Freestyle workout (pick as you go)')}</Button>
+
+      {!S.routines.length && !displayMuscles.length && (
+        <>
+          <div style={{ height: 10 }} />
+          <Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button>
+        </>
+      )}
+    </div>
+  )
 }
 
 /* ---------- elapsed clock (isolated so the workout tree doesn't re-render every second) ---------- */
@@ -691,6 +867,88 @@ function ActiveWorkout() {
     </div>
     <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>
 
+    {Array.from(new Set([...(A.targetMuscles || []), ...(A.entries || []).map(e => e.muscleGroup).filter(Boolean)])).length > 0 && (
+      <div className="workout-muscle-chips-bar" style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', padding: '6px 0 10px', scrollbarWidth: 'none' }}>
+        {Array.from(new Set([...(A.targetMuscles || []), ...(A.entries || []).map(e => e.muscleGroup).filter(Boolean)])).map(m => {
+          const count = A.entries.filter(e => (e.muscleGroup || exOr(e.id)?.tg || exOr(e.id)?.mg) === m).length
+          const isSelected = A.activeMuscle === m
+          return (
+            <button
+              key={m}
+              type="button"
+              className={'chip' + (isSelected ? ' on' : '')}
+              style={{ whiteSpace: 'nowrap', borderRadius: 'var(--r-pill)', padding: '6px 14px', fontSize: 13, fontWeight: isSelected ? 700 : 500 }}
+              onClick={() => {
+                update(s => {
+                  if (s.active) {
+                    s.active.activeMuscle = m
+                    s.active.name = t(getMuscleLabel(m))
+                    const firstIdx = s.active.entries.findIndex(e => (e.muscleGroup || exOr(e.id)?.tg || exOr(e.id)?.mg) === m)
+                    if (firstIdx >= 0) s.active.cur = firstIdx
+                  }
+                })
+              }}
+            >
+              {t(getMuscleLabel(m))} {count > 0 ? `(${count})` : ''}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          className={'chip' + (!A.activeMuscle ? ' on' : '')}
+          style={{ whiteSpace: 'nowrap', borderRadius: 'var(--r-pill)', padding: '6px 12px', fontSize: 13 }}
+          onClick={() => {
+            update(s => {
+              if (s.active) {
+                s.active.activeMuscle = null
+                s.active.name = s.active.targetMuscles?.length
+                  ? s.active.targetMuscles.map(m => t(getMuscleLabel(m))).join(' & ') + ' ' + t('Workout')
+                  : t('Workout')
+              }
+            })
+          }}
+        >
+          {t('All')} ({A.entries.length})
+        </button>
+        <button
+          type="button"
+          className="chip"
+          style={{ whiteSpace: 'nowrap', borderRadius: 'var(--r-pill)', padding: '6px 12px', fontSize: 13, color: 'var(--acc)' }}
+          onClick={() => {
+            confirmSheet({
+              title: t('Add muscle group to session'),
+              message: (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {DEFAULT_MUSCLE_GROUPS.filter(g => !(A.targetMuscles || []).includes(g.id)).map(g => (
+                    <Button
+                      key={g.id}
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        update(s => {
+                          if (s.active) {
+                            s.active.targetMuscles = [...(s.active.targetMuscles || []), g.id]
+                            s.active.activeMuscle = g.id
+                            s.active.name = t(g.label)
+                          }
+                        })
+                        useUI.getState().closeSheet()
+                      }}
+                    >
+                      + {t(g.label)}
+                    </Button>
+                  ))}
+                </div>
+              ),
+              confirmText: t('Close')
+            })
+          }}
+        >
+          + {t('Muscle')}
+        </button>
+      </div>
+    )}
+
     {A.entries.length ? <>
       <div className="muted small" style={{ marginBottom: 6 }}>{isSuperset ? t('Superset {0} / {1}', unitIdx + 1, units.length) : t('Exercise {0} / {1}', unitIdx + 1, units.length)}</div>
       {isSuperset ? (
@@ -708,7 +966,7 @@ function ActiveWorkout() {
       ) : (
         <ExerciseBlock entryIdx={cur} onToggle={(i, options) => toggle(cur, i, options)} onField={(i, f, v) => setField(cur, i, f, v)} onAddSet={() => addSet(cur)} onRemoveSet={() => removeSet(cur)} onAddWarmup={() => addWarmup(cur)} onRemoveSetAt={i => removeSetAt(cur, i)} onStartTimed={i => startTimed(cur, i)} onPairPrev={onPairPrev} onPairNext={onPairNext} onSubstitute={() => substituteExercise(cur)} />
       )}
-    </> : <div className="empty"><div className="ico"><Icon name="shuffle" /></div>{t('Freestyle workout — add your first exercise.')}</div>}
+    </> : <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{A.activeMuscle ? t('{0} — add your first exercise.', t(getMuscleLabel(A.activeMuscle))) : t('Freestyle workout — add your first exercise.')}</div>}
 
     <div style={{ height: 12 }} />
     <div className="row">
@@ -731,7 +989,11 @@ function ActiveWorkout() {
         const deload = deloadStatus(s)
         const target = deloadTargetFor(withBackoffRepsMode(full, s), deload)
         const shownPlan = deload.active ? { kind: 'deload', why: ['Deload session — load, working sets and effort are reduced for recovery.'] } : plan
-        s.active.entries.push({ id: ex.id, target, plan: shownPlan, sets: applyIntensifierPlan(applyTrainingPlan(progressed, target, step, deload), target) })
+        const assignedMuscle = s.active.activeMuscle || ex.mg || ex.tg || 'chest'
+        s.active.entries.push({ id: ex.id, muscleGroup: assignedMuscle, target, plan: shownPlan, sets: applyIntensifierPlan(applyTrainingPlan(progressed, target, step, deload), target) })
+        if (!s.active.targetMuscles?.includes(assignedMuscle)) {
+          s.active.targetMuscles = [...(s.active.targetMuscles || []), assignedMuscle]
+        }
         s.active.cur = s.active.entries.length - 1
       }), null, routine, seed)
     })} icon="plus">{t('Add exercise')}</Button>
@@ -767,14 +1029,29 @@ function WorkoutTourPreview() {
 }
 export default function Workout() {
   const nav = useNavigate()
+  const update = useStore(s => s.update)
   // A replay request or first tour can arrive before AppTour's effects mount.
   // Keep the real session's effects out of that initial render as well.
   const preview = useUI(s=>!!s.appTourWorkoutPreview || !!s.appTourRequest)
   const firstTour=useStore(s=>s.S.hasCompletedOnboarding && !s.S.hasCompletedAppTour)
   const active = useStore(s => s.S.active)
   if(preview||firstTour)return <WorkoutTourPreview />
+
+  const onBack = () => {
+    if (active?.activeMuscle && active.targetMuscles?.length > 1) {
+      update(s => {
+        if (s.active) {
+          s.active.activeMuscle = null
+          s.active.name = s.active.targetMuscles.map(m => t(getMuscleLabel(m))).join(' & ') + ' ' + t('Workout')
+        }
+      })
+    } else {
+      nav('/home')
+    }
+  }
+
   return <>
-    <div className="narrow"><Button size="sm" variant="ghost" icon="chevronLeft" style={{ minHeight:44 }} onClick={() => nav('/home')}>{t('Back')}</Button></div>
+    <div className="narrow"><Button size="sm" variant="ghost" icon="chevronLeft" style={{ minHeight:44 }} onClick={onBack}>{t('Back')}</Button></div>
     {active ? <ActiveWorkout /> : <StartChooser />}
   </>
 }
