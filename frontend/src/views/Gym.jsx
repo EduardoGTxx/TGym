@@ -27,11 +27,11 @@ export default function Gym() {
   // Reconcile weekly/monthly muscle goal rollover on load
   useEffect(() => {
     const currentKey = getCurrentPeriodKey(S.muscleGoals?.period || 'weekly')
-    if (S.muscleGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
+    const hasGoals = S.muscleGoals?.goals && Object.keys(S.muscleGoals.goals).length > 0
+    if (hasGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
       update(s => {
         reconcileMuscleGoals(s)
       })
-      useStore.getState().flushPersistence()
     }
   }, [S.muscleGoals, update])
 
@@ -50,7 +50,6 @@ export default function Gym() {
       const cur = Number(s.muscleGoals.counts[muscleKey]) || 0
       s.muscleGoals.counts[muscleKey] = Math.max(0, cur + delta)
     })
-    useStore.getState().flushPersistence()
   }
 
   const adjustGoal = (muscleKey, delta) => {
@@ -60,7 +59,6 @@ export default function Gym() {
       const cur = Number(s.muscleGoals.goals[muscleKey]) || 10
       s.muscleGoals.goals[muscleKey] = Math.max(1, cur + delta)
     })
-    useStore.getState().flushPersistence()
   }
 
   // Build grouped exercise cards from real history

@@ -9,10 +9,10 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { exOr, isCardio } from '../lib/exercises.js'
 import { ACTIVITY_TYPES } from '../lib/activities.js'
-import { lastEntryFor, bestWeightFor, buildSets, freestyleConfig, defaultConfig, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, displayReps, storedReps, repStep, fmtSec, EFFORT, effortOf, stepEffort, cascadeWeight, cascadeTopBackWeight, cascadeTopBackReps, insertWarmupRow, removeRowAt, pairAdjacent, unpairSuperset, cleanupSg, applyIntensifierPlan, pinnedNoteFor, exNoteFor, rerampWarmups } from '../lib/history.js'
+import { lastEntryFor, bestWeightFor, buildSets, freestyleConfig, defaultConfig, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, displayReps, storedReps, repStep, fmtSec, EFFORT, effortOf, stepEffort, effortValue, rirRangeLabel, cascadeWeight, cascadeTopBackWeight, cascadeTopBackReps, insertWarmupRow, removeRowAt, pairAdjacent, unpairSuperset, cleanupSg, applyIntensifierPlan, pinnedNoteFor, exNoteFor, rerampWarmups } from '../lib/history.js'
 import { fmtNum, fmtWeight, fmtDate, todayISO, exCount, DAYN, uid } from '../lib/format.js'
 import { getTodayMuscleGroups, DEFAULT_MUSCLE_GROUPS, getMuscleLabel } from '../lib/activity-engine.js'
-import { playAppSound, vibrate } from '../lib/sound.js'
+import { playAppSound } from '../lib/sound.js'
 import { t, exerciseNameFor, dateLocale } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import { setProgressHighWater, supersetFlowStep, restAfterSet, restOnRecheck } from '../lib/supersetFlow.js'
@@ -28,7 +28,6 @@ import { restSeconds } from '../lib/rest-policy.js'
 import { withBackoffRepsMode, seedPlannedRir, applyTrainingPlan, clampReps, deloadStatus, deloadTargetFor, repBounds, rirAdvice, targetRirFor, targetRirRangeFor } from '../lib/training-plan.js'
 import { pauseWorkoutClock, resumeWorkoutClock, workoutElapsedMs, lastWorkoutInteraction } from '../lib/workout-time.js'
 import { effectiveWorkoutComplete } from '../lib/workout-lifecycle.js'
-import { effortValue, rirRangeLabel } from '../lib/history.js'
 
 /* ---------- start chooser (no active workout) ---------- */
 function StartChooser() {
@@ -50,6 +49,7 @@ function StartChooser() {
     const targetMuscles = allMuscles.length ? allMuscles : [m]
     update(s => {
       s.active = {
+        sessionOrigin: { type: 'extra', routineId: null },
         id: uid(),
         d: today,
         start: Date.now(),
@@ -588,9 +588,11 @@ function ActiveWorkout() {
   const restFor = (idx, setIndex, phase = 'set') => restSeconds({ state: S, routine, target: A.entries[idx]?.target || {}, setIndex, warmup: isWarmupRow(A.entries[idx]?.sets?.[setIndex]), phase })
   const beginRest = sec => { if (sec > 0) startRest(sec); else stopRest() }
   const units = supersetUnits(A.entries)
+  const muscleEntryIndices = A.activeMuscle ? A.entries.map((e, idx) => ((e.muscleGroup || exOr(e.id)?.tg || exOr(e.id)?.mg) === A.activeMuscle ? idx : null)).filter(idx => idx !== null) : null
+  const visibleUnits = muscleEntryIndices ? units.filter(u => u.some(idx => muscleEntryIndices.includes(idx))) : units
   const cur = Math.min(A.cur, Math.max(0, A.entries.length - 1))
   const unit = A.entries.length ? unitOf(units, cur) : []
-  const unitIdx = units.findIndex(u => u === unit)
+  const unitIdx = visibleUnits.findIndex(u => u === unit)
   const isSuperset = unit.length > 1
   // Superset flow: keep the active exercise in view - completing a set scrolls to the
   // next exercise in the group, then back up to the first exercise of the next round.
@@ -949,8 +951,8 @@ function ActiveWorkout() {
       </div>
     )}
 
-    {A.entries.length ? <>
-      <div className="muted small" style={{ marginBottom: 6 }}>{isSuperset ? t('Superset {0} / {1}', unitIdx + 1, units.length) : t('Exercise {0} / {1}', unitIdx + 1, units.length)}</div>
+    {visibleUnits.length ? <>
+      <div className="muted small" style={{ marginBottom: 6 }}>{isSuperset ? t('Superset {0} / {1}', unitIdx + 1, visibleUnits.length) : t('Exercise {0} / {1}', unitIdx + 1, visibleUnits.length)}</div>
       {isSuperset ? (
         <div className="ss-card">
           <div className="ss-hd" style={{ justifyContent: 'space-between' }}>
@@ -968,11 +970,15 @@ function ActiveWorkout() {
       )}
     </> : <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{A.activeMuscle ? t('{0} — add your first exercise.', t(getMuscleLabel(A.activeMuscle))) : t('Freestyle workout — add your first exercise.')}</div>}
 
-    <div style={{ height: 12 }} />
-    <div className="row">
-      <Button icon="chevronLeft" disabled={unitIdx <= 0} onClick={() => update(s => { s.active.cur = units[unitIdx - 1][0] })}>{t('Prev')}</Button>
-      <Button trailingIcon="chevronRight" disabled={unitIdx < 0 || unitIdx >= units.length - 1} onClick={() => update(s => { s.active.cur = units[unitIdx + 1][0] })}>{t('Next')}</Button>
-    </div>
+    {visibleUnits.length > 0 && (
+      <>
+        <div style={{ height: 12 }} />
+        <div className="row">
+          <Button icon="chevronLeft" disabled={unitIdx <= 0} onClick={() => update(s => { s.active.cur = visibleUnits[unitIdx - 1][0] })}>{t('Prev')}</Button>
+          <Button trailingIcon="chevronRight" disabled={unitIdx < 0 || unitIdx >= visibleUnits.length - 1} onClick={() => update(s => { s.active.cur = visibleUnits[unitIdx + 1][0] })}>{t('Next')}</Button>
+        </div>
+      </>
+    )}
     <div style={{ height: 10 }} />
     <Button onClick={() => exercisePicker(ex => {
       const routine = S.routines.find(r => r.id === A.routineId)

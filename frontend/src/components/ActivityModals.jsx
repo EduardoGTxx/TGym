@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, uid } from '../lib/format.js'
+import { createActivityWorkout } from '../lib/activities.js'
 import { Button, NumberField, TextField, Segmented } from './ui.jsx'
 import Icon from './Icon.jsx'
 import {
@@ -39,30 +40,24 @@ export function WalkModal({ close }) {
     [durationMin, intensity, weightKg]
   )
 
-  const save = async () => {
+  const save = () => {
     update(s => {
       s.workouts ||= []
-      const workout = {
-        id: uid(),
-        d: todayISO(),
+      const dist = inputMode === 'distance' ? Number(distanceKm) : (effectiveSteps * footInfo.stepLengthMeters / 1000)
+      const workout = createActivityWorkout(s, {
+        type: 'walking',
         name: t('Walk'),
         start: Date.now() - durationMin * 60000,
-        end: Date.now(),
-        kind: 'activity',
-        activity: {
-          type: 'walking',
-          period,
-          steps: effectiveSteps,
-          distanceKm: inputMode === 'distance' ? Number(distanceKm) : (effectiveSteps * footInfo.stepLengthMeters / 1000),
-          minutes: Number(durationMin),
-          intensity,
-          calories: caloriesBurned,
-          source: 'manual'
-        }
-      }
+        minutes: Number(durationMin),
+        distanceKm: dist,
+        steps: effectiveSteps,
+        calories: caloriesBurned,
+        intensity,
+        source: 'manual'
+      })
+      workout.activity.period = period
       s.workouts.push(workout)
     })
-    await useStore.getState().flushPersistence()
     useUI.getState().toast(t('Walk activity saved ({0} steps)', effectiveSteps))
     close()
   }
@@ -329,29 +324,22 @@ export function CyclingModal({ close }) {
     [durationMin, intensity, weightKg]
   )
 
-  const save = async () => {
+  const save = () => {
     update(s => {
       s.workouts ||= []
-      const workout = {
-        id: uid(),
-        d: todayISO(),
+      const workout = createActivityWorkout(s, {
+        type: 'cycling',
         name: t('Cycling'),
         start: Date.now() - durationMin * 60000,
-        end: Date.now(),
-        kind: 'activity',
-        activity: {
-          type: 'cycling',
-          distanceKm: Number(distanceKm),
-          minutes: Number(durationMin),
-          speedKmh,
-          intensity,
-          calories: caloriesBurned,
-          source: 'manual'
-        }
-      }
+        minutes: Number(durationMin),
+        distanceKm: Number(distanceKm),
+        calories: caloriesBurned,
+        intensity,
+        source: 'manual'
+      })
+      workout.activity.speedKmh = speedKmh
       s.workouts.push(workout)
     })
-    await useStore.getState().flushPersistence()
     useUI.getState().toast(t('Cycling saved ({0} km · {1} km/h)', distanceKm, speedKmh))
     close()
   }
@@ -484,7 +472,6 @@ export function MuscleWorkoutModal({ close }) {
       }
       s.workouts.push(workout)
     })
-    await useStore.getState().flushPersistence()
     useUI.getState().toast(t('Exercise logged! +1 to {0}', selectedMuscle))
     close()
   }

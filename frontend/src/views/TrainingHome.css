@@ -385,6 +385,16 @@
 }
 
 /* Reduced motion preference */
+html.reduceMotion .narrow,
+html.reduceMotion .dribbble-card,
+html.reduceMotion .dribbble-avatar,
+html.reduceMotion .dribbble-bell-dot,
+html.reduceMotion .dribbble-barchart-bar,
+html.reduceMotion .dribbble-wave-chart,
+html.reduceMotion .dribbble-radial-wrap svg circle {
+  animation: none !important;
+  transition: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
   .narrow,
   .dribbble-card,

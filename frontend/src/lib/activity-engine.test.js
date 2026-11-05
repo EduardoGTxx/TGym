@@ -147,4 +147,18 @@ describe('activity-engine', () => {
     expect(getLatestWeightKg({})).toBe(75)
     expect(Math.round(getLatestWeightKg({ unit: 'lb' }))).toBe(75)
   })
-})
+  it('handles ISO date strings safely without timezone offset and excludes cancelled workouts', () => {
+    const dates = getDateListForPeriod('day', '2026-11-01')
+    expect(dates).toEqual(['2026-11-01'])
+
+    const state = {
+      workouts: [
+        { id: 'w1', d: '2026-11-01', kind: 'activity', activity: { type: 'walking', steps: 5000, calories: 200 } },
+        { id: 'w2', d: '2026-11-01', cancelled: true, kind: 'activity', activity: { type: 'walking', steps: 8000, calories: 400 } },
+        { id: 'w3', d: '2026-11-01', status: 'cancelled', kind: 'activity', activity: { type: 'running', steps: 10000, calories: 600 } }
+      ]
+    }
+    expect(getBurnedCalories(state, ['2026-11-01'])).toBe(200)
+    expect(getCompletedSteps(state, ['2026-11-01'])).toBe(5000)
+  })
+});

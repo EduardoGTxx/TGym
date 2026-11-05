@@ -36,7 +36,7 @@ export default function CardioAndCalorieBalanceCard() {
   }, [S, dateList])
 
   const stepGoalObj = S.stepGoal || { enabled: false, period: 'daily', target: 10000 }
-  const goalTarget = Number(stepGoalObj.target) || 10000
+  const goalTarget = Number(stepGoalObj.target ?? stepGoalObj.steps) || 10000
   // Adjust goal target to selected period
   const normalizedTarget = useMemo(() => {
     const baseTarget = goalTarget

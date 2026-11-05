@@ -31,7 +31,8 @@ export default function Home() {
 
   useEffect(() => {
     const currentKey = getCurrentPeriodKey(S.muscleGoals?.period || 'weekly')
-    if (S.muscleGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
+    const hasGoals = S.muscleGoals?.goals && Object.keys(S.muscleGoals.goals).length > 0
+    if (hasGoals && S.muscleGoals.lastResetPeriod !== currentKey) {
       update(s => {
         reconcileMuscleGoals(s)
       })
@@ -86,7 +87,8 @@ export default function Home() {
   const stepsPct = stepsGoal > 0 ? Math.min(100, Math.round((displaySteps / stepsGoal) * 100)) : 0
   const strokeDashoffset = Math.round(226.2 * (1 - stepsPct / 100))
 
-  const cyclingWorkouts = (S.workouts || []).filter(w => w.activity?.type === 'cycling')
+  const validWorkouts = (S.workouts || []).filter(w => !w.cancelled && !w.canceled && w.status !== 'cancelled' && w.finishReason !== 'cancelled')
+  const cyclingWorkouts = validWorkouts.filter(w => w.activity?.type === 'cycling')
   const cyclingDistance = cyclingWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
   const cyclingKmStr = Number(cyclingDistance.toFixed(1)).toLocaleString(dateLocale())
 
@@ -101,11 +103,11 @@ export default function Home() {
   const maxCyclingKm = Math.max(5, ...dailyCyclingKms)
   const cyclingBars = dailyCyclingKms.map(km => Math.max(6, Math.round((km / maxCyclingKm) * 100)))
 
-  const strengthWorkouts = (S.workouts || []).filter(w => !w.activity || w.activity?.type === 'strength' || w.activity?.type === 'gym')
-  const strengthMinutes = Math.round(strengthWorkouts.slice(-7).reduce((acc, w) => acc + (w.end && w.start ? (w.end - w.start) / 60000 : (w.activity?.minutes || 0)), 0))
+  const strengthWorkouts = validWorkouts.filter(w => !w.activity || w.activity?.type === 'strength' || w.activity?.type === 'gym')
+  const strengthMinutes = Math.round(strengthWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + (w.end && w.start ? (w.end - w.start) / 60000 : (w.activity?.minutes || 0)), 0))
   const gymMinStr = String(strengthMinutes)
 
-  const climbWorkouts = (S.workouts || []).filter(w => w.activity?.type === 'climbing' || w.activity?.type === 'hiking')
+  const climbWorkouts = validWorkouts.filter(w => w.activity?.type === 'climbing' || w.activity?.type === 'hiking')
   const climbDistance = climbWorkouts.filter(w => w.d === todayIso).reduce((acc, w) => acc + Number(w.activity?.distanceKm || 0), 0)
   const climbStr = Number(climbDistance.toFixed(1)).toLocaleString(dateLocale())
 

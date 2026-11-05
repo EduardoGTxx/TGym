@@ -3,6 +3,7 @@ import { isTrainingPaused, openTrainingPause } from './training-pause.js'
 import { isoOf } from './format.js'
 import { deloadStatus } from './training-plan.js'
 import { validReminderTime } from './measurement-reminders.js'
+import { getTodayMuscleGroups, getMuscleLabel } from './activity-engine.js'
 
 export const DELOAD_NOTIFICATION_IDS = [3200, 3201]
 export function deloadNotificationPlan(S, now = new Date()) {
@@ -34,7 +35,8 @@ export function workoutReminderValidation(S) {
   if (times.some(time => time != null && !validReminderTime(time))) return {valid:false, reason:'Enter a valid time'}
   const ids = new Set((S.routines || []).map(routine => routine.id))
   const scheduled = [...Object.values(S.week || {}), ...Object.values(S.dayPlan || {})].flat().some(id => ids.has(id))
-  if (!scheduled) return {valid:false, reason:'Add a workout to your schedule'}
+  const hasMuscleSchedule = Object.values(S.muscleWeek || {}).some(m => Array.isArray(m) && m.length > 0)
+  if (!scheduled && !hasMuscleSchedule) return {valid:false, reason:'Add a workout to your schedule'}
   return {valid:true, reason:null}
 }
 export function workoutNotificationPlan(state, now = new Date()) {
@@ -43,7 +45,14 @@ export function workoutNotificationPlan(state, now = new Date()) {
   const today = isoOf(now), settings = S.reminder
   const pending = date => {
     const plan = dailyPlan(S,date), routine = plan.pending[0]?.routine
-    return routine ? {...routine,remaining:plan.pending.length} : null
+    if (routine) return {...routine,remaining:plan.pending.length}
+    const d = new Date(`${date}T12:00:00`)
+    const muscles = getTodayMuscleGroups(S, d)
+    if (muscles.length > 0) {
+      const name = muscles.map(m => getMuscleLabel(m)).join(' & ')
+      return { id: `muscle-${date}`, name, remaining: 1 }
+    }
+    return null
   }
   const atTime = (date, time) => {
     const at = new Date(`${date}T${time}:00`)
