@@ -10,7 +10,7 @@ import { statisticsState } from '../lib/training-history.js'
 import { statsWeightView } from '../lib/stats-weight-view.js'
 import { createStatsSnapshotSelector } from '../lib/stats-snapshot.js'
 import ConsistencyCard from '../components/ConsistencyCard.jsx'
-import CalendarExport from '../components/CalendarExport.jsx'
+
 import ModuleSwitch, { PROGRESS_VIEWS } from '../components/ModuleSwitch.jsx'
 import { Activity, Children, cloneElement, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -501,7 +501,7 @@ function Stats({ focus = null, standaloneControl = true, hideHeader = false, hea
       </div>
     </div>
 
-    <div {...sectionProps('consistency')} data-tour="progress"><ConsistencyCard S={S} onTimes={sessionTimingSheet} onExport={() => useUI.getState().openSheet(close => <CalendarExport S={rawState} anchor={new Date()} close={close} reportType="consistency" />)} /></div>
+    <div {...sectionProps('consistency')} data-tour="progress"><ConsistencyCard S={S} onTimes={sessionTimingSheet} /></div>
 
     <div {...sectionProps('overview')}><HybridSummary S={S} exportFilters={exportFilters} /></div>
     <div {...sectionProps('duration')}><RoutineDuration S={S} exportFilters={exportFilters} /></div>

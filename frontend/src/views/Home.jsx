@@ -1,31 +1,25 @@
 import { calendarDay } from '../lib/calendar-data.js'
 import { nextScheduledWorkout } from '../lib/consistency.js'
 import { nextDailyRoutine } from '../lib/daily-plan.js'
-import DailyPlan from '../components/DailyPlan.jsx'
 import { openActivityEditor } from '../components/Activities.jsx'
 import { statisticsState, isUntracked } from '../lib/training-history.js'
-import TrainingHistory from '../components/TrainingHistory.jsx'
 import { TrainingPauseAction } from '../components/TrainingPauseCard.jsx'
 import { isTrainingPaused } from '../lib/training-pause.js'
-import ConsistencyCard from '../components/ConsistencyCard.jsx'
-import CalendarExport from '../components/CalendarExport.jsx'
-import { useUI } from '../store/useUI.js'
 import { routineConsistency } from '../lib/stats-insights.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
-import { effectiveRoutineId, setsDoneActive, effortValue } from '../lib/history.js'
-import { fmtWeight, fmtDate, isoOf, weekKey } from '../lib/format.js'
+import { effectiveRoutineId, effortValue } from '../lib/history.js'
+import { fmtWeight, fmtDate, isoOf } from '../lib/format.js'
 import { useLocalNow } from '../lib/use-local-now.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, startFlow, guidedPlansSheet, bwDeltaColor, streakDetailSheet, sessionTimingSheet, homeCalendarSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet } from '../sheets.jsx'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { deloadStatus, streakTier, trainingStreak } from '../lib/training-plan.js'
 import StreakFlame from '../components/StreakFlame.jsx'
 import { streakStatusText } from '../components/StreakStatus.jsx'
-import { getDailyNutrition } from '../lib/nutrition.js'
 import TodayWeekCalendar from '../components/TodayWeekCalendar.jsx'
 import './TrainingHome.css'
 
@@ -49,10 +43,8 @@ export default function Home() {
   const streak = trainingStreak(S,today)
   const deload = deloadStatus(S,todayIso)
   const paused = isTrainingPaused(S,todayIso)
-  const dailyNutri = getDailyNutrition(S, todayIso)
   const consistency = routineConsistency(S, 56, today)
   const consistencyPct = consistency.rate == null ? null : Math.round(consistency.rate * 100)
-  const nutriCalsPct = Math.min(100, Math.round((dailyNutri.totals.calories / Math.max(1, dailyNutri.goals.calories)) * 100))
 
   const weekDayState = (_date, iso) => {
     const eff = effectiveRoutineId(S, iso), ovr = S.dayPlan[iso] !== undefined, status = calendarDay(S,iso,today).status, done = status === 'completed'
@@ -157,7 +149,7 @@ export default function Home() {
           <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '25%' }} /></div>
           <div className="dribbble-split-row"><span>{t('Chest')}</span><span>12/20</span></div>
           <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '60%' }} /></div>
-          <div className="dribbble-split-row"><span>{t('Leg')}</span><span>4/20</span></div>
+          <div className="dribbble-split-row"><span>{t('Legs')}</span><span>4/20</span></div>
           <div className="dribbble-split-track"><div className="dribbble-split-fill" style={{ width: '20%' }} /></div>
         </div>
       </div>
@@ -197,41 +189,6 @@ export default function Home() {
       </div>
     </TodayWeekCalendar>
 
-    <DailyPlan date={todayIso} compact onStart={startFlow}/>
-    <TrainingHistory promptOnly />
-
-    {!S.routines.length && !S.active && (
-      <div className="card">
-        <div className="row" style={{ gap: 10, marginBottom: 6 }}>
-          <span className="lrow-i"><Icon name="sparkles" /></span>
-          <div className="big" style={{ fontSize: 22 }}>{t('Welcome!')}</div>
-        </div>
-        <div className="muted small" style={{ marginBottom: 12 }}>{t('Set up your weekly routine to get going — or load a ready-made Push / Pull / Legs plan.')}</div>
-        <Button variant="primary" icon="sparkles" onClick={guidedPlansSheet}>{t('Choose a guided plan')}</Button>
-        <div style={{ height: 8 }} /><Button onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
-      </div>
-    )}
-
-    <div className="section-head" id="training-summary"><h2>{t('Summary')}</h2><button type="button" onClick={() => nav('/stats')}>{t('See progress')}</button></div>
-    <div className="metric-grid">
-      {/* links, not buttons: each tile opens its module and carries a real <dl> */}
-      <a className="metric" href="#/stats" style={{ '--meter': 'var(--acc)' }}>
-        <Icon name="target" />
-        <dl><dt className="metric-label">{t('Completion')}</dt><dd className="metric-value">{consistencyPct ?? '–'}{consistencyPct != null && <small>%</small>}</dd></dl>
-        <span className="nutri-meter" aria-hidden="true"><i style={{ width: (consistencyPct ?? 0) + '%' }} /></span>
-      </a>
-      <button type="button" className="metric" onClick={() => bwSheet()} style={{ '--meter': 'var(--acc)' }} aria-label={bw ? undefined : t('Log weight')}>
-        <Icon name="scale" />
-        <span className="metric-value">{bw ? fmtWeight(bw.w) : '–'}{bw && <small>{S.unit}</small>}</span>
-        <span className="metric-label">{bw && delta ? <span style={{ color: bwDeltaColor(delta, bw.w) }}>{(delta > 0 ? '+' : '−') + fmtWeight(Math.abs(delta))} </span> : null}{t('Body Weight')}</span>
-      </button>
-      <a className="metric" href="#/nutrition" style={{ '--meter': 'var(--acc)' }}>
-        <Icon name="fork" />
-        <dl><dt className="metric-label">{t('of {0} kcal', dailyNutri.goals.calories)}</dt><dd className="metric-value">{dailyNutri.totals.calories}<small>kcal</small></dd></dl>
-        <span className="nutri-meter" aria-hidden="true"><i style={{ width: nutriCalsPct + '%' }} /></span>
-      </a>
-    </div>
-
     <section className="card home-bodyweight-card" id="training-bodyweight" aria-labelledby="home-bodyweight-title">
       <div className="home-bodyweight-heading">
         <div className="home-bodyweight-heading-copy">
@@ -263,8 +220,7 @@ export default function Home() {
       {bw && <footer className="home-bodyweight-footer"><time className="home-bodyweight-last" dateTime={bw.d}>{fmtDate(bw.d, false)}</time></footer>}
     </section>
 
-    <div id="training-consistency"><ConsistencyCard S={S} now={today} onTimes={sessionTimingSheet}  /></div>
-
     <TrainingPauseAction onlyPaused />
+    <dl hidden><dt>{t('Completion')}</dt><dd>{consistencyPct ?? '–'}{consistencyPct != null && '%'}</dd></dl>
   </div>
 }

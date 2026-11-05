@@ -36,7 +36,7 @@ let host, root
 const flame = () => host.querySelector('.header-streak b').textContent
 const metric = label => [...host.querySelectorAll('.consistency-card dt')].find(node => node.textContent === label)?.nextElementSibling.textContent
 // Today owns the flame; the consistency metrics it is checked against live in Progress.
-const mount = (Component, Progress = Component === Home ? Stats : null) => act(() => root.render(<MemoryRouter><Component />{Progress ? <Progress /> : null}</MemoryRouter>))
+const mount = (Component, Progress = Component === Home ? Stats : null) => act(() => root.render(<MemoryRouter initialEntries={['/stats?section=consistency']}><Component />{Progress ? <Progress /> : null}</MemoryRouter>))
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true

@@ -14,7 +14,7 @@ beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;vi.useFakeTimers();vi.s
 afterEach(()=>{act(()=>root.unmount());host.remove();vi.clearAllTimers();vi.useRealTimers();vi.clearAllMocks()})
 const mount=()=>act(()=>root.render(<MemoryRouter><Home/></MemoryRouter>))
 // Consistency lives in Progress; Today keeps the streak and a glance tile.
-const mountWithProgress=()=>act(()=>root.render(<MemoryRouter><Home/><Stats/></MemoryRouter>))
+const mountWithProgress=()=>act(()=>root.render(<MemoryRouter initialEntries={['/stats?section=consistency']}><Home/><Stats/></MemoryRouter>))
 it('does not offer reporting buttons in consistency or home',()=>{
  mountWithProgress()
  const section=host.querySelector('.consistency-card')

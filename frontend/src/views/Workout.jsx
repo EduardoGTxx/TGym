@@ -221,7 +221,8 @@ function ExerciseBlock({ preview, entryIdx, compact, onToggle, onField, onAddSet
   )
   return <>
     <Media ex={ex} key={entry.id} compact={compact} minimizable />
-    <div className="row between exercise-heading" style={{ marginBottom: 6 }}>
+    <div className="row between exercise-heading" style={{ marginBottom: 6, alignItems: 'center', gap: 10 }}>
+      <div className={'dribbble-exercise-badge badge-' + (entryIdx % 4)}><Icon name="dumbbell" /></div>
       <div className="grow"><div className={'exercise-title' + (compact ? ' compact' : '')}>{exerciseNameFor(ex, { entry, routineId: S.active.routineId })}</div></div>
       <div className="row" style={{ gap: 2, flex: 'none' }}>
         {!compact && PLATE_LOADED.has(ex.eq) && <button className="iconbtn" aria-label={t('Plate calculator')} title={t('Plate calculator')} onClick={() => plateCalculatorSheet((entry.sets[currentSet] ?? entry.sets[entry.sets.length - 1])?.w)}><Icon name="plate" /></button>}
@@ -266,6 +267,20 @@ function ExerciseBlock({ preview, entryIdx, compact, onToggle, onField, onAddSet
     })()}
     {S.exerciseGoals?.[entry.id] && <div className="small row" style={{ color: 'var(--yellow)', gap: 5, marginBottom: 8 }}><Icon name="target" />{t('Goal')}: {S.exerciseGoals[entry.id].weight > 0 ? fmtWeight(S.exerciseGoals[entry.id].weight) + ' ' + S.unit : ''}{S.exerciseGoals[entry.id].weight > 0 && S.exerciseGoals[entry.id].reps > 0 ? ' × ' : ''}{S.exerciseGoals[entry.id].reps > 0 ? S.exerciseGoals[entry.id].reps + ' ' + t('reps') : ''}</div>}
     {bw && !added && <Button size="sm" variant="tinted" icon="plus" onClick={() => update(s => { s.active.entries[entryIdx].logAddedWeight = true })}>{t('Log added weight')}</Button>}
+    {(() => {
+      const doneSets = entry.sets.filter(s => s.done).length
+      const totalSets = entry.sets.length
+      const pct = totalSets ? Math.round((doneSets / totalSets) * 100) : 0
+      return <div className={'dribbble-workout-progress color-' + (entryIdx % 4)}>
+        <div className="dribbble-workout-progress-labels">
+          <span>{t('{0} sets', `${doneSets}/${totalSets}`)}</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="dribbble-prog-track">
+          <div className="dribbble-prog-fill" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    })()}
     <div className="card sets-card" style={{ marginTop: 10, marginBottom: 0 }}>
       {entry.sets.map((s, i) => {
         const warm = isWarmupRow(s)

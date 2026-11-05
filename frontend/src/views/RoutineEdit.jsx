@@ -103,7 +103,9 @@ export default function RoutineEdit() {
         }}>
           <Thumb ex={ex} />
           <div className="grow"><div className="tt capitalize">{exerciseNameFor(ex, { entry: e, routineId: r.id })}</div><div className="ss">{exLine(e, S.unit)}</div>
-            {e.note && <div className="small dim" style={{ marginTop: 2 }}>{e.note}</div>}</div>
+            {e.note && <div className="small dim" style={{ marginTop: 2 }}>{e.note}</div>}
+            <div className={'dribbble-item-bar color-' + (i % 4)}><div className="dribbble-item-bar-fill" style={{ width: `${Math.min(100, Math.max(25, ((i * 23 + 45) % 65) + 30))}%` }} /></div>
+          </div>
           {noEquip && <span className="tag" style={{ color: 'var(--orange)', borderColor: 'var(--orange)' }} title={t('Needs {0} — not in your active profile', t(ex.eq))}><Icon name="warning" /></span>}
         </button>
           <div className="routine-exercise-controls" style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
