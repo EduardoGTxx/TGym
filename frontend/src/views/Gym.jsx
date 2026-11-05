@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { t, dateLocale, exerciseNameFor } from '../lib/i18n.js'
 import { exOr } from '../lib/exercises.js'
-import { startFlow, workoutRemindersSheet, workoutDetailSheet, exerciseDetailSheet, muscleWorkoutSheet } from '../sheets.jsx'
+import { startFlow, workoutRemindersSheet, workoutDetailSheet, exerciseDetailSheet, muscleWorkoutSheet, dailyMuscleWorkoutSheet } from '../sheets.jsx'
 import { Button } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import { loggedWorkouts } from '../lib/daily-plan.js'
@@ -149,7 +149,7 @@ export default function Gym() {
             variant="primary"
             className="dribbble-gym-start-btn"
             icon="play"
-            onClick={() => startFlow()}
+            onClick={dailyMuscleWorkoutSheet}
           >
             {t('Start workout')}
           </Button>

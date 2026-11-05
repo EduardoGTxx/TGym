@@ -1,0 +1,174 @@
+/* Daily Muscle Workout Modal Styles */
+.daily-muscle-session {
+  padding: 4px;
+}
+
+.daily-session-header {
+  margin-bottom: 14px;
+}
+
+.daily-session-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.daily-session-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #00B4D8 0%, #0077B6 100%);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.daily-session-title-wrap h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--label);
+}
+
+.daily-session-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.session-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.session-stat-box b {
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--label);
+}
+
+.session-stat-box small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.daily-muscle-tabs-row {
+  margin-bottom: 12px;
+}
+
+.daily-muscle-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.daily-muscle-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform var(--fast), background var(--fast), color var(--fast);
+}
+
+.daily-muscle-tab:active {
+  transform: scale(0.95);
+}
+
+.daily-muscle-tab.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+.daily-add-muscle-select {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px dashed var(--panel-edge);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.daily-logged-list {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.daily-logged-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid var(--panel-edge);
+}
+
+.daily-logged-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.daily-logged-copy b {
+  font-size: 13px;
+  color: var(--label);
+}
+
+.daily-logged-copy span {
+  font-size: 11px;
+  color: var(--label-2);
+}
+
+.daily-logged-empty {
+  padding: 10px;
+  text-align: center;
+  color: var(--label-2);
+  font-size: 12px;
+}
+
+.daily-exercise-form {
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.daily-finish-section {
+  margin-top: 10px;
+}
+
+.daily-finish-btn {
+  width: 100% !important;
+  height: 50px !important;
+  border-radius: 16px !important;
+  font-size: 16px !important;
+  font-weight: 750 !important;
+}

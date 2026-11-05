@@ -12,8 +12,8 @@ import { effectiveRoutineId, effortValue } from '../lib/history.js'
 import { fmtWeight, fmtDate, isoOf } from '../lib/format.js'
 import { useLocalNow } from '../lib/use-local-now.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet, walkSheet, cyclingSheet, climbingSheet } from '../sheets.jsx'
-import { getCompletedSteps, reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS } from '../lib/activity-engine.js'
+import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet, walkSheet, cyclingSheet, climbingSheet, dailyMuscleWorkoutSheet } from '../sheets.jsx'
+import { getCompletedSteps, reconcileMuscleGoals, DEFAULT_MUSCLE_GROUPS, getTodayMuscleGroups, getMuscleLabel } from '../lib/activity-engine.js'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -54,7 +54,9 @@ export default function Home() {
   }
 
   // today's session shown right under the week strip
-  const onToday = () => { if (S.active) nav('/workout'); else if (routine && nextDate === todayIso) startFlow(routine.id); else if (routine) dayOverrideSheet(nextDate); else dayOverrideSheet(todayIso) }
+  const todayMuscles = getTodayMuscleGroups(S, today)
+  const todayMusclesNames = todayMuscles.map(m => t(getMuscleLabel(m))).join(' · ')
+  const onToday = () => { if (S.active) nav('/workout'); else if (todayMuscles.length > 0) dailyMuscleWorkoutSheet(); else if (routine && nextDate === todayIso) startFlow(routine.id); else if (routine) dayOverrideSheet(nextDate); else dailyMuscleWorkoutSheet() }
 
   const user = useStore(s => s.user)
   const userName = user?.name || S.profile?.name || (S.lang === 'es' ? 'Atleta' : 'Athlete')

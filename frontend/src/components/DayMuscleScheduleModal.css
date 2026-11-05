@@ -1,0 +1,102 @@
+/* Day Muscle Schedule Modal Styles */
+.day-muscle-modal {
+  padding: 4px;
+}
+
+.day-muscle-header {
+  margin-bottom: 16px;
+}
+
+.day-muscle-title-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.day-muscle-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--surface-3);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.day-muscle-title-box h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+  color: var(--label);
+}
+
+.day-muscle-chips-section {
+  margin-bottom: 14px;
+}
+
+.day-muscle-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.day-muscle-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform var(--fast), background var(--fast), border-color var(--fast);
+  text-align: left;
+}
+
+.day-muscle-chip:active {
+  transform: scale(0.95);
+}
+
+.day-muscle-chip.active {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface-2));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.day-muscle-chip .icn {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.day-muscle-status-summary {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.day-muscle-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day-muscle-summary-text b {
+  font-size: 14px;
+  color: var(--label);
+}
+
+.day-muscle-summary-rest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--label-2);
+  font-size: 13px;
+  font-weight: 550;
+}

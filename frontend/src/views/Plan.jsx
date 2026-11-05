@@ -2,19 +2,19 @@ import RoutineList from '../components/RoutineList.jsx'
 import ModuleSwitch from '../components/ModuleSwitch.jsx'
 import { reorderRoutine, orderedRoutines } from '../lib/routine-order.js'
 import { routineIds, removeRoutineAssignments } from '../lib/daily-plan.js'
-import { openActivityEditor } from '../components/Activities.jsx'
 import { TrainingPauseAction } from '../components/TrainingPauseCard.jsx'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
-import { DAYN, uid } from '../lib/format.js'
+import { DAYN } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { dayAssignSheet, guidedPlansSheet, planToolsSheet, confirmSheet } from '../sheets.jsx'
+import { dayAssignSheet, planToolsSheet, confirmSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { useEffect, useState } from 'react'
-import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
+import { glyphOf } from '../lib/glyphs.js'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import { MuscleGoalsManager, StepGoalManager } from '../components/PlanGoals.jsx'
+import { getMuscleLabel } from '../lib/activity-engine.js'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -27,11 +27,6 @@ export default function Plan() {
     return () => clearTimeout(tm)
   }, [undoVisible])
 
-  const addRoutine = () => {
-    const r = { id: uid(), name: t('New routine'), emoji: DEFAULT_GLYPH, ex: [] }
-    update(s => { s.routines.push(r) })
-    nav('/plan/r/' + r.id)
-  }
   const deleteAll = () => {
     const scheduled = Object.values(S.week || {}).filter(ids=>routineIds(ids).length).length
     confirmSheet({
@@ -81,19 +76,39 @@ export default function Plan() {
       <div>
         <div className="week-schedule-header">
           <h4 className="sec week-schedule-title">{t('Week schedule')}</h4>
-          <Button size="sm" onClick={()=>openActivityEditor({planning:true})}>{t('Plan activity')}</Button>
         </div>
         <div className="list week-schedule" data-tour="schedule" style={{ display: 'flex', flexDirection: 'column' }}>
           {[1, 2, 3, 4, 5, 6, 0].map(d => {
-            const routines = routineIds(S.week[d]).map(id=>S.routines.find(x=>x.id===id)).filter(Boolean)
+            const muscleIds = S.muscleWeek?.[d] || []
+            const muscleNames = muscleIds.map(id => t(getMuscleLabel(id))).join(' · ')
+            const routines = routineIds(S.week?.[d]).map(id=>S.routines?.find(x=>x.id===id)).filter(Boolean)
             const r = routines[0]
+
             return <div key={d} className="item" onClick={() => dayAssignSheet(d)}>
               <button type="button" className="week-schedule-open" onClick={e => { e.stopPropagation(); dayAssignSheet(d) }}>
-              <div className="grow"><div className="tt">{t(DAYN[d])}</div>{routines.length>1 && <div className="ss schedule-names">{routines.map(r=>r.name).join(' · ')}</div>}</div>
-              {r ? <span className="tag acc schedule-routine-label"><Icon name={glyphOf(r.emoji)} />{routines.length>1 ? t('{0} activities',routines.length) : r.name}</span> : <span className="tag">{t('Rest')}</span>}
+                <div className="grow">
+                  <div className="tt">{t(DAYN[d])}</div>
+                  {muscleIds.length > 0 ? (
+                    <div className="ss schedule-names">{muscleNames}</div>
+                  ) : routines.length > 1 ? (
+                    <div className="ss schedule-names">{routines.map(r=>r.name).join(' · ')}</div>
+                  ) : null}
+                </div>
+                {muscleIds.length > 0 ? (
+                  <span className="tag acc schedule-routine-label">
+                    <Icon name="dumbbell" />{muscleNames}
+                  </span>
+                ) : r ? (
+                  <span className="tag acc schedule-routine-label">
+                    <Icon name={glyphOf(r.emoji)} />{routines.length>1 ? t('{0} activities',routines.length) : r.name}
+                  </span>
+                ) : (
+                  <span className="tag">{t('Rest')}</span>
+                )}
               </button>
               {r && <button className="iconbtn" aria-label={t('Muscles trained')} onClick={e=>{e.stopPropagation();routineMuscleSheet(r.id)}}><Icon name="info" /></button>}
-              <Icon name="chevronRight" className="chev" /></div>
+              <Icon name="chevronRight" className="chev" />
+            </div>
           })}
         </div>
 
@@ -102,16 +117,38 @@ export default function Plan() {
           <StepGoalManager />
         </div>
       </div>
+
       <div>
-        <div className="row between" data-tour="routine" style={{ marginTop: 0, marginBottom: 10 }}>
-          <h4 className="sec" style={{ margin: 0 }}>{t('Routines')}</h4>
-          <div className="row" style={{ gap: 6 }}><Button size="sm" variant="tinted" icon="sparkles" onClick={guidedPlansSheet}>{t('Guided')}</Button><Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('New')}</Button></div>
-        </div>
-        {S.routines.length ? <RoutineList S={S} onOpen={id=>nav('/plan/r/'+id)} onDelete={deleteOne} onInfo={routineMuscleSheet} onReorder={(id,target)=>update(s=>reorderRoutine(s,id,target))}/> : <>
-          <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
-          <Button icon="sparkles" onClick={guidedPlansSheet}>{t('Choose a guided plan')}</Button>
-        </>}
-        {S.routines.length > 0 && <><div style={{ height: 12 }} /><Button variant="danger" icon="trash" onClick={deleteAll}>{t('Delete all routines')}</Button></>}
+        {S.routines && S.routines.length > 0 ? (
+          <div>
+            <div className="row between" data-tour="routine" style={{ marginTop: 0, marginBottom: 10 }}>
+              <h4 className="sec" style={{ margin: 0 }}>{t('Routines')}</h4>
+            </div>
+            <RoutineList
+              S={S}
+              onOpen={id => nav('/plan/r/' + id)}
+              onDelete={deleteOne}
+              onInfo={routineMuscleSheet}
+              onReorder={(id, target) => update(s => reorderRoutine(s, id, target))}
+            />
+            <div style={{ height: 12 }} />
+            <Button variant="danger" icon="trash" onClick={deleteAll}>
+              {t('Delete all routines')}
+            </Button>
+          </div>
+        ) : (
+          <div className="card plan-goals-card" style={{ marginTop: 0 }}>
+            <div className="row" style={{ gap: 10, alignItems: 'center', marginBottom: 8 }}>
+              <span className="plan-goal-badge" style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}>
+                <Icon name="dumbbell" />
+              </span>
+              <h3 className="plan-goals-title">{t('Muscle training schedule')}</h3>
+            </div>
+            <p className="dim small" style={{ margin: '0 0 8px 0', lineHeight: 1.5 }}>
+              {t('Configure the muscle groups you want to train each day in the weekly calendar on the left. When you start your workout, the assigned muscle groups will appear automatically so you can log your exercises.')}
+            </p>
+          </div>
+        )}
       </div>
     </div>
     {undoVisible && <div className="routine-undo"><span>{t('Routine deleted')}</span><button onClick={restoreDeleted}>{t('Undo')}</button></div>}

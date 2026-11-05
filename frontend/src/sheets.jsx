@@ -1,4 +1,6 @@
 import { WalkModal, ClimbingModal, CyclingModal, MuscleWorkoutModal } from './components/ActivityModals.jsx'
+import DailyMuscleWorkoutModal from './components/DailyMuscleWorkoutModal.jsx'
+import DayMuscleScheduleModal from './components/DayMuscleScheduleModal.jsx'
 import { clearWorkoutNotification } from './lib/workout-notification.js'
 import DailyPlan, { ScheduleEditor } from './components/DailyPlan.jsx'
 import { dailyPlan, nextDailyRoutine, routineIds, loggedWorkouts } from './lib/daily-plan.js'
@@ -1274,8 +1276,10 @@ function PlanImport({ bundle, close }) {
 /* ============================ day override / assign ============================ */
 function DayOverride({ iso, close }) { return <ScheduleEditor iso={iso} close={close}/> }
 export const dayOverrideSheet = iso => ui().openSheet(close => <DayOverride iso={iso} close={close} />)
-function DayAssign({ day, close }) { return <ScheduleEditor day={day} close={close}/> }
+function DayAssign({ day, close }) { return <DayMuscleScheduleModal day={day} close={close}/> }
 export const dayAssignSheet = day => ui().openSheet(close => <DayAssign day={day} close={close} />)
+export const dayMuscleScheduleSheet = day => ui().openSheet(close => <DayMuscleScheduleModal day={day} close={close} />)
+export const dailyMuscleWorkoutSheet = () => ui().openSheet(close => <DailyMuscleWorkoutModal close={close} />)
 
 function StreakProfileAvatar({ name, photo }) {
   const [failedPhoto, setFailedPhoto] = useState(null)
@@ -1826,6 +1830,7 @@ export function startFlow(routineId) {
   if (S().active) {nav('/workout');return}
   if (routineId === undefined) routineId = nextDailyRoutine(S(),todayISO())?.id || null
   if(isTrainingPaused(S(),todayISO())) return ui().openSheet(close=><TrainingPauseCard onSaved={close} />)
+  if (!routineId) return dailyMuscleWorkoutSheet()
   if (startingWorkoutDecision && ui().sheets.some(sheet=>sheet.id===startingWorkoutDecision.id)) return startingWorkoutDecision
   startingWorkoutDecision = bwSheet({ required: true, onDone: bw => beginWorkout(routineId, bw), onClose:()=>{ startingWorkoutDecision=null } })
   return startingWorkoutDecision

@@ -1,4 +1,15 @@
 /* Dribbble Gym View Styles */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .dribbble-gym-view {
   padding: 16px;
   max-width: 600px;
@@ -6,6 +17,7 @@
   min-height: 100vh;
   box-sizing: border-box;
   padding-bottom: 96px;
+  animation: viewFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dribbble-gym-header {
@@ -28,12 +40,17 @@
   position: relative;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: transform var(--fast);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+}
+
+.dribbble-back-btn:hover,
+.dribbble-bell-btn:hover {
+  background: var(--surface-2);
 }
 
 .dribbble-back-btn:active,
 .dribbble-bell-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
 .dribbble-gym-titles {
@@ -68,7 +85,12 @@
   gap: 12px;
   box-shadow: 0 8px 24px -4px rgba(0, 180, 216, 0.35);
   cursor: pointer;
-  transition: transform var(--fast);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
+}
+
+.dribbble-gym-active-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(0, 180, 216, 0.45);
 }
 
 .dribbble-gym-active-card:active {
@@ -111,6 +133,11 @@
   font-size: 15px !important;
   font-weight: 650 !important;
   height: 48px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.dribbble-gym-start-btn:active {
+  transform: scale(0.96) !important;
 }
 
 .dribbble-gym-muscle-btn {
@@ -119,6 +146,11 @@
   font-size: 14px !important;
   font-weight: 600 !important;
   height: 48px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.dribbble-gym-muscle-btn:active {
+  transform: scale(0.96) !important;
 }
 
 /* Muscle Goals Section */
@@ -165,6 +197,12 @@
   align-items: flex-start;
   gap: 14px;
   box-sizing: border-box;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.dribbble-muscle-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -2px rgba(15, 23, 42, 0.09);
 }
 
 .dribbble-muscle-card-body {
@@ -227,7 +265,7 @@
   place-items: center;
   cursor: pointer;
   line-height: 1;
-  transition: transform var(--fast), background var(--fast);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease;
 }
 
 .dribbble-step-btn:hover:not(:disabled) {
@@ -235,7 +273,7 @@
 }
 
 .dribbble-step-btn:active:not(:disabled) {
-  transform: scale(0.9);
+  transform: scale(0.85);
 }
 
 .dribbble-step-btn:disabled {
@@ -261,11 +299,12 @@
   gap: 12px;
   cursor: pointer;
   color: var(--accent);
-  transition: background var(--fast);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .dribbble-muscle-empty-card:hover {
   background: var(--surface-2);
+  transform: translateY(-2px);
 }
 
 .dribbble-muscle-empty-card b {
@@ -299,14 +338,19 @@
   align-items: center;
   gap: 14px;
   cursor: pointer;
-  transition: transform var(--fast), box-shadow var(--fast);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
   text-align: left;
   width: 100%;
   box-sizing: border-box;
 }
 
+.dribbble-gym-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -2px rgba(15, 23, 42, 0.09);
+}
+
 .dribbble-gym-card:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .dribbble-gym-badge {
@@ -319,6 +363,11 @@
   font-size: 20px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dribbble-gym-card:hover .dribbble-gym-badge {
+  transform: scale(1.08) rotate(-4deg);
 }
 
 .dribbble-gym-badge.badge-0 { background: linear-gradient(135deg, #00B4D8 0%, #0096C7 100%); }
@@ -372,7 +421,7 @@
 .dribbble-gym-fill {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dribbble-gym-fill.color-0 { background: #00B4D8; }
@@ -421,4 +470,16 @@
   color: var(--label-2);
   max-width: 320px;
   line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dribbble-gym-view,
+  .dribbble-gym-card,
+  .dribbble-muscle-card,
+  .dribbble-gym-badge,
+  .dribbble-step-btn,
+  .dribbble-gym-fill {
+    animation: none !important;
+    transition: none !important;
+  }
 }

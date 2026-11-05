@@ -35,6 +35,21 @@
 .home-bodyweight-footer{display:flex;justify-content:flex-end;margin-top:14px;text-align:right}
 .home-bodyweight-empty{margin-top:14px}
 
+/* Page Entry Animation */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.narrow {
+  animation: viewFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 /* Dribbble UI/UX Layout Styles */
 .dribbble-top-header {
@@ -64,6 +79,11 @@
   flex-shrink: 0;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
   overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dribbble-avatar:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
 }
 .dribbble-avatar-img {
   width: 100%;
@@ -110,12 +130,29 @@
   position: relative;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: transform var(--fast);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.2s ease;
+}
+.dribbble-bell-btn:hover,
+.dribbble-settings-btn:hover {
+  background: var(--surface-2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 .dribbble-bell-btn:active,
 .dribbble-settings-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
+
+@keyframes bellDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.85;
+  }
+}
+
 .dribbble-bell-dot {
   position: absolute;
   top: 10px;
@@ -125,6 +162,7 @@
   border-radius: 50%;
   background: #EF4444;
   border: 1.5px solid var(--surface);
+  animation: bellDotPulse 2.5s ease-in-out infinite;
 }
 
 /* 2x2 Activity Grid */
@@ -148,8 +186,12 @@
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
-  transition: transform var(--fast), box-shadow var(--fast);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.14);
+}
+.dribbble-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.22);
 }
 .dribbble-card:active {
   transform: scale(0.96);
@@ -172,6 +214,10 @@
   font-size: 13px;
   font-weight: 650;
   color: #FFFFFF;
+  transition: background 0.2s ease;
+}
+.dribbble-card:hover .dribbble-badge {
+  background: rgba(255, 255, 255, 0.32);
 }
 .dribbble-badge .icn {
   font-size: 15px;
@@ -195,6 +241,9 @@
   height: 86px;
   display: grid;
   place-items: center;
+}
+.dribbble-radial-wrap svg circle {
+  transition: stroke-dashoffset 0.85s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dribbble-radial-copy {
   position: absolute;
@@ -242,12 +291,32 @@
   height: 48px;
   margin-top: 14px;
 }
+
+@keyframes barRise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
 .dribbble-barchart-bar {
   flex: 1;
   background: rgba(255, 255, 255, 0.35);
   border-radius: 4px;
-  transition: height var(--fast);
+  transform-origin: bottom;
+  animation: barRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
 }
+.dribbble-barchart-bar:nth-child(1) { animation-delay: 0.04s; }
+.dribbble-barchart-bar:nth-child(2) { animation-delay: 0.08s; }
+.dribbble-barchart-bar:nth-child(3) { animation-delay: 0.12s; }
+.dribbble-barchart-bar:nth-child(4) { animation-delay: 0.16s; }
+.dribbble-barchart-bar:nth-child(5) { animation-delay: 0.20s; }
+.dribbble-barchart-bar:nth-child(6) { animation-delay: 0.24s; }
+.dribbble-barchart-bar:nth-child(7) { animation-delay: 0.28s; }
+
 .dribbble-barchart-bar.highlight {
   background: #FFFFFF;
 }
@@ -282,14 +351,43 @@
   height: 100%;
   background: #FFFFFF;
   border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Card 4: Climbing / Hiking (Amber / Ochre) */
 .dribbble-card-climbing {
   background: linear-gradient(135deg, #F59E0B 0%, #EAB308 100%);
 }
+
+@keyframes wavePulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.05);
+  }
+}
+
 .dribbble-wave-chart {
   width: 100%;
   height: 48px;
   margin-top: 10px;
+  transform-origin: bottom;
+  animation: wavePulse 4.5s ease-in-out infinite;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .narrow,
+  .dribbble-card,
+  .dribbble-avatar,
+  .dribbble-bell-dot,
+  .dribbble-barchart-bar,
+  .dribbble-wave-chart,
+  .dribbble-radial-wrap svg circle {
+    animation: none !important;
+    transition: none !important;
+  }
 }

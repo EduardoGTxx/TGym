@@ -206,3 +206,20 @@ export const DEFAULT_MUSCLE_GROUPS = [
   { id: 'glutes', label: 'Glutes' },
   { id: 'calves', label: 'Calves' }
 ]
+
+export function getMuscleLabel(muscleId) {
+  const def = DEFAULT_MUSCLE_GROUPS.find(g => g.id === muscleId)
+  if (def) return def.label
+  return muscleId ? muscleId.charAt(0).toUpperCase() + muscleId.slice(1) : ''
+}
+
+export function getTodayMuscleGroups(state, date = new Date()) {
+  const d = new Date(date)
+  const day = d.getDay() // 0 = Sunday, 1 = Monday, etc.
+  return state?.muscleWeek?.[day] || []
+}
+
+export function setDayMuscleGroups(state, day, muscleIds) {
+  state.muscleWeek ||= {}
+  state.muscleWeek[day] = Array.isArray(muscleIds) ? muscleIds : []
+}

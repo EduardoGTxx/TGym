@@ -7,7 +7,10 @@ import {
   getDateListForPeriod,
   getConsumedCalories,
   getBurnedCalories,
-  getCompletedSteps
+  getCompletedSteps,
+  getTodayMuscleGroups,
+  setDayMuscleGroups,
+  getMuscleLabel
 } from './activity-engine.js'
 
 describe('activity-engine', () => {
@@ -104,5 +107,21 @@ describe('activity-engine', () => {
     // 4000 walking steps + 500m climbing = 4000 + 687 = 4687 steps
     const steps = getCompletedSteps(state, dates)
     expect(steps).toBe(4687)
+  })
+
+  it('manages muscle schedule per day and returns readable labels', () => {
+    const state = {}
+    setDayMuscleGroups(state, 1, ['chest', 'triceps'])
+    expect(state.muscleWeek[1]).toEqual(['chest', 'triceps'])
+
+    // Thursday Nov 5 2026 is day 4
+    const nov5 = new Date('2026-11-05T12:00:00Z')
+    expect(getTodayMuscleGroups(state, nov5)).toEqual([])
+
+    setDayMuscleGroups(state, 4, ['legs', 'calves'])
+    expect(getTodayMuscleGroups(state, nov5)).toEqual(['legs', 'calves'])
+
+    expect(getMuscleLabel('biceps')).toBe('Biceps')
+    expect(getMuscleLabel('custom_glute')).toBe('Custom_glute')
   })
 })
