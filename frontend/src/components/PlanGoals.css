@@ -143,3 +143,118 @@
   padding-top: 10px;
   border-top: 1px solid var(--sep);
 }
+
+
+/* Custom Dropdown (replaces native select dialog) */
+.custom-dropdown-wrap {
+  position: relative;
+  width: 100%;
+}
+.custom-dropdown-field {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  color: var(--label);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--fast), background var(--fast);
+}
+.custom-dropdown-wrap.open .custom-dropdown-field {
+  border-color: var(--acc);
+}
+.custom-dropdown-field .placeholder-text {
+  color: var(--label-2);
+}
+.custom-dropdown-options {
+  margin-top: 6px;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  border-radius: 14px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.custom-dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--label);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+.custom-dropdown-option:hover,
+.custom-dropdown-option:active {
+  background: var(--surface-2);
+}
+.custom-dropdown-option.active {
+  background: var(--acc);
+  color: var(--on-acc);
+  font-weight: 750;
+}
+
+
+/* Colorful Dribbble Card: Muscle Goals Card */
+.plan-goals-card {
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 22px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+.plan-goals-title {
+  color: #FFFFFF !important;
+}
+.plan-goals-card .dim {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+.plan-goal-row {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.plan-goal-badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #FFFFFF !important;
+}
+.plan-goal-name {
+  color: #FFFFFF !important;
+}
+.plan-goal-step-btn {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #FFFFFF !important;
+}
+.plan-goal-target-val {
+  color: #FFFFFF !important;
+}
+
+/* Colorful Dribbble Card: Step Goal Card */
+.plan-step-goal-card {
+  background: linear-gradient(135deg, #9A3412 0%, #EA580C 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 22px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(234, 88, 12, 0.25) !important;
+}
+.plan-step-goal-card .plan-goals-title {
+  color: #FFFFFF !important;
+}
+.plan-step-goal-card .dim {
+  color: rgba(255, 255, 255, 0.8) !important;
+}

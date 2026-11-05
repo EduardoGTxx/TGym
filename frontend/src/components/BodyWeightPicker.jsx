@@ -284,7 +284,7 @@ const BodyWeightPicker = forwardRef(function BodyWeightPicker({ value, onChange,
         validation={{ min:manualMin, max:manualMax }} decimal disabled={disabled} aria-label={label || t('Weight')}
         aria-invalid={currentInvalid || undefined} aria-describedby={currentInvalid ? errorId : hintId}
         style={{ width:`${Math.max(readoutWidth, Math.min(8, (inputLength ?? 0) + .25))}ch` }}
-        onFocus={event => { flushSync(() => { if (motion.current) stopMotion(); setFocused(true) }); event.currentTarget.select() }} onInput={manualInput} onChange={edit}/>
+        onFocus={event => { flushSync(() => { if (motion.current) stopMotion(); setFocused(true) }); event.currentTarget.select(); event.currentTarget.scrollIntoView?.({ block: 'center', behavior: 'smooth' }) }} onInput={manualInput} onChange={edit}/>
       <span className="bodyweight-picker-unit" aria-hidden="true">{shownUnit}</span>
     </div>
     <div ref={ruler} className="bodyweight-picker-ruler" role="slider" tabIndex={disabled ? -1 : 0}

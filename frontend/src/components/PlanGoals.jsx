@@ -6,6 +6,52 @@ import { Button, Segmented, NumberField } from './ui.jsx'
 import { DEFAULT_MUSCLE_GROUPS, getCurrentPeriodKey } from '../lib/activity-engine.js'
 import './PlanGoals.css'
 
+
+function CustomDropdown({ value, options, onChange, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div className={`custom-dropdown-wrap ${open ? 'open' : ''}`}>
+      <button
+        type="button"
+        className="custom-dropdown-field"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <span className={selected ? 'selected-text' : 'placeholder-text'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <Icon name={open ? 'chevronUp' : 'chevronDown'} />
+      </button>
+
+      {open && (
+        <div className="custom-dropdown-options" role="listbox">
+          {options.map(opt => {
+            const isSel = opt.value === value
+            return (
+              <button
+                type="button"
+                key={opt.value}
+                className={`custom-dropdown-option ${isSel ? 'active' : ''}`}
+                onClick={() => {
+                  onChange(opt.value)
+                  setOpen(false)
+                }}
+                role="option"
+                aria-selected={isSel}
+              >
+                <span className="opt-label">{opt.label}</span>
+                {isSel && <Icon name="check" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function MuscleGoalsManager() {
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
@@ -146,17 +192,15 @@ export function MuscleGoalsManager() {
       {isAdding ? (
         <div className="plan-add-muscle-box">
           <label className="field-label">{t('Choose muscle group')}</label>
-          <select
-            className="field"
+          <CustomDropdown
             value={selectedToAdd}
-            onChange={e => setSelectedToAdd(e.target.value)}
-          >
-            <option value="">{t('Select a muscle group…')}</option>
-            {availableGroups.map(g => (
-              <option key={g.id} value={g.id}>{t(g.label)}</option>
-            ))}
-            <option value="__custom__">{t('Custom muscle…')}</option>
-          </select>
+            onChange={setSelectedToAdd}
+            placeholder={t('Select a muscle group…')}
+            options={[
+              ...availableGroups.map(g => ({ value: g.id, label: t(g.label) })),
+              { value: '__custom__', label: t('Custom muscle…') }
+            ]}
+          />
 
           {selectedToAdd === '__custom__' && (
             <input

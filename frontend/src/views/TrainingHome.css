@@ -53,18 +53,22 @@
 
 /* Dribbble UI/UX Layout Styles */
 .dribbble-top-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
   margin-bottom: 16px;
   padding: 4px 0;
+  width: 100%;
 }
 .dribbble-user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
 }
 .dribbble-avatar {
   width: 48px;
@@ -390,4 +394,113 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+
+/* Colorful Dribbble Card: Week Calendar */
+.narrow .today-week-calendar {
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 24px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22) !important;
+  padding: 16px 14px !important;
+  margin-bottom: 16px !important;
+}
+.narrow .today-week-calendar .week-expand {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+}
+.narrow .today-week-calendar .iconbtn {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+.narrow .today-week-calendar .week > .wday {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  transition: all 0.2s ease;
+}
+.narrow .today-week-calendar .week > .wday .lbl {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.narrow .today-week-calendar .week > .wday .num {
+  font-weight: 750 !important;
+  color: #FFFFFF !important;
+}
+.narrow .today-week-calendar .week > .wday.today {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5) !important;
+  border: none !important;
+}
+.narrow .today-week-calendar .today-row {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+  margin-top: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.narrow .today-week-calendar .today-row-icon {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #FFFFFF !important;
+}
+.narrow .today-week-calendar .today-row-main {
+  color: #FFFFFF !important;
+}
+.narrow .today-week-calendar .today-row-main .title {
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+}
+.narrow .today-week-calendar .today-row-main .sub {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Colorful Dribbble Card: Body Weight */
+.narrow .home-bodyweight-card {
+  background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%) !important;
+  border: none !important;
+  border-radius: 24px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.22) !important;
+  padding: 20px 18px !important;
+  margin-bottom: 24px !important;
+}
+.narrow .home-bodyweight-card h2 {
+  color: #FFFFFF !important;
+  font-weight: 750 !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-log {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(8px) !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-current,
+.narrow .home-bodyweight-card .home-bodyweight-target {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 18px !important;
+  backdrop-filter: blur(10px) !important;
+  color: #FFFFFF !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-label {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-value {
+  color: #FFFFFF !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-value b {
+  color: #FFFFFF !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-change {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.narrow .home-bodyweight-card .home-bodyweight-footer {
+  color: rgba(255, 255, 255, 0.75) !important;
 }

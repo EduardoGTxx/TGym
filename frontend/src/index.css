@@ -276,6 +276,7 @@ html{scroll-padding-top:calc(var(--sat) + 8px);scroll-padding-bottom:calc(var(--
 #root::before{content:"";position:fixed;inset:0 0 auto;height:var(--sat);background:var(--bg);z-index:70;pointer-events:none}
 /* While typing, give the usable viewport to the form. Timers keep running in state. */
 :root[data-keyboard="true"]{--sab:0px}
+:root[data-keyboard="true"] .sheet{max-height:calc(var(--visual-height,100%) - var(--sat) - 8px);padding-bottom:max(24px,var(--sab,0px))}
 :root[data-keyboard="true"] #tabbar,:root[data-keyboard="true"] #timer{display:none}
 @media (max-height:400px){body:has(input:focus,textarea:focus,[contenteditable="true"]:focus) #tabbar,body:has(input:focus,textarea:focus,[contenteditable="true"]:focus) #timer{display:none}}
 @media (pointer:coarse){input,select,textarea{font-size:16px}}
@@ -979,7 +980,7 @@ h4.sec{
 }
 
 /* ---------------------------------------------------------------- modal -- */
-#modal-root{position:fixed;left:0;right:0;top:var(--visual-top,0px);height:var(--visual-height,100dvh);z-index:100;display:none}
+#modal-root{position:fixed;left:0;right:0;top:var(--visual-top,0px);bottom:0;height:auto;max-height:var(--visual-height,100%);z-index:100;display:none}
 #modal-root.open{display:block}
 .mback{
   position:absolute;inset:0;background:rgba(0,0,0,.4);
@@ -990,7 +991,7 @@ h4.sec{
   position:absolute;left:0;right:0;bottom:0;background:var(--bg-el);
   border-radius:var(--r-xl) var(--r-xl) 0 0;
   padding:8px max(18px,var(--sar)) max(24px, calc(var(--sab) + 16px)) max(18px,var(--sal));
-  max-height:min(90dvh,calc(var(--visual-height,100dvh) - var(--sat) - 12px));overflow-y:auto;-webkit-overflow-scrolling:touch;
+  max-height:min(90%,calc(var(--visual-height,100%) - var(--sat) - 12px));overflow-y:auto;-webkit-overflow-scrolling:touch;
   animation:sheetup .34s var(--ease);
   overscroll-behavior:contain;touch-action:pan-y;will-change:transform;
 }

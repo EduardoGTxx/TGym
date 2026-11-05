@@ -43,9 +43,7 @@ import { syncSystemAppearance } from './lib/system-appearance.js'
 bindUI(useUI)   // lets the shared controls open sheets without importing the store at module scope
 
 // theme === 'system' follows the OS/browser preference instead of a fixed choice.
-const resolveTheme = theme => ['light', 'dark', 'amoled'].includes(theme)
-  ? theme
-  : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+const resolveTheme = theme => ['light', 'dark', 'amoled'].includes(theme) ? theme : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'amoled' : 'light')
 
 function applyPrefs(theme, accent, reduceMotion = false) {
   const de = document.documentElement
