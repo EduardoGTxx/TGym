@@ -1830,7 +1830,6 @@ export function startFlow(routineId) {
   if (S().active) {nav('/workout');return}
   if (routineId === undefined) routineId = nextDailyRoutine(S(),todayISO())?.id || null
   if(isTrainingPaused(S(),todayISO())) return ui().openSheet(close=><TrainingPauseCard onSaved={close} />)
-  if (!routineId) return dailyMuscleWorkoutSheet()
   if (startingWorkoutDecision && ui().sheets.some(sheet=>sheet.id===startingWorkoutDecision.id)) return startingWorkoutDecision
   startingWorkoutDecision = bwSheet({ required: true, onDone: bw => beginWorkout(routineId, bw), onClose:()=>{ startingWorkoutDecision=null } })
   return startingWorkoutDecision
