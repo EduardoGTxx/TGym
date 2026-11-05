@@ -34,7 +34,8 @@ function UpdateDialog({manifest, close}) {
     try {
       await snapshotBeforeUpdate()
       if (distribution === 'github' && Capacitor.getPlatform() === 'android') {
-        const result = permission ? await Installer.resumeInstall() : await Installer.install({url: manifest.android.apk, sha256:manifest.android.sha256, versionCode:manifest.versionCode})
+        const allowMobileData = !!useStore.getState().S?.allowMobileData
+        const result = permission ? await Installer.resumeInstall() : await Installer.install({url: manifest.android.apk, sha256:manifest.android.sha256, versionCode:manifest.versionCode, allowMobileData})
         setPermission(!!result.permissionRequired)
         if (result.installerOpened) close()
       } else if (distribution === 'pwa') {

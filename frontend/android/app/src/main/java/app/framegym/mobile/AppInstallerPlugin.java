@@ -5,6 +5,10 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.net.Uri;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.core.content.FileProvider;
@@ -78,12 +82,55 @@ public class AppInstallerPlugin extends Plugin {
             } catch (Exception error) { call.reject("Could not open Android installer", error); }
         });
     }
+        @PluginMethod
+    public void getNetworkStatus(PluginCall call) {
+        ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            JSObject ret = new JSObject();
+            ret.put("connected", true);
+            ret.put("isWifi", true);
+            call.resolve(ret);
+            return;
+        }
+        Network activeNetwork = cm.getActiveNetwork();
+        NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
+        boolean connected = caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        boolean isWifi = caps != null && (
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+        );
+        boolean isCellular = caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
+        JSObject ret = new JSObject();
+        ret.put("connected", connected);
+        ret.put("isWifi", isWifi);
+        ret.put("isCellular", isCellular);
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void install(PluginCall call) {
         if (!busy.compareAndSet(false, true)) { call.reject("Update already downloading"); return; }
         String address = call.getString("url", "");
         String sha = call.getString("sha256", "");
         long expectedCode = call.getInt("versionCode", 0);
+        boolean allowMobileData = call.getBoolean("allowMobileData", false);
+        ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null && !allowMobileData) {
+            Network activeNetwork = cm.getActiveNetwork();
+            NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
+            boolean isWifiOrUnmetered = caps != null && (
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+            );
+            if (!isWifiOrUnmetered) {
+                busy.set(false);
+                call.reject("Mobile data not allowed: Wi-Fi required");
+                return;
+            }
+        }
+
         new Thread(() -> {
             File apk = new File(getContext().getCacheDir(), "tgym-update.apk");
             try {

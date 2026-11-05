@@ -1,3 +1,4 @@
+import { isNetworkPermitted } from './network-policy.js'
 import { APP_DISTRIBUTION, APP_REPOSITORY, UPDATE_MANIFEST_URL } from './app-meta.js'
 
 const semver = value => {
@@ -47,6 +48,7 @@ export function updateUrlFor(manifest, distribution = APP_DISTRIBUTION) {
   return distribution === 'github' ? manifest.android.apk : null
 }
 export async function checkForAppUpdate({ currentVersion = __APP_VERSION__, force = false, fetcher = fetch, now = Date.now(), manifestUrl = UPDATE_MANIFEST_URL, distribution = APP_DISTRIBUTION, timeoutMs = 15000 } = {}) {
+  if (!(await isNetworkPermitted())) return { throttled: false, manifest: null, update: null, error: 'mobile_data_restricted' }
   const pwa = distribution === 'pwa'
   // Web checks only its own deployed build, never an Android release manifest.
   if (pwa) manifestUrl = new URL('build.json', document.baseURI).href

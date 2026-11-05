@@ -1,3 +1,4 @@
+import { assertNetworkPermitted } from './network-policy.js'
 import { parseTGymJson } from './json-import.js'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { mergeTGymStates } from './state-merge.js'
@@ -107,6 +108,7 @@ async function accessToken(clientId, prompt, interactive) {
 }
 
 async function driveFetch(path, token, init = {}, retried = false) {
+  await assertNetworkPermitted()
   // Include reading the body: a connection can stall after receiving headers.
   const controller=new AbortController()
   let timer,response,body

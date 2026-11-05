@@ -2,6 +2,8 @@ import english from '../lib/english-fallback.js'
 // Spanish UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
   ...english,
+  "Allow mobile data": "Permitir datos móviles",
+  "Allow internet connection over mobile data when Wi-Fi is unavailable.": "Permite la conexión a internet usando datos móviles cuando no haya Wi-Fi disponible.",
   "Calendar key": "Clave del calendario",
   "Total training days": "Total de días entrenados",
   "Kilograms": "Kilos",

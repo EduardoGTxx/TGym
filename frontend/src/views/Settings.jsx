@@ -386,6 +386,9 @@ export default function Settings() {
         try { if (restoreImportUndo(replaceState)) toast(t('Import undone')) }
         catch { toast(t('Could not save. Check available storage and try again.')) }
       } })} />}
+            <Row icon="globe" iconTint="var(--cyan)" title={t('Allow mobile data')} subtitle={t('Allow internet connection over mobile data when Wi-Fi is unavailable.')}>
+        <Switch checked={!!S.allowMobileData} onChange={v => update(s => { s.allowMobileData = v })} />
+      </Row>
       <Row icon="trash" iconTint="var(--red)" title={t('Reset everything')} danger onClick={() => authorize(() => confirmSheet({ title: t('Reset everything?'), message: t('Deletes your plan, workouts and body weight on this device. This cannot be undone.'), confirmText: t('Delete everything'), danger: true, onConfirm: () => { replaceState(JSON.parse(JSON.stringify(DEF)), true); nav('/home'); toast(t('All data reset')) } }))} />
     </Section>
 

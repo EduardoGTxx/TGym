@@ -1,4 +1,6 @@
 // Backend + WebAuthn helpers (ported from the vanilla app).
+import { assertNetworkPermitted } from './network-policy.js'
+
 export const IS_APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)
 export const IS_ANDROID = /Android/.test(navigator.userAgent)
 export const BIO = IS_APPLE ? 'Face ID / Touch ID' : IS_ANDROID ? 'fingerprint or face unlock' : 'your fingerprint, face or PIN'
@@ -16,6 +18,7 @@ let remoteToken = null
 export function setRemoteAuth(base, token) { remoteBase = base || ''; remoteToken = token || null }
 
 async function requestJson(url, options = {}) {
+  await assertNetworkPermitted()
   const controller = new AbortController()
   const { timeoutMs = 15000, signal, ...init } = options
   const abort = () => controller.abort()
