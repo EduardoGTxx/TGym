@@ -1,3 +1,4 @@
+import { reconcileMuscleGoals } from './lib/activity-engine.js'
 import { WalkModal, ClimbingModal, CyclingModal, MuscleWorkoutModal } from './components/ActivityModals.jsx'
 import DailyMuscleWorkoutModal from './components/DailyMuscleWorkoutModal.jsx'
 import DayMuscleScheduleModal from './components/DayMuscleScheduleModal.jsx'
@@ -2164,6 +2165,7 @@ export function doFinishWorkout(options = {}) {
       if (mx > 0) { const cur = s.exWeights[e.id]; if (!cur || mx > cur.w) s.exWeights[e.id] = { w: mx, d: w.d } }
     })
     s.workouts.push(w)
+    reconcileMuscleGoals(s, now)
     s.muscleGoals ||= { period: 'weekly', lastResetPeriod: '', goals: {}, counts: {} }
     s.muscleGoals.counts ||= {}
     const muscleExerciseCounts = {}

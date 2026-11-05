@@ -2,9 +2,12 @@
 import { isoOf } from './format.js'
 import { MEASURE_FIELDS, measurementValue } from './stats-insights.js'
 import { nutritionTotals } from './nutrition-totals.js'
+import { loggedWorkouts } from './daily-plan.js'
+
+const asLocalDate = date => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(date + 'T12:00:00') : new Date(date)
 
 export function getWeekKey(date = new Date()) {
-  const dt = new Date(date)
+  const dt = asLocalDate(date)
   const day = (dt.getDay() + 6) % 7
   dt.setDate(dt.getDate() - day + 3)
   const firstThu = dt.getTime()
@@ -15,7 +18,7 @@ export function getWeekKey(date = new Date()) {
 }
 
 export function getMonthKey(date = new Date()) {
-  const d = new Date(date)
+  const d = asLocalDate(date)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
@@ -30,7 +33,7 @@ export function getDateListForPeriod(period = 'day', anchor = new Date()) {
   const dates = []
   const count = period === 'month' ? 30 : period === 'week' ? 7 : 1
   for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(anchor)
+    const d = asLocalDate(anchor)
     d.setDate(d.getDate() - i)
     dates.push(isoOf(d))
   }
@@ -155,7 +158,7 @@ export function getBurnedCalories(state, dateList) {
   let total = 0
   const weightKg = getLatestWeightKg(state)
   const dates = new Set(dateList)
-  for (const w of state?.workouts || []) {
+  for (const w of loggedWorkouts(state || {})) {
     if (dates.has(w.d)) {
       if (w.activity?.calories > 0) {
         total += Number(w.activity.calories)
@@ -174,7 +177,7 @@ export function getBurnedCalories(state, dateList) {
 export function getCompletedSteps(state, dateList) {
   let total = 0
   const dates = new Set(dateList)
-  for (const w of state?.workouts || []) {
+  for (const w of loggedWorkouts(state || {})) {
     if (dates.has(w.d)) {
       const type = w.activity?.type
       if (type === 'walking' || type === 'hiking' || type === 'climbing' || type === 'running') {
@@ -193,7 +196,7 @@ export function getCompletedSteps(state, dateList) {
  * Reconciles and resets muscle goals counts on period rollover.
  */
 export function reconcileMuscleGoals(state, date = new Date()) {
-  if (!state?.muscleGoals) {
+  if (!state?.muscleGoals?.goals || Object.keys(state.muscleGoals.goals).length === 0) {
     return false
   }
 
@@ -227,7 +230,7 @@ export function getMuscleLabel(muscleId) {
 }
 
 export function getTodayMuscleGroups(state, date = new Date()) {
-  const d = new Date(date)
+  const d = asLocalDate(date)
   const day = d.getDay() // 0 = Sunday, 1 = Monday, etc.
   return state?.muscleWeek?.[day] || []
 }
