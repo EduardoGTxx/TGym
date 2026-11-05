@@ -1,161 +1,132 @@
-# TGym 🏋️‍♂️
+<div align="center">
 
-> **The privacy-first, local-first workout tracker and strength progression engine.**  
-> Built for serious lifters, personal trainers, and athletes who value data ownership, fluid performance, and zero bloat.
+<img src="frontend/public/icon-512.png" width="112" alt="Icono de TGym"/>
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20PWA%20%7C%20Web-emerald)](https://github.com/Truesilverking/TGym)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-success)](https://github.com/Truesilverking/TGym)
+# TGym
 
----
+**Rastreador de entrenamiento y sobrecarga progresiva para Android y PWA, libre, privado y sin suscripciones.**
 
-## ⚡ Overview
+[![Release](https://img.shields.io/github/v/release/EduardoGTxx/TGym?label=versi%C3%B3n&color=2979ff)](https://github.com/EduardoGTxx/TGym/releases/latest)
+[![CI](https://github.com/EduardoGTxx/TGym/actions/workflows/test.yml/badge.svg)](https://github.com/EduardoGTxx/TGym/actions/workflows/test.yml)
+[![Descargas](https://img.shields.io/github/downloads/EduardoGTxx/TGym/total?color=2979ff&label=descargas)](https://github.com/EduardoGTxx/TGym/releases)
+![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
+![React 19](https://img.shields.io/badge/React_19-Capacitor_7-61DAFB?logo=react&logoColor=black)
+[![Licencia AGPL-3.0](https://img.shields.io/github/license/EduardoGTxx/TGym?color=blue)](LICENSE)
 
-**TGym** is an offline-first, high-performance training management suite available as a native Android application and installable Progressive Web App (PWA). 
+[**⬇️ Descargar el APK**](https://github.com/EduardoGTxx/TGym/releases/latest) · [PWA Web](https://eduardogtxx.github.io/TGym/) · [Novedades](https://github.com/EduardoGTxx/TGym/releases) · [Arquitectura](docs/ARCHITECTURE.md) · [Reportar un error](https://github.com/EduardoGTxx/TGym/issues/new)
 
-Designed to replace bloated, subscription-gated fitness apps, TGym puts precision strength programming into your pocket with zero ads, zero telemetry, and 100% offline operation. All your training data belongs to you—stored locally on your device with instant export and backup capabilities.
-
----
-
-## ✨ Features
-
-### 🏋️‍♂️ Workout Execution & Programming
-- **Structured Routine Design**: Organize workouts with Warmups, Working Sets, Top Sets, Back-off Sets, Drop Sets, and Supersets/Circuits.
-- **RIR / RPE Tracking**: Log Reps in Reserve (RIR) or Rate of Perceived Exertion (RPE) to manage session fatigue accurately.
-- **Dynamic Rest Timers**: Floating rest countdown with background notifications, audio cues, and hands-free logging support.
-- **Auto-Calculated Back-offs**: Configurable back-off repetitions (**Same reps** or **Increased reps**) maintaining exact training volumes.
-- **Cardio & Bodyweight Modes**: Seamless support for repetition-based, time-based, and distance-based exercises.
-
-### 📈 Progression & Fatigue Management
-- **Automatic Load Progression**: Suggests increments based on your historical RIR and completed repetitions.
-- **Deload Week System**: Easily initiate or schedule deload cycles that scale training volume while preserving workout configuration.
-- **1RM & Fatigue Probes**: Built-in 1-Rep Max calculators (Brzycki, Epley) and monotonic fatigue monitoring.
-
-### 📅 Streaks, Consistency & Calendar
-- **Interactive Streak Flame**: Dynamic daily streak tracking with timezone-safe calendar normalization.
-- **Consistency Heatmap**: Visual frequency matrix of training sessions, active days, and rest days.
-- **Integrated Calendar**: Schedule upcoming routines and inspect historical sessions day-by-day.
-
-### 📊 Measurements & Progress Reports
-- **Body Composition Logging**: Track body weight, circumferences, caliper skinfolds, and InBody analysis metrics.
-- **Export & Reports**: Generate publication-grade PDF progress reports and Excel/JSON data sheets.
-- **Milestones & Records**: Automatic detection and celebration of personal bests (PRs) per exercise.
-
-### 🔒 Privacy & Local-First Architecture
-- **Offline-Ready**: Full core functionality works with zero internet connection.
-- **Data Resiliency**: Multi-tier persistence with `localStorage`, IndexedDB mirror, and encrypted mobile file mirror (`framegym-state.json`).
-- **Zero Lock-In**: Export portable JSON archives at any time; import without loss of exercise history or IDs.
-- **Optional Self-Hosted Sync**: Connect your own private TGym API instance or Google Drive for multi-device sync.
+</div>
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🏋️‍♂️ ¿Qué es TGym?
 
-- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Zustand](https://github.com/pmndrs/zustand) (state management), [React Router 7](https://reactrouter.com/).
-- **Mobile**: [Capacitor 7](https://capacitorjs.com/) with native Android plugins for notifications, biometrics, and audio.
-- **PWA**: Service Worker caching with offline fallback and standalone app manifests.
-- **Testing**: [Vitest](https://vitest.dev/) with Happy-DOM and LinkeDOM.
-- **Styling**: Native CSS modern variables, Material 3 design palette, dark theme, and reduced-motion compliance.
-- **Backend (Optional)**: Lightweight Node.js server for optional private profile synchronization.
-- **MCP**: Read-only Model Context Protocol server exposing workout and calculation modules.
+TGym es una suite de entrenamiento y progresión de fuerza de alto rendimiento, diseñada con arquitectura **local-first** y disponible como aplicación nativa para Android y Progressive Web App (PWA).
+
+Diseñada para reemplazar apps saturadas de anuncios y suscripciones mensuales, TGym pone la periodización y la sobrecarga progresiva en tu bolsillo con **cero anuncios, cero telemetría y funcionamiento 100% offline**. Todos tus datos te pertenecen: se guardan localmente en tu dispositivo con respaldo continuo y exportación instantánea en PDF, Excel o JSON.
 
 ---
 
-## 🚀 Getting Started
+## ✨ Funciones
 
-### Prerequisites
-- **Node.js**: v22.x or higher
-- **pnpm**: v10.x (`pnpm install -g pnpm@10`)
-- **Android Development** (optional for native APK): JDK 21 and Android SDK 35
-
-### Local Development
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Truesilverking/TGym.git
-   cd TGym
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   cd frontend
-   pnpm install --frozen-lockfile
-   ```
-
-3. **Start the standalone development server:**
-   ```bash
-   pnpm run dev --mode standalone --host 127.0.0.1
-   ```
-   *Standalone mode uses an isolated browser-local profile and requires no backend API.*
+| | |
+|---|---|
+| 🏋️‍♂️ **Entrenamiento estructurado** | Series efectivas, Top Sets, Back-offs automáticos, Drop Sets, Superseries, Warmups y modo Freestyle por grupo muscular asignado al día. |
+| ⏱️ **Temporizador flotante** | Cuenta regresiva de descanso dinámica, notificaciones nativas en segundo plano, alertas auditivas y registro ergonómico sin tapar las entradas. |
+| 📈 **Sobrecarga progresiva** | Cálculo de incrementos automáticos de carga basados en RIR (Reps in Reserve), RPE y repeticiones completadas históricamente. |
+| 📅 **Rutinas y Calendario** | Cronograma semanal con grupos musculares asignados por día, metas de ejercicios semanales/mensuales y selector visual integrado. |
+| 🏃‍♂️ **Múltiples actividades** | Seguimiento y registro de Caminata (Walk), Ciclismo (Cycling), Gimnasio (Gym) y Escalada (Climbing) con tarjetas coloridas estilo Dribbble. |
+| ⚖️ **Composición corporal** | Registro de peso (Body Weight), calorías quemadas, pliegues cutáneos, medidas corporales y bioimpedancia en vista compacta. |
+| 🔥 **Racha y consistencia** | Racha diaria con llama interactiva, mapa de calor de frecuencia y detección automática de récords personales (PRs). |
+| 🔒 **100% Local-first** | Funciona sin conexión. Persistencia multicapa con `localStorage`, base de datos IndexedDB y archivo espejo cifrado en el móvil. |
+| 📊 **Exportar y reportes** | Informes profesionales en PDF, planillas de cálculo en Excel (.xlsx), copias de seguridad en JSON y sincronización opcional en Google Drive. |
+| 🎨 **Diseño moderno y limpio** | Modo Oscuro (Dark) y Modo Claro (Light puro), sin opciones innecesarias en Ajustes, con tipografía deportiva y navegación fluida. |
+| 🌐 **Idiomas** | Interfaz completa disponible en Español e Inglés. |
 
 ---
 
-## 🧪 Testing & Verification
+## 📲 Instalación
 
-Run the test suite and validation scripts from the `frontend/` directory:
+1. Descarga el archivo APK de la última versión desde [**Releases**](https://github.com/EduardoGTxx/TGym/releases/latest).
+2. Ábrelo en tu dispositivo Android y confirma la instalación ("Permitir desde esta fuente" si es la primera vez).
+3. **PWA opcional**: También puedes ingresar desde el navegador en [eduardogtxx.github.io/TGym](https://eduardogtxx.github.io/TGym/) y seleccionar "Instalar aplicación" o "Agregar a pantalla de inicio".
 
-```bash
-# Run unit & component test suites
-pnpm test
+---
 
-# Production web build
-pnpm build
+## 🗂️ Estructura del proyecto
 
-# Progressive Web App build
-pnpm build:pwa
-
-# Build mobile assets & synchronize Capacitor
-pnpm build:mobile
-
-# Locale and version validation
-node scripts/check-locales.mjs
-node scripts/check-source-strings.mjs
-node scripts/check-version.mjs
-pnpm run test:fatigue-probe
+```text
+TGym/
+├── frontend/                 # Aplicación compartida (React 19, Vite, Zustand, Capacitor 7)
+│   ├── src/
+│   │   ├── views/            # Pantallas (Home, Routine, Workout, Stats, Nutrition)
+│   │   ├── components/       # Modales de actividad, calendario, selector de peso y tarjetas
+│   │   ├── lib/              # Algoritmos de progresión, RIR, RPE, 1RM, exportadores PDF/Excel
+│   │   └── store/            # Estado global reactivo con persistencia local
+│   ├── android/              # Proyecto nativo Android (Gradle, SDK 35, plugins de audio y notificaciones)
+│   └── scripts/              # Validadores de versiones, locales y comprobaciones de integridad
+├── api/                      # Servidor opcional Node.js para sincronización de perfil privado
+├── mcp/                      # Servidor Model Context Protocol (MCP) de lectura para asistentes IA
+├── docs/                     # Especificaciones de arquitectura (ARCHITECTURE.md)
+└── .github/workflows/        # CI/CD (pruebas Vitest, compilación PWA y Release automatizado de APK)
 ```
 
 ---
 
-## 📱 Mobile Build (Android)
+## 🛠️ Compilación y Desarrollo Local
 
-To compile the native Android package:
+### Requisitos previos
+- **Node.js** v22 o superior
+- **pnpm** v10 (`npm i -g pnpm@10`)
+- **JDK 21** y **Android SDK 35** (para compilación del APK nativo)
 
-1. Build mobile web assets and sync Capacitor:
-   ```bash
-   cd frontend
-   pnpm run build:mobile
-   ```
+```bash
+# 1. Instalar dependencias
+cd frontend
+pnpm install --frozen-lockfile
 
-2. Assemble the APK using Gradle:
-   ```bash
-   cd android
-   ./gradlew assembleRelease lintRelease
-   # On Windows: gradlew.bat assembleRelease lintRelease
-   ```
+# 2. Iniciar servidor de desarrollo en modo independiente
+pnpm run dev --mode standalone --host 127.0.0.1
 
-*Android updates validate package identity, SHA-256 checksums, and signing keys before triggering system installation.*
+# 3. Ejecutar suite de pruebas unitarias
+pnpm test
 
----
+# 4. Construir versión web / PWA de producción
+pnpm build
+pnpm build:pwa
 
-## 🌿 Branching & Release Workflow
+# 5. Sincronizar activos para Android
+pnpm run build:mobile
+```
 
-We maintain a strict two-branch workflow:
+### Compilar el APK de Android localmente
 
-| Branch | Purpose |
-| :--- | :--- |
-| [`main`](https://github.com/Truesilverking/TGym/tree/main) | **Production-ready, stable releases.** Releases and APK builds are published exclusively from tags on `main`. |
-| [`Dev`](https://github.com/Truesilverking/TGym/tree/Dev) | **Active development branch.** All features, fixes, and UI improvements land here first before merging into `main`. |
-
-### Release Process
-1. Complete changes and verify all tests pass on `Dev`.
-2. Bump version in `frontend/package.json` and `frontend/android/app/build.gradle` (`versionCode` and `versionName`).
-3. Verify release readiness with `node scripts/check-version.mjs`.
-4. Merge `Dev` into `main`, push to origin, and create an annotated Git tag `vX.Y.Z`.
-5. GitHub Actions builds and publishes the signed release automatically.
+```bash
+cd frontend/android
+./gradlew assembleRelease
+# En Windows: .\gradlew.bat assembleRelease
+```
 
 ---
 
-## 📄 License & Acknowledgments
+## 🚀 Publicar una nueva versión
 
-- **License**: TGym is licensed under the **[GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE)**.
-- **Origin**: TGym is derived from [openGym](https://gitlab.com/DuarteSantos8/opengym) created by Duarte Santos. We honor and preserve all original contributions and open-source lineage.
+1. Asegúrate de que las pruebas pasen en la rama `Dev`.
+2. Actualiza la versión en `frontend/package.json` y `frontend/android/app/build.gradle` (`versionName` y `versionCode`).
+3. Fusiona en `main` y sube un tag con formato `vX.Y.Z`:
+   ```bash
+   git tag v2.0.10
+   git push origin v2.0.10
+   ```
+4. El workflow **TGym release** en GitHub Actions se encargará automáticamente de:
+   - Ejecutar la suite completa de pruebas Vitest.
+   - Compilar los activos web y la PWA.
+   - Compilar y firmar el APK (`TGym-Android-vX.Y.Z.apk`) y el App Bundle (`.aab`).
+   - Crear el Release en GitHub con los archivos instalables y sumas SHA-256.
+
+---
+
+## 📄 Licencia y Créditos
+
+- **Licencia**: TGym está distribuido bajo la licencia **[GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE)**.
+- **Origen**: Derivado y evolucionado a partir de [openGym](https://gitlab.com/DuarteSantos8/opengym) de Duarte Santos, preservando el compromiso total con el código abierto y la privacidad del usuario.
