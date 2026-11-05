@@ -1806,7 +1806,7 @@ export function WorkoutRow({ w, onClick }) {
   const st = useStore(s => s.S)
   const glyph = glyphOf((st.routines.find(r => r.id === w.routineId) || {}).emoji)
   return <button type="button" className="item" onClick={onClick}>
-    <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19 }}><Icon name={glyph} /></span>
+    <span className="lrow-i" style={{ width: 44, height: 44, borderRadius: 14, fontSize: 20 }}><Icon name={glyph} /></span>
     <div className="grow"><div className="tt">{w.name}</div>
       <div className="ss">{[fmtDate(w.d, true), ...durPart(workoutElapsedMs(w)), ...(w.activity && !w.activity.preservesWorkout ? [w.activity.distanceKm!=null ? fmtNum(w.activity.distanceKm)+' km' : null, w.activity.source==='manual'?t('Manual'):'Health Connect'].filter(Boolean) : [t('{0} sets', setsDone(w)), fmtVol(w.vol, historyResultUnit(null,null,w,st))])].join(' · ')}</div></div>
     {w.prs && w.prs.length > 0 && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}

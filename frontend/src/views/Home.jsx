@@ -139,7 +139,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="dribbble-card dribbble-card-gym" role="button" tabIndex={0} onClick={onToday} aria-label={t('Gym')}>
+      <div className="dribbble-card dribbble-card-gym" role="button" tabIndex={0} onClick={() => nav('/gym')} aria-label={t('Gym')}>
         <div className="dribbble-card-header">
           <span className="dribbble-badge"><Icon name="dumbbell" />{t('Gym')}</span>
         </div>

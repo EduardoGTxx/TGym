@@ -7,7 +7,7 @@ import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
 import './NavigationDock.css'
 
-const DOCK_PAGES = new Set(['/home','/plan','/library','/nutrition','/stats','/body','/records','/history','/progress'])
+const DOCK_PAGES = new Set(['/home','/plan','/library','/nutrition','/stats','/body','/records','/history','/progress','/gym'])
 
 export default function TabBar({ onStart }) {
   const nav = useNavigate(), loc = useLocation()
@@ -20,7 +20,7 @@ export default function TabBar({ onStart }) {
   if (!(user || isGuest) || onboarding || !DOCK_PAGES.has(page)) return null
 
   const cur = loc.pathname.split('/')[1] || 'home'
-  const owner = { history:'stats', progress:'stats', body:'stats', records:'stats', library:'plan' }
+  const owner = { history:'stats', progress:'stats', body:'stats', records:'stats', library:'plan', gym:'home' }
   const startWorkout = () => {
     if (!S.active) {
       if (isTrainingPaused(S,todayISO())) { onStart(); return }

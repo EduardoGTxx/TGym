@@ -25,6 +25,7 @@ import Login from './views/Login.jsx'
 import MobileOnboarding from './views/MobileOnboarding.jsx'
 import RoutineEdit from './views/RoutineEdit.jsx'
 import Workout from './views/Workout.jsx'
+import Gym from './views/Gym.jsx'
 import Settings from './views/Settings.jsx'
 import Admin from './views/Admin.jsx'
 import AppLock from './components/AppLock.jsx'
@@ -314,6 +315,7 @@ function Shell() {
               <Route path="/history" element={<></>} />
               <Route path="/library" element={<></>} />
               <Route path="/nutrition" element={<></>} />
+              <Route path="/gym" element={<Gym />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />

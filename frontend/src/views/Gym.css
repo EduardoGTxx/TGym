@@ -1,0 +1,218 @@
+/* Dribbble Gym View Styles */
+.dribbble-gym-view {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: 96px;
+}
+
+.dribbble-gym-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.dribbble-back-btn,
+.dribbble-bell-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  color: var(--label);
+  display: grid;
+  place-items: center;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform var(--fast);
+}
+
+.dribbble-back-btn:active,
+.dribbble-bell-btn:active {
+  transform: scale(0.92);
+}
+
+.dribbble-gym-titles {
+  margin-bottom: 20px;
+}
+
+.dribbble-gym-title {
+  font-size: clamp(26px, 7vw, 32px);
+  font-weight: 800;
+  color: var(--label);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.dribbble-gym-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--label-2);
+  margin-top: 4px;
+}
+
+.dribbble-gym-active-card {
+  background: linear-gradient(135deg, #00B4D8 0%, #0077B6 100%);
+  color: #FFFFFF;
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 8px 24px -4px rgba(0, 180, 216, 0.35);
+  cursor: pointer;
+  transition: transform var(--fast);
+}
+
+.dribbble-gym-active-card:active {
+  transform: scale(0.98);
+}
+
+.dribbble-gym-active-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
+
+.dribbble-gym-active-title {
+  font-size: 17px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.dribbble-gym-active-sub {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.dribbble-gym-actions {
+  margin-bottom: 22px;
+  display: flex;
+  gap: 10px;
+}
+
+.dribbble-gym-start-btn {
+  flex: 1;
+  border-radius: 16px !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  height: 48px !important;
+}
+
+.dribbble-gym-month {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-2);
+  margin: 22px 0 12px 2px;
+}
+
+.dribbble-gym-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dribbble-gym-card {
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform var(--fast), box-shadow var(--fast);
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dribbble-gym-card:active {
+  transform: scale(0.98);
+}
+
+.dribbble-gym-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dribbble-gym-badge.badge-0 { background: linear-gradient(135deg, #00B4D8 0%, #0096C7 100%); }
+.dribbble-gym-badge.badge-1 { background: linear-gradient(135deg, #5B42F3 0%, #7653FC 100%); }
+.dribbble-gym-badge.badge-2 { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+.dribbble-gym-badge.badge-3 { background: linear-gradient(135deg, #FF6536 0%, #E04818 100%); }
+
+.dribbble-gym-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dribbble-gym-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dribbble-gym-reps-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--label-2);
+}
+
+.dribbble-gym-reps-row span {
+  flex-shrink: 0;
+  min-width: 42px;
+}
+
+.dribbble-gym-reps-row span:last-child {
+  text-align: right;
+}
+
+.dribbble-gym-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.dribbble-gym-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dribbble-gym-fill.color-0 { background: #00B4D8; }
+.dribbble-gym-fill.color-1 { background: #5B42F3; }
+.dribbble-gym-fill.color-2 { background: #F59E0B; }
+.dribbble-gym-fill.color-3 { background: #FF6536; }
