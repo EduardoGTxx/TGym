@@ -40,9 +40,9 @@
 - Modify: `frontend/android/app/build.gradle`
 - Test: `frontend/scripts/check-version.mjs`
 
-- [ ] Update `frontend/package.json` version from `1.15.121` to `2.0.0`.
-- [ ] Update `frontend/android/app/build.gradle` `versionCode` to `158` and `versionName` to `"2.0.0"`.
-- [ ] Run `node scripts/check-version.mjs` with `PREVIOUS_VERSION_CODE=157` in `frontend/` to confirm version validation passes.
+- [x] Update `frontend/package.json` version from `1.15.121` to `2.0.0`.
+- [x] Update `frontend/android/app/build.gradle` `versionCode` to `158` and `versionName` to `"2.0.0"`.
+- [x] Run `node scripts/check-version.mjs` with `PREVIOUS_VERSION_CODE=157` in `frontend/` to confirm version validation passes.
 
 ---
 
@@ -55,19 +55,19 @@
 - Test: `frontend/src/views/Home.bodyweight.test.jsx`
 - Test: `frontend/src/views/Home.streak.test.jsx`
 
-- [ ] Remove `metric-grid` (`Completion`, `Body Weight` metric link, `Nutrition` kcal link) from `Home.jsx`.
-- [ ] Remove `ConsistencyCard` container (`#training-consistency`) from `Home.jsx`.
-- [ ] Remove `DailyPlan` and `TrainingHistory` prompt blocks from `Home.jsx` (since today's scheduled workout is already handled in the calendar strip and the Gym card).
-- [ ] Remove the blank welcome guided plan card from `Home.jsx`.
-- [ ] Ensure `Home.jsx` renders in order:
+- [x] Remove `metric-grid` (`Completion`, `Body Weight` metric link, `Nutrition` kcal link) from `Home.jsx`.
+- [x] Remove `ConsistencyCard` container (`#training-consistency`) from `Home.jsx`.
+- [x] Remove `DailyPlan` and `TrainingHistory` prompt blocks from `Home.jsx` (since today's scheduled workout is already handled in the calendar strip and the Gym card).
+- [x] Remove the blank welcome guided plan card from `Home.jsx`.
+- [x] Ensure `Home.jsx` renders in order:
   1. Dribbble Top Header (`.dribbble-top-header` with avatar, greeting, streak flame badge, and bell button)
   2. Dribbble 2x2 Activity Grid (Walk, Cycling, Gym, Climbing)
   3. Deload notice (compact banner only if deload is active)
   4. Week Training Calendar (`TodayWeekCalendar` with `.today-row.home-next-workout` to start/resume workout)
   5. Body Weight Progress (`home-bodyweight-card` with current weight, goal, and delta)
   6. Training pause action (only if paused)
-- [ ] Update test assertions in `Home.calendar.test.jsx` and other Home tests if needed.
-- [ ] Run `pnpm test src/views/Home.*.test.jsx` to verify all Home tests pass.
+- [x] Update test assertions in `Home.calendar.test.jsx` and other Home tests if needed.
+- [x] Run `pnpm test src/views/Home.*.test.jsx` to verify all Home tests pass.
 
 ---
 
@@ -78,14 +78,14 @@
 - Modify: `frontend/src/views/TrainingHome.css`
 - Modify: `frontend/src/index.css`
 
-- [ ] Style all `.card` elements globally with Dribbble specs:
+- [x] Style all `.card` elements globally with Dribbble specs:
   - Surface: `#FFFFFF` (light mode), `#1E293B` (dark mode)
   - Border radius: `22px`
   - Shadow: `0 8px 24px -4px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02)`
   - Border: `1px solid var(--panel-edge)`
-- [ ] Refine `#tabbar` floating dock:
+- [x] Refine `#tabbar` floating dock:
   - Background: `#0F172A` with curved pill radius (`28px`), subtle glow, white/accent active state.
-- [ ] Add Dribbble exercise card styling:
+- [x] Add Dribbble exercise card styling:
   - Colored square badges with rounded corners (`14px`):
     - Badge Cyan: `#00B4D8` with white icon
     - Badge Purple: `#5B42F3` with white icon
@@ -108,14 +108,14 @@
 - Test: `frontend/src/components/RoutineList.test.jsx`
 - Test: `frontend/src/views/Workout.test.jsx`
 
-- [ ] In `Plan.jsx` and `RoutineList.jsx`:
+- [x] In `Plan.jsx` and `RoutineList.jsx`:
   - Apply the Dribbble card containers to routine list rows and week schedule items.
   - Cycle through the 4 vibrant badge colors (Cyan, Purple, Amber, Coral) for icons.
-- [ ] In `RoutineEdit.jsx`:
+- [x] In `RoutineEdit.jsx`:
   - Enhance exercise row display with colored square badges and target rep pills.
-- [ ] In `Workout.jsx`:
+- [x] In `Workout.jsx`:
   - Ensure active exercise cards show the Dribbble badge and progress bar (completed sets vs prescribed sets).
-- [ ] Run `pnpm test src/views/Workout.test.jsx src/components/RoutineList.test.jsx src/views/Plan.order.test.jsx`.
+- [x] Run `pnpm test src/views/Workout.test.jsx src/components/RoutineList.test.jsx src/views/Plan.order.test.jsx`.
 
 ---
 
@@ -126,9 +126,9 @@
 - Build: PWA standalone build (`pnpm run build:pwa`)
 - Build: Production web build (`pnpm run build`)
 
-- [ ] Run full Vitest suite (`pnpm test` in `frontend/`) and ensure 264/264 test files pass.
-- [ ] Run `pnpm run build:pwa` in `frontend/` and verify clean build.
-- [ ] Run `pnpm run build` in `frontend/` and verify clean build.
-- [ ] Commit all changes to `Dev` with message `feat(ui): global Dribbble redesign, clean main menu, and bump to v2.0.0`.
-- [ ] Push `Dev` to `origin/Dev`.
-- [ ] Merge `Dev` into `main`, push `main` to `origin/main`, tag `v2.0.0` and push tag to `origin`.
+- [x] Run full Vitest suite (`pnpm test` in `frontend/`) and ensure 264/264 test files pass.
+- [x] Run `pnpm run build:pwa` in `frontend/` and verify clean build.
+- [x] Run `pnpm run build` in `frontend/` and verify clean build.
+- [x] Commit all changes to `Dev` with message `feat(ui): global Dribbble redesign, clean main menu, and bump to v2.0.0`.
+- [x] Push `Dev` to `origin/Dev`.
+- [x] Merge `Dev` into `main`, push `main` to `origin/main`, tag `v2.0.0` and push tag to `origin`.
