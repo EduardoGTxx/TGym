@@ -9,6 +9,8 @@ import { isTrainingPaused } from './lib/training-pause.js'
 import MetricFields from './components/MetricFields.jsx'
 import { upsertBodyRecord, parseMetrics, validMeasurementDate, recordHeight } from './lib/body-records.js'
 import MeasurementReminders from './components/MeasurementReminders.jsx'
+import WorkoutReminderSettings from './components/WorkoutReminderSettings.jsx'
+import { nextScheduledWorkout } from './lib/consistency.js'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
@@ -1726,6 +1728,78 @@ function SessionTiming() {
   </>
 }
 export const sessionTimingSheet = () => ui().openSheet(() => <SessionTiming />)
+
+/* ============================ workout reminders & notifications ============================ */
+export function WorkoutRemindersModal({ close }) {
+  const S = useStore(s => s.S)
+  const today = useLocalNow(), todayIso = isoOf(today)
+  const nextDate = nextScheduledWorkout(S, today)
+  const routine = nextDate ? nextDailyRoutine(S, nextDate) : null
+  const isToday = nextDate === todayIso
+  const deload = deloadStatus(S, todayIso)
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+  const nextLabel = S.active ? t('Today') : isToday ? t('Today') : nextDate === isoOf(tomorrow) ? t('Tomorrow') : nextDate ? fmtDate(nextDate, true) : t('No upcoming workout')
+
+  return <div className="workout-reminders-modal">
+    <div className="row between" style={{ alignItems: 'center', marginBottom: 14 }}>
+      <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+        <div className="dribbble-exercise-badge badge-0" style={{ width: 38, height: 38, fontSize: 18 }}>
+          <Icon name="bell" />
+        </div>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 18 }}>{t('Reminders & Notifications')}</h3>
+          <div className="small muted">{t('Training schedule & alerts')}</div>
+        </div>
+      </div>
+    </div>
+
+    {/* Today's / Upcoming Training Notification */}
+    <div className="card dribbble-modal-training-card" style={{ marginBottom: 14, background: routine ? 'linear-gradient(135deg, #00A6FB 0%, #0582CA 100%)' : 'var(--surface-2)', color: routine ? '#FFFFFF' : 'var(--label)', borderRadius: 20, padding: 16 }}>
+      <div className="row between" style={{ alignItems: 'flex-start', marginBottom: 6 }}>
+        <span className="dribbble-badge" style={{ background: routine ? 'rgba(255,255,255,0.22)' : 'var(--surface-3)', color: routine ? '#FFFFFF' : 'var(--label)' }}>
+          <Icon name={routine ? 'dumbbell' : 'moon'} />
+          {nextLabel}
+        </span>
+        {S.active && <span className="tag" style={{ background: '#EF4444', color: '#fff', border: 'none' }}>{t('In progress')}</span>}
+      </div>
+      <div style={{ marginTop: 8 }}>
+        <h4 style={{ margin: 0, fontSize: 20, fontWeight: 750 }}>
+          {S.active ? S.active.name : routine ? routine.name : t('Rest day')}
+        </h4>
+        <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>
+          {routine ? t('{0} exercises planned', routine.ex?.length || 0) : t('No workout scheduled for today. Rest and recover!')}
+        </div>
+      </div>
+      {routine && (
+        <div style={{ marginTop: 12 }}>
+          <Button variant="primary" style={{ background: '#FFFFFF', color: '#0582CA', fontWeight: 700 }} onClick={() => { close(); if (S.active) nav('/workout'); else startFlow(routine.id); }}>
+            <Icon name="play" />
+            {S.active ? t('Resume workout') : t('Start workout')}
+          </Button>
+        </div>
+      )}
+    </div>
+
+    {/* Deload Warning if active */}
+    {S.deload?.on && (deload.active || (deload.daysUntil != null && deload.daysUntil <= 7)) && (
+      <div className="card" style={{ marginBottom: 14, border: '1px solid var(--orange)' }}>
+        <div className="row" style={{ gap: 8 }}>
+          <Icon name="arrowDown" style={{ color: 'var(--orange)' }} />
+          <div>
+            <b>{deload.active ? t('Deload week active') : t('Deload starts soon')}</b>
+            <div className="small muted">{t('Load {0}% · Sets {1}%', deload.config.loadPct, deload.config.setPct)}</div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Workout Reminders Configuration */}
+    <div style={{ marginTop: 6 }}>
+      <WorkoutReminderSettings />
+    </div>
+  </div>
+}
+export const workoutRemindersSheet = () => ui().openSheet(close => <WorkoutRemindersModal close={close} />)
 
 /* shared small workout row (used in lists) */
 export function WorkoutRow({ w, onClick }) {

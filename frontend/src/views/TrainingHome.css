@@ -97,7 +97,8 @@
   gap: 8px;
   flex-shrink: 0;
 }
-.dribbble-bell-btn {
+.dribbble-bell-btn,
+.dribbble-settings-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -111,7 +112,8 @@
   cursor: pointer;
   transition: transform var(--fast);
 }
-.dribbble-bell-btn:active {
+.dribbble-bell-btn:active,
+.dribbble-settings-btn:active {
   transform: scale(0.92);
 }
 .dribbble-bell-dot {

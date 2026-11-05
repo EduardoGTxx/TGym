@@ -13,7 +13,7 @@ import { effectiveRoutineId, effortValue } from '../lib/history.js'
 import { fmtWeight, fmtDate, isoOf } from '../lib/format.js'
 import { useLocalNow } from '../lib/use-local-now.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, startFlow, bwDeltaColor, streakDetailSheet, homeCalendarSheet, workoutRemindersSheet } from '../sheets.jsx'
 import { routineMuscleSheet } from '../components/RoutineMusclePreview.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -96,9 +96,12 @@ export default function Home() {
       </div>
       <div className="dribbble-header-actions">
         <button className={'header-streak streak-' + streakTier(streak.current)} data-tour="streak" data-streak-state={streak.state} onClick={streakDetailSheet} aria-label={`${t('Training days in this streak')}: ${streak.current}. ${streakStatusText(streak)}`} title={streakStatusText(streak)}><StreakFlame value={streak.current} /><b>{streak.current}</b></button>
-        <button type="button" className="dribbble-bell-btn" onClick={() => nav('/settings')} aria-label={t('Settings')}>
+        <button type="button" className="dribbble-bell-btn" onClick={workoutRemindersSheet} aria-label={t('Reminders')}>
           <Icon name="bell" />
           <span className="dribbble-bell-dot" />
+        </button>
+        <button type="button" className="dribbble-settings-btn" onClick={() => nav('/settings')} aria-label={t('Settings')}>
+          <Icon name="gear" />
         </button>
       </div>
     </div>

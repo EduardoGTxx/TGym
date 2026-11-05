@@ -670,3 +670,38 @@ a.metric{text-decoration:none}
 .dribbble-exercise-badge.badge-1 { background: linear-gradient(135deg, #5B42F3 0%, #7653FC 100%); }
 .dribbble-exercise-badge.badge-2 { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
 .dribbble-exercise-badge.badge-3 { background: linear-gradient(135deg, #FF6536 0%, #E04818 100%); }
+
+/* Dribbble Style for Options, Sections, and Lists across all Views */
+.sect-b, .settings-section .sect-b {
+  border-radius: 22px;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.lrow-i {
+  border-radius: 12px;
+}
+.today-row.home-next-workout {
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+}
+.today-row .today-row-icon {
+  border-radius: 14px;
+}
+.home-bodyweight-card {
+  border-radius: 22px;
+}
+.home-bodyweight-current, .home-bodyweight-target {
+  background: var(--surface-2);
+  border-radius: 18px;
+  padding: 14px 12px;
+  border: 1px solid var(--panel-edge);
+}
+.week-schedule .item {
+  border-radius: 20px;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.04);
+}
