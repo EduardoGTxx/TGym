@@ -169,34 +169,34 @@
   animation: bellDotPulse 2.5s ease-in-out infinite;
 }
 
-/* 2x2 Activity Grid - Vertical Rectangles */
+/* 2x2 Activity Grid - Compact Rectangles */
 .dribbble-activity-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 10px 0 10px 0;
+  gap: 8px;
+  margin: 8px 0;
 }
 .dribbble-card {
-  border-radius: 20px;
-  padding: 13px 12px;
+  border-radius: 18px;
+  padding: 10px 10px 8px 10px;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 178px;
-  aspect-ratio: 0.86;
+  min-height: 114px;
+  aspect-ratio: 1.34;
   border: none;
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 6px 16px -3px rgba(0, 0, 0, 0.14);
 }
 .dribbble-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.20);
 }
 .dribbble-card:active {
   transform: scale(0.96);
@@ -204,19 +204,19 @@
 .dribbble-card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 .dribbble-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  padding: 3px 9px;
-  border-radius: 16px;
-  font-size: 12px;
+  padding: 2.5px 7px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 650;
   color: #FFFFFF;
   transition: background 0.2s ease;
@@ -225,7 +225,7 @@
   background: rgba(255, 255, 255, 0.32);
 }
 .dribbble-badge .icn {
-  font-size: 15px;
+  font-size: 13.5px;
 }
 
 /* Card 1: Walk (Coral / Orange) */
@@ -242,8 +242,8 @@
 }
 .dribbble-radial-wrap {
   position: relative;
-  width: 82px;
-  height: 82px;
+  width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
 }
@@ -259,13 +259,13 @@
   text-align: center;
 }
 .dribbble-radial-copy b {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
 .dribbble-radial-copy small {
-  font-size: 10px;
+  font-size: 8.5px;
   opacity: 0.85;
   text-transform: lowercase;
 }
@@ -275,27 +275,27 @@
   background: linear-gradient(135deg, #5B42F3 0%, #7B61FF 100%);
 }
 .dribbble-card-stat {
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .dribbble-card-stat b {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 .dribbble-card-stat small {
-  font-size: 13px;
-  margin-left: 4px;
+  font-size: 11px;
+  margin-left: 3px;
   font-weight: 600;
   opacity: 0.9;
 }
 .dribbble-barchart {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 48px;
+  gap: 3px;
+  height: 24px;
   margin-top: auto;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 @keyframes barRise {
@@ -310,7 +310,7 @@
 .dribbble-barchart-bar {
   flex: 1;
   background: rgba(255, 255, 255, 0.35);
-  border-radius: 4px;
+  border-radius: 2px;
   transform-origin: bottom;
   animation: barRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
@@ -334,7 +334,7 @@
 .dribbble-splits {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   margin-top: auto;
   width: 100%;
 }
@@ -342,21 +342,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 .dribbble-split-track {
   width: 100%;
-  height: 5px;
-  border-radius: 3px;
+  height: 3.5px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.25);
   overflow: hidden;
 }
 .dribbble-split-fill {
   height: 100%;
   background: #FFFFFF;
-  border-radius: 3px;
+  border-radius: 2px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -378,7 +378,7 @@
 
 .dribbble-wave-chart {
   width: 100%;
-  height: 44px;
+  height: 22px;
   margin-top: auto;
   transform-origin: bottom;
   animation: wavePulse 4.5s ease-in-out infinite;

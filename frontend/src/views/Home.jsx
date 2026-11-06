@@ -85,7 +85,7 @@ export default function Home() {
   const displaySteps = stepsToday
   const stepsGoal = normalizedStepGoal || 10000
   const stepsPct = stepsGoal > 0 ? Math.min(100, Math.round((displaySteps / stepsGoal) * 100)) : 0
-  const strokeDashoffset = Math.round(226.2 * (1 - stepsPct / 100))
+  const strokeDashoffset = Math.round(144.5 * (1 - stepsPct / 100))
 
   const validWorkouts = (S.workouts || []).filter(w => !w.cancelled && !w.canceled && w.status !== 'cancelled' && w.finishReason !== 'cancelled')
   const cyclingWorkouts = validWorkouts.filter(w => w.activity?.type === 'cycling')
@@ -164,9 +164,9 @@ export default function Home() {
         </div>
         <div className="dribbble-walk-center">
           <div className="dribbble-radial-wrap">
-            <svg width="86" height="86" viewBox="0 0 86 86" aria-hidden="true">
-              <circle cx="43" cy="43" r="36" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="6" />
-              <circle cx="43" cy="43" r="36" fill="none" stroke="#FFFFFF" strokeWidth="6" strokeDasharray="226.2" strokeDashoffset={strokeDashoffset} strokeLinecap="round" transform="rotate(-90 43 43)" />
+            <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="4.5" />
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#FFFFFF" strokeWidth="4.5" strokeDasharray="144.5" strokeDashoffset={strokeDashoffset} strokeLinecap="round" transform="rotate(-90 29 29)" />
             </svg>
             <div className="dribbble-radial-copy">
               <b>{displaySteps.toLocaleString(dateLocale())}</b>
