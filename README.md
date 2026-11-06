@@ -115,8 +115,8 @@ cd frontend/android
 2. Actualiza la versión en `frontend/package.json` y `frontend/android/app/build.gradle` (`versionName` y `versionCode`).
 3. Fusiona en `main` y sube un tag con formato `vX.Y.Z`:
    ```bash
-   git tag v2.1.0
-   git push origin v2.1.0
+   git tag v2.1.1
+   git push origin v2.1.1
    ```
 4. El workflow **TGym release** en GitHub Actions se encargará automáticamente de:
    - Ejecutar la suite completa de pruebas Vitest.
